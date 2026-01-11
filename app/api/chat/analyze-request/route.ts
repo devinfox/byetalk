@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 // Server-side lock to prevent parallel processing of the same message
 const processingMessages = new Set<string>()
@@ -69,7 +65,7 @@ export async function POST(request: NextRequest) {
 
     // Check if we've already processed this message (prevent duplicates)
     // Check for existing task by message_id OR by message content
-    const { data: existingTasksById } = await supabase
+    const { data: existingTasksById } = await getSupabaseAdmin()
       .from('tasks')
       .select('id, status')
       .eq('source', 'chat_request')
@@ -85,7 +81,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check for existing email draft with the same message (any status)
-    const { data: existingDrafts, error: draftError } = await supabase
+    const { data: existingDrafts, error: draftError } = await getSupabaseAdmin()
       .from('email_drafts')
       .select('id, status')
       .eq('user_id', recipientId)
@@ -200,7 +196,7 @@ Respond with:
 
       try {
         // Get sender's email from users table
-        const { data: senderUser } = await supabase
+        const { data: senderUser } = await getSupabaseAdmin()
           .from('users')
           .select('id, email, first_name, last_name')
           .eq('id', senderId)
@@ -208,7 +204,7 @@ Respond with:
 
         if (senderUser?.email) {
           // Get recipient's (current user) info
-          const { data: recipientUser } = await supabase
+          const { data: recipientUser } = await getSupabaseAdmin()
             .from('users')
             .select('id, first_name, last_name')
             .eq('id', recipientId)
@@ -220,7 +216,7 @@ Respond with:
           let matchedDocuments: { id: string; file_name: string }[] = []
           if (analysis.emailDraft.document_hints.length > 0) {
             // Fetch user's documents
-            const { data: userDocs } = await supabase
+            const { data: userDocs } = await getSupabaseAdmin()
               .from('documents')
               .select('id, file_name, description')
               .eq('uploaded_by', recipientId)
@@ -374,7 +370,7 @@ Return JSON only:
             taskTitle = `Email ${senderName}: ${hintsDescription}`
             const taskDescription = `${analysis.task.description}\n\nAI Draft created - review and send the email.\n\n— Requested by ${senderName || 'colleague'} via chat${messageId ? `\n[message_id:${messageId}]` : ''}`
 
-            const { data: task, error: taskError } = await supabase
+            const { data: task, error: taskError } = await getSupabaseAdmin()
               .from('tasks')
               .insert({
                 title: taskTitle,
@@ -416,7 +412,7 @@ Return JSON only:
 
           console.log('[Chat Analyze API] Inserting draft with data:', JSON.stringify(draftData, null, 2))
 
-          const { data: draft, error: draftError } = await supabase
+          const { data: draft, error: draftError } = await getSupabaseAdmin()
             .from('email_drafts')
             .insert(draftData)
             .select('id')
@@ -466,7 +462,7 @@ Return JSON only:
       // Include message_id in description to prevent duplicates
       const description = `${analysis.task.description}\n\n— Requested by ${senderName || 'colleague'} via chat${messageId ? `\n[message_id:${messageId}]` : ''}`
 
-      const { data: task, error } = await supabase
+      const { data: task, error } = await getSupabaseAdmin()
         .from('tasks')
         .insert({
           title: analysis.task.title,

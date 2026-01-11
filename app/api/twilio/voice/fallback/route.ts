@@ -1,13 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import twilio from 'twilio'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 const VoiceResponse = twilio.twiml.VoiceResponse
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,7 +24,7 @@ export async function POST(request: NextRequest) {
 
     // Update call record with missed status
     if (callSid) {
-      await supabase
+      await getSupabaseAdmin()
         .from('calls')
         .update({
           disposition: dialCallStatus === 'completed' ? 'answered' : 'no_answer',

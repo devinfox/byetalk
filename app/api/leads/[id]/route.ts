@@ -1,11 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-// Use service role for deletions
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 // DELETE /api/leads/[id] - Hard delete a lead
 export async function DELETE(
@@ -22,7 +16,7 @@ export async function DELETE(
     console.log('[Delete Lead] Starting hard delete for lead:', leadId)
 
     // First, check if the lead exists
-    const { data: lead, error: findError } = await supabase
+    const { data: lead, error: findError } = await getSupabaseAdmin()
       .from('leads')
       .select('id, first_name, last_name')
       .eq('id', leadId)
@@ -36,79 +30,79 @@ export async function DELETE(
     // Order matters - clear references before deleting the lead
 
     // 1. Clear calls
-    await supabase
+    await getSupabaseAdmin()
       .from('calls')
       .update({ lead_id: null })
       .eq('lead_id', leadId)
 
     // 2. Clear tasks
-    await supabase
+    await getSupabaseAdmin()
       .from('tasks')
       .update({ lead_id: null })
       .eq('lead_id', leadId)
 
     // 3. Clear deals (set lead_id to null, don't delete the deal)
-    await supabase
+    await getSupabaseAdmin()
       .from('deals')
       .update({ lead_id: null })
       .eq('lead_id', leadId)
 
     // 4. Clear emails
-    await supabase
+    await getSupabaseAdmin()
       .from('emails')
       .update({ lead_id: null })
       .eq('lead_id', leadId)
 
     // 5. Clear email_drafts
-    await supabase
+    await getSupabaseAdmin()
       .from('email_drafts')
       .update({ lead_id: null })
       .eq('lead_id', leadId)
 
     // 6. Clear form_submissions
-    await supabase
+    await getSupabaseAdmin()
       .from('form_submissions')
       .update({ lead_id: null })
       .eq('lead_id', leadId)
 
     // 7. Clear activity_log
-    await supabase
+    await getSupabaseAdmin()
       .from('activity_log')
       .update({ lead_id: null })
       .eq('lead_id', leadId)
 
     // 8. Clear notes
-    await supabase
+    await getSupabaseAdmin()
       .from('notes')
       .update({ lead_id: null })
       .eq('lead_id', leadId)
 
     // 9. Clear system_events
-    await supabase
+    await getSupabaseAdmin()
       .from('system_events')
       .update({ lead_id: null })
       .eq('lead_id', leadId)
 
     // 10. Clear documents
-    await supabase
+    await getSupabaseAdmin()
       .from('documents')
       .update({ lead_id: null })
       .eq('lead_id', leadId)
 
     // 11. Clear lead duplicate references
-    await supabase
+    await getSupabaseAdmin()
       .from('leads')
       .update({ duplicate_of_lead_id: null })
       .eq('duplicate_of_lead_id', leadId)
 
     // 12. Clear contacts that reference this lead
-    await supabase
+    await getSupabaseAdmin()
       .from('contacts')
       .update({ lead_id: null })
       .eq('lead_id', leadId)
 
     // Now delete the lead
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await getSupabaseAdmin()
       .from('leads')
       .delete()
       .eq('id', leadId)

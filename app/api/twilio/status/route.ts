@@ -1,11 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-// Use service role for webhook (no user session)
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 // Trigger AI processing for a call
 // Note: This is called synchronously to ensure it completes before serverless function terminates
@@ -81,7 +75,7 @@ export async function POST(request: NextRequest) {
 
     // Method 1: Try to find by call_sid (primary method when client stores it)
     if (callSid) {
-      const { data: callBySid } = await supabase
+      const { data: callBySid } = await getSupabaseAdmin()
         .from('calls')
         .select('id')
         .eq('call_sid', callSid)
@@ -95,7 +89,7 @@ export async function POST(request: NextRequest) {
 
     // Method 2: Try parent call sid (for child leg callbacks)
     if (!existingCall && parentCallSid) {
-      const { data: callByParent } = await supabase
+      const { data: callByParent } = await getSupabaseAdmin()
         .from('calls')
         .select('id')
         .eq('call_sid', parentCallSid)
@@ -112,7 +106,7 @@ export async function POST(request: NextRequest) {
       console.log('Attempting to_number lookup:', { cleanToNumber })
 
       // Try exact match with normalized 10-digit number
-      const { data: callByToNumber } = await supabase
+      const { data: callByToNumber } = await getSupabaseAdmin()
         .from('calls')
         .select('id')
         .eq('direction', 'outbound')
@@ -129,7 +123,7 @@ export async function POST(request: NextRequest) {
 
       // If not found, try any recent call to this number
       if (!existingCall) {
-        const { data: anyCallByToNumber } = await supabase
+        const { data: anyCallByToNumber } = await getSupabaseAdmin()
           .from('calls')
           .select('id')
           .eq('direction', 'outbound')
@@ -146,7 +140,7 @@ export async function POST(request: NextRequest) {
 
       // Update call_sid for future lookups if we found a match
       if (existingCall && callSid) {
-        await supabase
+        await getSupabaseAdmin()
           .from('calls')
           .update({ call_sid: callSid })
           .eq('id', existingCall.id)
@@ -157,7 +151,7 @@ export async function POST(request: NextRequest) {
     if (!existingCall && cleanFromNumber.length === 10) {
       console.log('Attempting from_number lookup (inbound):', { cleanFromNumber })
 
-      const { data: callByFromNumber } = await supabase
+      const { data: callByFromNumber } = await getSupabaseAdmin()
         .from('calls')
         .select('id')
         .eq('direction', 'inbound')
@@ -171,7 +165,7 @@ export async function POST(request: NextRequest) {
         console.log('Found call by from_number:', cleanFromNumber)
 
         if (callSid) {
-          await supabase
+          await getSupabaseAdmin()
             .from('calls')
             .update({ call_sid: callSid })
             .eq('id', existingCall.id)
@@ -185,7 +179,7 @@ export async function POST(request: NextRequest) {
 
       // First try to match by phone number with any format
       if (cleanToNumber.length >= 7) {
-        const { data: recentCallByPhone } = await supabase
+        const { data: recentCallByPhone } = await getSupabaseAdmin()
           .from('calls')
           .select('id')
           .eq('direction', 'outbound')
@@ -203,7 +197,7 @@ export async function POST(request: NextRequest) {
 
       // Last resort: any recent call without recording
       if (!existingCall) {
-        const { data: recentCall } = await supabase
+        const { data: recentCall } = await getSupabaseAdmin()
           .from('calls')
           .select('id')
           .eq('direction', 'outbound')
@@ -253,7 +247,7 @@ export async function POST(request: NextRequest) {
         console.log('Extracting user from client identity:', { clientIdentity, userIdPrefix })
 
         // Find user by ID prefix (fetch all and filter since UUID doesn't support pattern matching)
-        const { data: allUsers } = await supabase
+        const { data: allUsers } = await getSupabaseAdmin()
           .from('users')
           .select('id')
           .eq('is_deleted', false)
@@ -282,7 +276,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Apply updates
-    await supabase
+    await getSupabaseAdmin()
       .from('calls')
       .update(updateData)
       .eq('id', existingCall.id)

@@ -1,15 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { AssemblyAI } from 'assemblyai'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { findLeadByPhone } from '@/lib/email-ai'
 import { findMatchingFunnelSemantic } from '@/lib/funnel-matcher'
-
-// Use service role for server-side processing
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 // OpenAI for all AI analysis (summary, sentiment, tasks, etc.)
 // Lazy initialization to avoid errors when API key is missing
@@ -85,7 +79,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get the call record
-    const { data: call, error: callError } = await supabase
+    const { data: call, error: callError } = await getSupabaseAdmin()
       .from('calls')
       .select('*, contact:contacts(first_name, last_name), user:users!calls_user_id_fkey(id, first_name, last_name)')
       .eq('id', callId)
@@ -108,7 +102,7 @@ export async function POST(request: NextRequest) {
     // If no user_id on call, try to find an active user as fallback
     if (!ownerId) {
       console.log('⚠️ No user_id on call record, attempting to find fallback owner...')
-      const { data: activeUsers } = await supabase
+      const { data: activeUsers } = await getSupabaseAdmin()
         .from('users')
         .select('id')
         .eq('is_active', true)
@@ -121,7 +115,7 @@ export async function POST(request: NextRequest) {
         console.log('Using fallback owner:', ownerId)
 
         // Update the call record with the owner
-        await supabase
+        await getSupabaseAdmin()
           .from('calls')
           .update({ user_id: ownerId })
           .eq('id', callId)
@@ -215,7 +209,7 @@ export async function POST(request: NextRequest) {
               .join('\n')
 
             // Save transcription and diarization data
-            await supabase
+            await getSupabaseAdmin()
               .from('calls')
               .update({
                 transcription,
@@ -254,7 +248,7 @@ export async function POST(request: NextRequest) {
 
           transcription = transcriptionResponse
 
-          await supabase
+          await getSupabaseAdmin()
             .from('calls')
             .update({
               transcription,
@@ -492,7 +486,7 @@ Leave fields null if not clearly mentioned by the customer.`
     }
 
     // Step 3: Save GPT analysis results
-    await supabase
+    await getSupabaseAdmin()
       .from('calls')
       .update({
         ai_analysis_status: 'completed',
@@ -529,7 +523,7 @@ Leave fields null if not clearly mentioned by the customer.`
         let existingLead = null
         if (phoneNumber) {
           const cleanPhone = phoneNumber.replace(/\D/g, '').slice(-10)
-          const { data: foundLead } = await supabase
+          const { data: foundLead } = await getSupabaseAdmin()
             .from('leads')
             .select('id, owner_id, email, first_name, last_name')
             .or(`phone.ilike.%${cleanPhone}%,phone_secondary.ilike.%${cleanPhone}%`)
@@ -571,7 +565,7 @@ Leave fields null if not clearly mentioned by the customer.`
           // Apply updates if any
           if (Object.keys(leadUpdates).length > 0) {
             leadUpdates.updated_at = new Date().toISOString()
-            await supabase
+            await getSupabaseAdmin()
               .from('leads')
               .update(leadUpdates)
               .eq('id', existingLead.id)
@@ -609,7 +603,7 @@ Leave fields null if not clearly mentioned by the customer.`
             source: leadData.source_type,
           })
 
-          const { data: newLead, error: leadError } = await supabase
+          const { data: newLead, error: leadError } = await getSupabaseAdmin()
             .from('leads')
             .insert(leadData)
             .select('id, first_name, last_name')
@@ -625,7 +619,7 @@ Leave fields null if not clearly mentioned by the customer.`
 
         // Update the call with the new lead_id
         if (newLeadId) {
-          await supabase
+          await getSupabaseAdmin()
             .from('calls')
             .update({ lead_id: newLeadId, updated_at: new Date().toISOString() })
             .eq('id', callId)
@@ -677,7 +671,7 @@ Leave fields null if not clearly mentioned by the customer.`
           }
         }
 
-        const { data: task, error: taskError } = await supabase
+        const { data: task, error: taskError } = await getSupabaseAdmin()
           .from('tasks')
           .insert({
             title: taskTitle,
@@ -712,7 +706,7 @@ Leave fields null if not clearly mentioned by the customer.`
         console.log('Email commitment detected, checking for existing draft...')
 
         // Check if a draft already exists for this call (prevent duplicates)
-        const { data: existingDraft } = await supabase
+        const { data: existingDraft } = await getSupabaseAdmin()
           .from('email_drafts')
           .select('id')
           .eq('call_id', callId)
@@ -727,7 +721,7 @@ Leave fields null if not clearly mentioned by the customer.`
           // Find lead info - try from lead_id first, then phone number
           let leadInfo = null
         if (call.lead_id) {
-          const { data: lead } = await supabase
+          const { data: lead } = await getSupabaseAdmin()
             .from('leads')
             .select('id, first_name, last_name, email')
             .eq('id', call.lead_id)
@@ -820,14 +814,14 @@ Leave fields null if not clearly mentioned by the customer.`
             isNewLead: !!newLeadId,
             interestLevel: funnelEnrollment.suggested_tags?.find((t: string) => t.includes('interested')) || undefined
           },
-          supabase
+          getSupabaseAdmin()
         )
 
         if (matchedFunnel) {
           console.log('AI matched funnel:', matchedFunnel.funnel_name, 'reason:', matchedFunnel.match_reason)
 
           // Check if lead is already enrolled in this funnel
-          const { data: existingEnrollment } = await supabase
+          const { data: existingEnrollment } = await getSupabaseAdmin()
             .from('email_funnel_enrollments')
             .select('id')
             .eq('funnel_id', matchedFunnel.funnel_id)
@@ -837,7 +831,7 @@ Leave fields null if not clearly mentioned by the customer.`
 
           if (!existingEnrollment) {
             // Get first phase delay for scheduling
-            const { data: phases } = await supabase
+            const { data: phases } = await getSupabaseAdmin()
               .from('email_funnel_phases')
               .select('delay_days, delay_hours')
               .eq('funnel_id', matchedFunnel.funnel_id)
@@ -865,7 +859,7 @@ Leave fields null if not clearly mentioned by the customer.`
             const nextEmailAt = new Date(Date.now() + delayMs).toISOString()
 
             // Create enrollment as pending approval (draft)
-            const { data: enrollmentData, error: enrollError } = await supabase.from('email_funnel_enrollments').insert({
+            const { data: enrollmentData, error: enrollError } = await getSupabaseAdmin().from('email_funnel_enrollments').insert({
               funnel_id: matchedFunnel.funnel_id,
               lead_id: leadIdForFunnel,
               status: 'pending_approval',
@@ -910,14 +904,14 @@ Leave fields null if not clearly mentioned by the customer.`
         console.log('Generating lead profile analysis for lead:', leadIdForProfile)
 
         // Get lead info including existing AI profile for evolution
-        const { data: lead } = await supabase
+        const { data: lead } = await getSupabaseAdmin()
           .from('leads')
           .select('id, first_name, last_name, email, phone, status, source_type, notes, ai_profile_summary, ai_profile_details, ai_coaching_tips')
           .eq('id', leadIdForProfile)
           .single()
 
         // Get ALL calls for this lead
-        const { data: dbCalls } = await supabase
+        const { data: dbCalls } = await getSupabaseAdmin()
           .from('calls')
           .select('id, transcription, ai_summary, ai_sentiment, ai_key_topics, ai_objections, started_at, duration_seconds, direction')
           .eq('lead_id', leadIdForProfile)
@@ -946,7 +940,7 @@ Leave fields null if not clearly mentioned by the customer.`
 
         // Get ALL emails for this lead
         const leadEmail = lead?.email?.toLowerCase().trim()
-        const { data: allEmails } = await supabase
+        const { data: allEmails } = await getSupabaseAdmin()
           .from('emails')
           .select('id, from_address, to_addresses, subject, body_text, snippet, ai_summary, ai_sentiment, ai_intent, ai_key_topics, ai_action_items, ai_commitments, ai_requests, sent_at, created_at, is_inbound, lead_id')
           .eq('is_deleted', false)
@@ -1163,7 +1157,7 @@ CRITICAL: Your coaching tips should be SO SPECIFIC that a new rep could read the
             const profile = JSON.parse(profileContent)
 
             // Update lead with evolved AI profile
-            await supabase
+            await getSupabaseAdmin()
               .from('leads')
               .update({
                 ai_profile_summary: profile.profile_summary,
@@ -1213,7 +1207,7 @@ CRITICAL: Your coaching tips should be SO SPECIFIC that a new rep could read the
     console.error('Call processing error:', error)
 
     if (callId) {
-      await supabase
+      await getSupabaseAdmin()
         .from('calls')
         .update({
           ai_analysis_status: 'failed',

@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
-// Use service role for cron job (no user session)
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 // Verify cron secret to prevent unauthorized access
 function verifyCronSecret(request: NextRequest): boolean {
@@ -66,7 +61,7 @@ export async function GET(request: NextRequest) {
     // Find all unprocessed calls with recordings (created in last 24 hours)
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
 
-    const { data: unprocessedCalls, error: fetchError } = await supabase
+    const { data: unprocessedCalls, error: fetchError } = await getSupabaseAdmin()
       .from('calls')
       .select('id, direction, duration_seconds, recording_url, created_at')
       .eq('is_deleted', false)

@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,7 +19,7 @@ export async function POST(request: NextRequest) {
 
     // Update call record with transcription if successful
     if (callSid && transcriptionText && transcriptionStatus === 'completed') {
-      const { error } = await supabase
+      const { error } = await getSupabaseAdmin()
         .from('calls')
         .update({
           transcription: transcriptionText,

@@ -1,12 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import sharp from 'sharp'
 import * as jose from 'jose'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 const KLING_ACCESS_KEY = process.env.KLING_ACCESS_KEY!
 const KLING_SECRET_KEY = process.env.KLING_SECRET_KEY!
@@ -128,7 +124,7 @@ async function uploadCompositeImage(
   imageBuffer: Buffer,
   filename: string
 ): Promise<string> {
-  const { data, error } = await supabase.storage
+  const { data, error } = await getSupabaseAdmin().storage
     .from('takeover-composites')
     .upload(filename, imageBuffer, {
       contentType: 'image/jpeg',
@@ -141,7 +137,7 @@ async function uploadCompositeImage(
   }
 
   // Get public URL
-  const { data: urlData } = supabase.storage
+  const { data: urlData } = getSupabaseAdmin().storage
     .from('takeover-composites')
     .getPublicUrl(filename)
 
@@ -150,7 +146,7 @@ async function uploadCompositeImage(
 
 // Delete composite image from storage
 async function deleteCompositeImage(filename: string): Promise<void> {
-  const { error } = await supabase.storage
+  const { error } = await getSupabaseAdmin().storage
     .from('takeover-composites')
     .remove([filename])
 
@@ -237,7 +233,7 @@ export async function POST(request: NextRequest) {
     // Store the video generation record in the database (if table exists)
     let videoRecord = null
     try {
-      const { data, error: dbError } = await supabase
+      const { data, error: dbError } = await getSupabaseAdmin()
         .from('takeover_videos')
         .insert({
           winner_id: winnerId,
@@ -332,7 +328,7 @@ export async function GET(request: NextRequest) {
 
     // If completed, update the database record
     if (status === 'SUCCEEDED' && videoUrl) {
-      await supabase
+      await getSupabaseAdmin()
         .from('takeover_videos')
         .update({
           status: 'completed',
@@ -342,7 +338,7 @@ export async function GET(request: NextRequest) {
         .eq('runway_task_id', taskId)
     } else if (status === 'FAILED') {
       const errorMsg = taskData.data?.task_status_msg || taskData.message || 'Unknown error'
-      await supabase
+      await getSupabaseAdmin()
         .from('takeover_videos')
         .update({
           status: 'failed',

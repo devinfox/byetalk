@@ -1,14 +1,9 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 // Default gladiator avatars
 const DEFAULT_AVATARS = ['/guy-1.png', '/guy-2.png', '/guy-3.png']
 
-// Use service role for server-side access
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 export type SalesRepData = {
   id: string
@@ -34,7 +29,7 @@ function getDefaultAvatar(userId: string): string {
 export async function GET() {
   try {
     // Get all active users (employees)
-    const { data: users, error: usersError } = await supabase
+    const { data: users, error: usersError } = await getSupabaseAdmin()
       .from('users')
       .select('id, first_name, last_name, gladiator_avatar, role')
       .eq('is_active', true)
@@ -59,7 +54,7 @@ export async function GET() {
     startOfDay.setHours(0, 0, 0, 0)
 
     // Get all closed_won deals this week (Monday-Friday)
-    const { data: deals, error: dealsError } = await supabase
+    const { data: deals, error: dealsError } = await getSupabaseAdmin()
       .from('deals')
       .select('id, owner_id, secondary_owner_id, funded_amount, estimated_value, closed_at')
       .eq('stage', 'closed_won')
@@ -72,7 +67,7 @@ export async function GET() {
 
     // Get transfer overs from calls (disposition = 'answered' and direction = 'inbound')
     // TODO: This should be based on actual transfer-over tracking if implemented
-    const { data: weeklyCalls, error: callsError } = await supabase
+    const { data: weeklyCalls, error: callsError } = await getSupabaseAdmin()
       .from('calls')
       .select('id, user_id, started_at')
       .eq('is_deleted', false)
@@ -83,7 +78,7 @@ export async function GET() {
       console.error('Error fetching calls:', callsError)
     }
 
-    const { data: dailyCalls } = await supabase
+    const { data: dailyCalls } = await getSupabaseAdmin()
       .from('calls')
       .select('id, user_id, started_at')
       .eq('is_deleted', false)

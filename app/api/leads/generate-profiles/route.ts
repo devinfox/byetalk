@@ -1,11 +1,7 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import OpenAI from 'openai'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 // Lazy initialization to avoid errors when API key is missing
 let openaiInstance: OpenAI | null = null
@@ -27,7 +23,7 @@ export async function POST(request: Request) {
     console.log('Starting lead profile generation scan...', leadId ? `for lead ${leadId}` : 'for all leads')
 
     // Get leads (single or all)
-    let query = supabase
+    let query = getSupabaseAdmin()
       .from('leads')
       .select('id, first_name, last_name, email, phone, status, source_type, notes')
       .eq('is_deleted', false)
@@ -46,7 +42,7 @@ export async function POST(request: Request) {
     console.log(`Found ${leads?.length || 0} leads`)
 
     // Get all calls with transcriptions
-    const { data: allCalls, error: callsError } = await supabase
+    const { data: allCalls, error: callsError } = await getSupabaseAdmin()
       .from('calls')
       .select('id, lead_id, contact_id, to_number, from_number, transcription, ai_summary, ai_sentiment, ai_key_topics, ai_objections, started_at, duration_seconds, direction')
       .eq('is_deleted', false)
@@ -60,7 +56,7 @@ export async function POST(request: Request) {
     console.log(`Found ${allCalls?.length || 0} calls with transcriptions`)
 
     // Get all emails with AI analysis
-    const { data: allEmails, error: emailsError } = await supabase
+    const { data: allEmails, error: emailsError } = await getSupabaseAdmin()
       .from('emails')
       .select('id, lead_id, from_address, to_addresses, subject, body_text, snippet, ai_summary, ai_sentiment, ai_intent, ai_key_topics, ai_action_items, ai_commitments, ai_requests, sent_at, created_at, is_inbound')
       .eq('is_deleted', false)
@@ -271,7 +267,7 @@ Keep labels SHORT (1-3 words max). For investment tags, include ALL account type
           const profile = JSON.parse(profileContent)
 
           // Update lead with AI profile
-          const { error: updateError } = await supabase
+          const { error: updateError } = await getSupabaseAdmin()
             .from('leads')
             .update({
               ai_profile_summary: profile.profile_summary,
@@ -342,12 +338,12 @@ Keep labels SHORT (1-3 words max). For investment tags, include ALL account type
 // GET to check status
 export async function GET() {
   try {
-    const { data: leads } = await supabase
+    const { data: leads } = await getSupabaseAdmin()
       .from('leads')
       .select('id, first_name, last_name, ai_profile_summary, ai_profile_updated_at')
       .eq('is_deleted', false)
 
-    const { data: calls } = await supabase
+    const { data: calls } = await getSupabaseAdmin()
       .from('calls')
       .select('id, lead_id, transcription')
       .eq('is_deleted', false)

@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,7 +11,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get current call
-    const { data: call, error: fetchError } = await supabase
+    const { data: call, error: fetchError } = await getSupabaseAdmin()
       .from('calls')
       .select('id, custom_fields')
       .eq('id', callId)
@@ -31,7 +27,7 @@ export async function POST(request: NextRequest) {
       diarized_transcript: diarizedTranscript,
     }
 
-    const { error: updateError } = await supabase
+    const { error: updateError } = await getSupabaseAdmin()
       .from('calls')
       .update({ custom_fields: updatedCustomFields })
       .eq('id', callId)
@@ -50,7 +46,7 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   const search = request.nextUrl.searchParams.get('search')
 
-  const { data: calls } = await supabase
+  const { data: calls } = await getSupabaseAdmin()
     .from('calls')
     .select('id, transcription, started_at, to_number')
     .eq('is_deleted', false)

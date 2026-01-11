@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import sharp from 'sharp'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 // Force dynamic rendering for file uploads
 export const dynamic = 'force-dynamic'
@@ -160,7 +156,7 @@ export async function POST(request: NextRequest) {
     const uniqueFilename = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${ext}`
 
     // Upload optimized image to Supabase Storage
-    const { data, error } = await supabase.storage
+    const { data, error } = await getSupabaseAdmin().storage
       .from('email-images')
       .upload(uniqueFilename, optimizedBuffer, {
         contentType: optimizedMimeType,
@@ -187,7 +183,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get public URL
-    const { data: urlData } = supabase.storage
+    const { data: urlData } = getSupabaseAdmin().storage
       .from('email-images')
       .getPublicUrl(uniqueFilename)
 

@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
-// Use service role for server-side processing
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,7 +8,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}))
     const { callId, forceAll } = body
 
-    let query = supabase
+    let query = getSupabaseAdmin()
       .from('calls')
       .select('id, recording_url, ai_analysis_status, transcription')
       .not('recording_url', 'is', null)
@@ -48,7 +43,7 @@ export async function POST(request: NextRequest) {
     for (const call of calls) {
       try {
         // Reset call for reprocessing (clear transcription so AssemblyAI will re-diarize)
-        await supabase
+        await getSupabaseAdmin()
           .from('calls')
           .update({
             ai_analysis_status: 'processing',
@@ -82,7 +77,7 @@ export async function POST(request: NextRequest) {
           console.error(`Failed to process call ${call.id}:`, result.error)
 
           // Mark as failed
-          await supabase
+          await getSupabaseAdmin()
             .from('calls')
             .update({ ai_analysis_status: 'failed' })
             .eq('id', call.id)
@@ -93,7 +88,7 @@ export async function POST(request: NextRequest) {
         console.error(`Error processing call ${call.id}:`, err)
 
         // Mark as failed
-        await supabase
+        await getSupabaseAdmin()
           .from('calls')
           .update({ ai_analysis_status: 'failed' })
           .eq('id', call.id)
@@ -121,7 +116,7 @@ export async function POST(request: NextRequest) {
 // GET to check status of unprocessed calls
 export async function GET() {
   try {
-    const { data: unprocessed, error } = await supabase
+    const { data: unprocessed, error } = await getSupabaseAdmin()
       .from('calls')
       .select('id, recording_url, ai_analysis_status, started_at, to_number')
       .not('recording_url', 'is', null)

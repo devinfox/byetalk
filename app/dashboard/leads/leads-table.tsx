@@ -89,6 +89,8 @@ export function LeadsTable({ leads, users, campaigns, currentUser }: LeadsTableP
             next.delete(leadId)
             return next
           })
+        } else {
+          console.error('Failed to remove from turbo queue:', await response.text())
         }
       } else {
         // Add to queue
@@ -99,10 +101,16 @@ export function LeadsTable({ leads, users, campaigns, currentUser }: LeadsTableP
         })
         if (response.ok) {
           setTurboQueueLeadIds(prev => new Set(prev).add(leadId))
+        } else {
+          console.error('Failed to add to turbo queue:', await response.text())
         }
       }
+      // Refetch queue to ensure sync with server
+      await fetchTurboQueue()
     } catch (error) {
       console.error('Error toggling turbo mode:', error)
+      // Refetch on error to ensure state is correct
+      await fetchTurboQueue()
     } finally {
       setTurboLoading(prev => {
         const next = new Set(prev)
