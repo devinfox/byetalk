@@ -10,11 +10,13 @@ import {
   X,
   Minimize2,
   Maximize2,
+  UserPlus,
 } from 'lucide-react'
 import { useTwilioDevice, CallStatus } from '@/lib/useTwilioDevice'
 import { createClient } from '@/lib/supabase'
 import { useDialer } from '@/lib/dialer-context'
 import { IncomingCallModal } from './incoming-call-modal'
+import { AddToCallModal } from './add-to-call-modal'
 
 interface FloatingDialerProps {
   userId?: string
@@ -31,6 +33,8 @@ export function FloatingDialer({ userId }: FloatingDialerProps) {
   const { isOpen, phoneNumber, entityInfo, closeDialer, setPhoneNumber, openDialer } = useDialer()
   const [isMinimized, setIsMinimized] = useState(false)
   const [callDuration, setCallDuration] = useState(0)
+  const [showAddToCall, setShowAddToCall] = useState(false)
+  const [addingParticipant, setAddingParticipant] = useState(false)
   const ringtoneRef = useRef<{ oscillator: OscillatorNode; gainNode: GainNode; context: AudioContext } | null>(null)
   const ringtoneIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -196,6 +200,36 @@ export function FloatingDialer({ userId }: FloatingDialerProps) {
   const handleHangUp = () => {
     hangUp()
     setCallDuration(0)
+    setShowAddToCall(false)
+  }
+
+  // Handle adding a participant to the call
+  const handleAddParticipant = async (colleague: { id: string; first_name: string; last_name: string }) => {
+    if (!callSid) {
+      throw new Error('No active call')
+    }
+
+    setAddingParticipant(true)
+    try {
+      const response = await fetch('/api/twilio/add-participant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          callSid,
+          colleagueId: colleague.id,
+        }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to add participant')
+      }
+
+      const result = await response.json()
+      console.log('[Dialer] Added participant to call:', result)
+    } finally {
+      setAddingParticipant(false)
+    }
   }
 
   // Format duration
@@ -355,6 +389,7 @@ export function FloatingDialer({ userId }: FloatingDialerProps) {
                         ? 'bg-red-500 hover:bg-red-600'
                         : 'bg-gray-700 hover:bg-gray-600'
                     }`}
+                    title={isMuted ? 'Unmute' : 'Mute'}
                   >
                     {isMuted ? (
                       <MicOff className="w-5 h-5 text-white" />
@@ -363,8 +398,17 @@ export function FloatingDialer({ userId }: FloatingDialerProps) {
                     )}
                   </button>
                   <button
+                    onClick={() => setShowAddToCall(true)}
+                    disabled={status !== 'connected' || addingParticipant}
+                    className="p-3 bg-yellow-500 hover:bg-yellow-600 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Add colleague to call"
+                  >
+                    <UserPlus className="w-5 h-5 text-black" />
+                  </button>
+                  <button
                     onClick={handleHangUp}
                     className="p-3 bg-red-500 hover:bg-red-600 rounded-full transition-colors"
+                    title="End call"
                   >
                     <PhoneOff className="w-5 h-5 text-white" />
                   </button>
@@ -400,6 +444,14 @@ export function FloatingDialer({ userId }: FloatingDialerProps) {
               )}
             </button>
             <button
+              onClick={() => setShowAddToCall(true)}
+              disabled={status !== 'connected'}
+              className="p-2 bg-yellow-500 hover:bg-yellow-600 rounded-full transition-colors disabled:opacity-50"
+              title="Add colleague"
+            >
+              <UserPlus className="w-4 h-4 text-black" />
+            </button>
+            <button
               onClick={handleHangUp}
               className="p-2 bg-red-500 hover:bg-red-600 rounded-full transition-colors"
             >
@@ -408,6 +460,14 @@ export function FloatingDialer({ userId }: FloatingDialerProps) {
           </div>
         )}
       </div>
+
+      {/* Add to Call Modal */}
+      <AddToCallModal
+        isOpen={showAddToCall}
+        onClose={() => setShowAddToCall(false)}
+        callSid={callSid}
+        onAddParticipant={handleAddParticipant}
+      />
     </div>
   )
 }
