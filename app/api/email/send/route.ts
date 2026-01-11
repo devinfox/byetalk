@@ -377,7 +377,7 @@ export async function POST(request: NextRequest) {
           content: att.content, // base64 encoded
           filename: att.filename,
           type: att.content_type,
-          disposition: att.is_inline ? 'inline' : 'attachment',
+          disposition: (att.is_inline ? 'inline' : 'attachment') as 'inline' | 'attachment',
           contentId: att.content_id,
         }))
 
