@@ -27,12 +27,28 @@ export default async function DashboardLayout({
 
   const profile = await getCurrentUser()
 
-  // Fetch unread email count for sidebar badge
-  const { count: unreadEmailCount } = await supabase
-    .from('emails')
-    .select('*', { count: 'exact', head: true })
-    .eq('is_read', false)
-    .eq('is_inbound', true)
+  // Fetch unread email count for sidebar badge (only for current user's email accounts)
+  let unreadEmailCount = 0
+  if (profile?.id) {
+    // First get the user's email account IDs
+    const { data: userEmailAccounts } = await supabase
+      .from('email_accounts')
+      .select('id')
+      .eq('user_id', profile.id)
+      .eq('is_deleted', false)
+
+    if (userEmailAccounts && userEmailAccounts.length > 0) {
+      const accountIds = userEmailAccounts.map(acc => acc.id)
+      const { count } = await supabase
+        .from('emails')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_read', false)
+        .eq('is_inbound', true)
+        .in('email_account_id', accountIds)
+
+      unreadEmailCount = count || 0
+    }
+  }
 
   return (
     <TurboModeProvider>
@@ -56,7 +72,7 @@ export default async function DashboardLayout({
                       {/* Dark overlay for readability */}
                       <div className="fixed inset-0 bg-black/60 pointer-events-none" />
 
-                      <Sidebar user={profile} unreadEmailCount={unreadEmailCount || 0} />
+                      <Sidebar user={profile} unreadEmailCount={unreadEmailCount} />
                       <div className="flex-1 flex flex-col relative z-10">
                         <Header user={profile} />
                         <div className="flex-1 flex overflow-hidden">
