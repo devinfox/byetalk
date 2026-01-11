@@ -75,21 +75,37 @@ export default async function DashboardPage() {
     d.created_at && new Date(d.created_at) >= today
   ).length || 0
 
-  // Fetch unread emails (first 5)
-  const { data: unreadEmails } = await supabase
-    .from('emails')
-    .select(`
-      id,
-      thread_id,
-      subject,
-      from_address,
-      from_name,
-      created_at
-    `)
-    .eq('is_read', false)
-    .eq('is_inbound', true)
-    .order('created_at', { ascending: false })
-    .limit(5)
+  // First get the current user's email account IDs
+  const { data: userEmailAccounts } = await supabase
+    .from('email_accounts')
+    .select('id')
+    .eq('user_id', user?.id || '')
+    .eq('is_deleted', false)
+
+  const userEmailAccountIds = userEmailAccounts?.map(a => a.id) || []
+
+  // Fetch unread emails only for the current user's accounts
+  let unreadEmails: { id: string; thread_id: string; subject: string | null; from_address: string; from_name: string | null; created_at: string }[] = []
+
+  if (userEmailAccountIds.length > 0) {
+    const { data } = await supabase
+      .from('emails')
+      .select(`
+        id,
+        thread_id,
+        subject,
+        from_address,
+        from_name,
+        created_at
+      `)
+      .in('email_account_id', userEmailAccountIds)
+      .eq('is_read', false)
+      .eq('is_inbound', true)
+      .order('created_at', { ascending: false })
+      .limit(5)
+
+    unreadEmails = data || []
+  }
 
   // TODO: Fetch outstanding tasks count when tasks feature is implemented
   const outstandingTasks = 0
