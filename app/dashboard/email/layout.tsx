@@ -15,17 +15,21 @@ export default async function EmailLayout({
   }
 
   return (
-    <div className="h-full flex">
+    <div className="h-full flex overflow-hidden max-w-full">
       {/* Email Folder Sidebar */}
-      <EmailSidebar userId={user.id} />
+      <div className="flex-shrink-0">
+        <EmailSidebar userId={user.id} />
+      </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 min-w-0 overflow-hidden">
         {children}
       </div>
 
       {/* Document Panel for attaching files to emails */}
-      <DocumentPanel userId={user.id} />
+      <div className="flex-shrink-0">
+        <DocumentPanel userId={user.id} />
+      </div>
     </div>
   )
 }
