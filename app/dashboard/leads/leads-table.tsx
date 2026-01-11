@@ -49,9 +49,9 @@ export function LeadsTable({ leads, users, campaigns, currentUser }: LeadsTableP
   const [convertingLead, setConvertingLead] = useState<typeof leads[0] | null>(null)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
 
-  // Turbo mode queue state
-  const [turboQueueLeadIds, setTurboQueueLeadIds] = useState<Set<string>>(new Set())
-  const [turboLoading, setTurboLoading] = useState<Set<string>>(new Set())
+  // Turbo mode queue state - using Record for reliable React state updates
+  const [turboQueueLeadIds, setTurboQueueLeadIds] = useState<Record<string, boolean>>({})
+  const [turboLoading, setTurboLoading] = useState<Record<string, boolean>>({})
 
   // Fetch turbo queue status
   const fetchTurboQueue = useCallback(async () => {
@@ -59,9 +59,10 @@ export function LeadsTable({ leads, users, campaigns, currentUser }: LeadsTableP
       const response = await fetch('/api/turbo/queue')
       if (response.ok) {
         const data = await response.json()
-        const queuedLeadIds = new Set<string>(
-          (data.queue?.items || []).map((item: { lead_id: string }) => item.lead_id)
-        )
+        const queuedLeadIds: Record<string, boolean> = {}
+        for (const item of data.queue?.items || []) {
+          queuedLeadIds[item.lead_id] = true
+        }
         setTurboQueueLeadIds(queuedLeadIds)
       }
     } catch (error) {
@@ -74,23 +75,26 @@ export function LeadsTable({ leads, users, campaigns, currentUser }: LeadsTableP
   }, [fetchTurboQueue])
 
   // Toggle turbo mode for a lead
-  const toggleTurboMode = async (leadId: string, isCurrentlyEnlisted: boolean) => {
-    setTurboLoading(prev => new Set(prev).add(leadId))
+  const toggleTurboMode = async (leadId: string, shouldEnable: boolean) => {
+    // Set loading state for this specific lead
+    setTurboLoading(prev => ({ ...prev, [leadId]: true }))
 
     try {
-      if (isCurrentlyEnlisted) {
+      if (!shouldEnable) {
         // Remove from queue
         const response = await fetch(`/api/turbo/queue?lead_id=${leadId}`, {
           method: 'DELETE',
         })
         if (response.ok) {
           setTurboQueueLeadIds(prev => {
-            const next = new Set(prev)
-            next.delete(leadId)
+            const next = { ...prev }
+            delete next[leadId]
             return next
           })
         } else {
           console.error('Failed to remove from turbo queue:', await response.text())
+          // Refetch to get correct state
+          await fetchTurboQueue()
         }
       } else {
         // Add to queue
@@ -100,21 +104,21 @@ export function LeadsTable({ leads, users, campaigns, currentUser }: LeadsTableP
           body: JSON.stringify({ lead_ids: [leadId] }),
         })
         if (response.ok) {
-          setTurboQueueLeadIds(prev => new Set(prev).add(leadId))
+          setTurboQueueLeadIds(prev => ({ ...prev, [leadId]: true }))
         } else {
           console.error('Failed to add to turbo queue:', await response.text())
+          // Refetch to get correct state
+          await fetchTurboQueue()
         }
       }
-      // Refetch queue to ensure sync with server
-      await fetchTurboQueue()
     } catch (error) {
       console.error('Error toggling turbo mode:', error)
       // Refetch on error to ensure state is correct
       await fetchTurboQueue()
     } finally {
       setTurboLoading(prev => {
-        const next = new Set(prev)
-        next.delete(leadId)
+        const next = { ...prev }
+        delete next[leadId]
         return next
       })
     }
@@ -335,13 +339,13 @@ export function LeadsTable({ leads, users, campaigns, currentUser }: LeadsTableP
                     {lead.phone ? (
                       <div className="flex items-center gap-2">
                         <Switch
-                          checked={turboQueueLeadIds.has(lead.id)}
-                          onCheckedChange={() => toggleTurboMode(lead.id, turboQueueLeadIds.has(lead.id))}
-                          disabled={turboLoading.has(lead.id)}
+                          checked={!!turboQueueLeadIds[lead.id]}
+                          onCheckedChange={(checked) => toggleTurboMode(lead.id, checked)}
+                          disabled={!!turboLoading[lead.id]}
                           aria-label="Enlist in turbo mode"
                         />
-                        <span className={`text-xs ${turboQueueLeadIds.has(lead.id) ? 'text-yellow-400' : 'text-gray-500'}`}>
-                          {turboLoading.has(lead.id) ? '...' : turboQueueLeadIds.has(lead.id) ? 'Enlisted' : 'Off'}
+                        <span className={`text-xs ${turboQueueLeadIds[lead.id] ? 'text-yellow-400' : 'text-gray-500'}`}>
+                          {turboLoading[lead.id] ? '...' : turboQueueLeadIds[lead.id] ? 'Enlisted' : 'Off'}
                         </span>
                       </div>
                     ) : (

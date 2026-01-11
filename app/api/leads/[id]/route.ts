@@ -29,6 +29,32 @@ export async function DELETE(
     // Clear lead_id references in related tables to avoid foreign key constraint violations
     // Order matters - clear references before deleting the lead
 
+    // 0a. First find and delete turbo_active_calls that reference queue items for this lead
+    const { data: queueItems } = await getSupabaseAdmin()
+      .from('turbo_call_queue')
+      .select('id')
+      .eq('lead_id', leadId)
+
+    if (queueItems && queueItems.length > 0) {
+      const queueIds = queueItems.map(q => q.id)
+      await getSupabaseAdmin()
+        .from('turbo_active_calls')
+        .delete()
+        .in('queue_item_id', queueIds)
+    }
+
+    // 0b. Delete from turbo_call_queue
+    await getSupabaseAdmin()
+      .from('turbo_call_queue')
+      .delete()
+      .eq('lead_id', leadId)
+
+    // 0c. Delete any turbo_active_calls by lead_id directly
+    await getSupabaseAdmin()
+      .from('turbo_active_calls')
+      .delete()
+      .eq('lead_id', leadId)
+
     // 1. Clear calls
     await getSupabaseAdmin()
       .from('calls')
