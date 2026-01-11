@@ -66,11 +66,18 @@ export default async function LeadsPage({
     .eq('is_active', true)
     .order('name')
 
-  // Get lead stats
-  const { data: stats } = await supabase
+  // Get lead stats (filtered by user for non-admin roles)
+  let statsQuery = supabase
     .from('leads')
     .select('status')
     .eq('is_deleted', false)
+
+  // If not manager/admin, only count own leads
+  if (user?.role === 'sales_rep' || user?.role === 'senior_rep' || user?.role === 'closer') {
+    statsQuery = statsQuery.eq('owner_id', user.id)
+  }
+
+  const { data: stats } = await statsQuery
 
   const leadStats = {
     total: stats?.length || 0,
