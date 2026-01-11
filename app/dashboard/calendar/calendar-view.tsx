@@ -5,7 +5,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
-  CheckCircle,
   Circle,
   Phone,
   FileText,
@@ -61,16 +60,18 @@ export function CalendarView({ tasks, currentUser, userTimezone }: CalendarViewP
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date())
   const [view, setView] = useState<'month' | 'week'>('month')
 
-  // Group tasks by date
+  // Group tasks by date - only include pending tasks (exclude completed)
   const tasksByDate = useMemo(() => {
     const grouped: Record<string, Task[]> = {}
-    tasks.forEach((task) => {
-      const dateKey = format(toZonedTime(parseISO(task.due_at), userTimezone), 'yyyy-MM-dd')
-      if (!grouped[dateKey]) {
-        grouped[dateKey] = []
-      }
-      grouped[dateKey].push(task)
-    })
+    tasks
+      .filter((task) => task.status !== 'completed') // Hide completed tasks entirely
+      .forEach((task) => {
+        const dateKey = format(toZonedTime(parseISO(task.due_at), userTimezone), 'yyyy-MM-dd')
+        if (!grouped[dateKey]) {
+          grouped[dateKey] = []
+        }
+        grouped[dateKey].push(task)
+      })
     return grouped
   }, [tasks, userTimezone])
 
@@ -273,11 +274,7 @@ export function CalendarView({ tasks, currentUser, userTimezone }: CalendarViewP
                       {dayTasks.slice(0, 3).map((task) => (
                         <div
                           key={task.id}
-                          className={`text-xs px-1.5 py-0.5 rounded truncate ${
-                            task.status === 'completed'
-                              ? 'bg-green-500/20 text-green-400 line-through'
-                              : `${getPriorityColor(task.priority)}/20 text-gray-300`
-                          }`}
+                          className={`text-xs px-1.5 py-0.5 rounded truncate ${getPriorityColor(task.priority)}/20 text-gray-300`}
                         >
                           {formatTimeInUserTimezone(task.due_at)} {task.title}
                         </div>
@@ -323,11 +320,7 @@ export function CalendarView({ tasks, currentUser, userTimezone }: CalendarViewP
                       {dayTasks.map((task) => (
                         <div
                           key={task.id}
-                          className={`text-xs p-1.5 rounded-lg ${
-                            task.status === 'completed'
-                              ? 'bg-green-500/20 text-green-400'
-                              : `${getPriorityColor(task.priority)}/20 text-gray-300`
-                          }`}
+                          className={`text-xs p-1.5 rounded-lg ${getPriorityColor(task.priority)}/20 text-gray-300`}
                         >
                           <div className="font-medium truncate">
                             {formatTimeInUserTimezone(task.due_at)}
@@ -366,27 +359,15 @@ export function CalendarView({ tasks, currentUser, userTimezone }: CalendarViewP
                 .map((task) => (
                   <div
                     key={task.id}
-                    className={`glass-card-subtle p-4 rounded-xl ${
-                      task.status === 'completed'
-                        ? 'border-green-500/30'
-                        : ''
-                    }`}
+                    className="glass-card-subtle p-4 rounded-xl"
                   >
                     <div className="flex items-start gap-3">
-                      <div className={`mt-0.5 ${task.status === 'completed' ? 'text-green-400' : 'text-gray-400'}`}>
-                        {task.status === 'completed' ? (
-                          <CheckCircle className="w-5 h-5" />
-                        ) : (
-                          getTaskTypeIcon(task.task_type)
-                        )}
+                      <div className="mt-0.5 text-gray-400">
+                        {getTaskTypeIcon(task.task_type)}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <span
-                            className={`text-sm font-medium ${
-                              task.status === 'completed' ? 'text-green-400 line-through' : 'text-white'
-                            }`}
-                          >
+                          <span className="text-sm font-medium text-white">
                             {task.title}
                           </span>
                           <span className={`w-2 h-2 rounded-full ${getPriorityColor(task.priority)}`} />
