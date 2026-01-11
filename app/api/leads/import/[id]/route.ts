@@ -70,3 +70,44 @@ export async function GET(
     )
   }
 }
+
+/**
+ * DELETE /api/leads/import/[id]
+ * Cancel an import job
+ */
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Update job status to cancelled
+    const { error } = await getSupabaseAdmin()
+      .from('lead_import_jobs')
+      .update({
+        status: 'cancelled',
+        completed_at: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .in('status', ['pending', 'processing']) // Only cancel jobs that aren't done
+
+    if (error) {
+      return NextResponse.json({ error: 'Failed to cancel import' }, { status: 500 })
+    }
+
+    return NextResponse.json({ success: true, message: 'Import cancelled' })
+  } catch (error) {
+    console.error('[Import] Error cancelling job:', error)
+    return NextResponse.json(
+      { error: (error as Error).message || 'Failed to cancel import' },
+      { status: 500 }
+    )
+  }
+}

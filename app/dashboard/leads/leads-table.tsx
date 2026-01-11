@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { CallButton } from '@/components/call-button'
@@ -14,14 +14,12 @@ import {
   Trash2,
   Search,
   Filter,
-  Zap,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
-import { Switch } from '@/components/ui/switch'
 import { EditLeadModal } from './edit-lead-modal'
 import { ConvertLeadModal } from './convert-lead-modal'
 import type { Lead, User, Campaign } from '@/types/database.types'
@@ -55,10 +53,6 @@ export function LeadsTable({ leads, users, campaigns, currentUser, currentPage, 
   const [editingLead, setEditingLead] = useState<typeof leads[0] | null>(null)
   const [convertingLead, setConvertingLead] = useState<typeof leads[0] | null>(null)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
-
-  // Turbo mode queue state - using Record for reliable React state updates
-  const [turboQueueLeadIds, setTurboQueueLeadIds] = useState<Record<string, boolean>>({})
-  const [turboLoading, setTurboLoading] = useState<Record<string, boolean>>({})
 
   // Handle search with debounce
   const handleSearch = (value: string) => {
@@ -95,77 +89,6 @@ export function LeadsTable({ leads, users, campaigns, currentUser, currentPage, 
     const params = new URLSearchParams(window.location.search)
     params.set('page', page.toString())
     router.push(`/dashboard/leads?${params.toString()}`)
-  }
-
-  // Fetch turbo queue status
-  const fetchTurboQueue = useCallback(async () => {
-    try {
-      const response = await fetch('/api/turbo/queue')
-      if (response.ok) {
-        const data = await response.json()
-        const queuedLeadIds: Record<string, boolean> = {}
-        for (const item of data.queue?.items || []) {
-          queuedLeadIds[item.lead_id] = true
-        }
-        setTurboQueueLeadIds(queuedLeadIds)
-      }
-    } catch (error) {
-      console.error('Error fetching turbo queue:', error)
-    }
-  }, [])
-
-  useEffect(() => {
-    fetchTurboQueue()
-  }, [fetchTurboQueue])
-
-  // Toggle turbo mode for a lead
-  const toggleTurboMode = async (leadId: string, shouldEnable: boolean) => {
-    // Set loading state for this specific lead
-    setTurboLoading(prev => ({ ...prev, [leadId]: true }))
-
-    try {
-      if (!shouldEnable) {
-        // Remove from queue
-        const response = await fetch(`/api/turbo/queue?lead_id=${leadId}`, {
-          method: 'DELETE',
-        })
-        if (response.ok) {
-          setTurboQueueLeadIds(prev => {
-            const next = { ...prev }
-            delete next[leadId]
-            return next
-          })
-        } else {
-          console.error('Failed to remove from turbo queue:', await response.text())
-          // Refetch to get correct state
-          await fetchTurboQueue()
-        }
-      } else {
-        // Add to queue
-        const response = await fetch('/api/turbo/queue/add', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ lead_ids: [leadId] }),
-        })
-        if (response.ok) {
-          setTurboQueueLeadIds(prev => ({ ...prev, [leadId]: true }))
-        } else {
-          console.error('Failed to add to turbo queue:', await response.text())
-          // Refetch to get correct state
-          await fetchTurboQueue()
-        }
-      }
-    } catch (error) {
-      console.error('Error toggling turbo mode:', error)
-      // Refetch on error to ensure state is correct
-      await fetchTurboQueue()
-    } finally {
-      setTurboLoading(prev => {
-        const next = { ...prev }
-        delete next[leadId]
-        return next
-      })
-    }
   }
 
   // Use leads directly (server-side filtered)
@@ -274,12 +197,6 @@ export function LeadsTable({ leads, users, campaigns, currentUser, currentPage, 
                 <th className="px-5 py-4 font-medium">Source</th>
                 <th className="px-5 py-4 font-medium">Owner</th>
                 <th className="px-5 py-4 font-medium">Created</th>
-                <th className="px-5 py-4 font-medium">
-                  <span className="flex items-center gap-1">
-                    <Zap className="w-3 h-3 text-yellow-400" />
-                    Turbo
-                  </span>
-                </th>
                 <th className="px-5 py-4 font-medium w-10"></th>
               </tr>
             </thead>
@@ -370,23 +287,6 @@ export function LeadsTable({ leads, users, campaigns, currentUser, currentPage, 
                     {formatDate(lead.created_at)}
                   </td>
                   <td className="px-5 py-4">
-                    {lead.phone ? (
-                      <div className="flex items-center gap-2">
-                        <Switch
-                          checked={!!turboQueueLeadIds[lead.id]}
-                          onCheckedChange={(checked) => toggleTurboMode(lead.id, checked)}
-                          disabled={!!turboLoading[lead.id]}
-                          aria-label="Enlist in turbo mode"
-                        />
-                        <span className={`text-xs ${turboQueueLeadIds[lead.id] ? 'text-yellow-400' : 'text-gray-500'}`}>
-                          {turboLoading[lead.id] ? '...' : turboQueueLeadIds[lead.id] ? 'Enlisted' : 'Off'}
-                        </span>
-                      </div>
-                    ) : (
-                      <span className="text-gray-500 text-xs">No phone</span>
-                    )}
-                  </td>
-                  <td className="px-5 py-4">
                     <div className="relative">
                       <button
                         onClick={() => setOpenMenuId(openMenuId === lead.id ? null : lead.id)}
@@ -464,7 +364,7 @@ export function LeadsTable({ leads, users, campaigns, currentUser, currentPage, 
               ))}
               {filteredLeads.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-5 py-8 text-center text-gray-500">
+                  <td colSpan={7} className="px-5 py-8 text-center text-gray-500">
                     {searchQuery || statusFilter !== 'all'
                       ? 'No leads match your filters'
                       : 'No leads yet. Create your first lead to get started.'}

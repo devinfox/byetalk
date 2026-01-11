@@ -108,6 +108,7 @@ export async function POST(request: NextRequest) {
             status: importJob.default_status || 'new',
             owner_id: importJob.default_owner_id || null,
             campaign_id: importJob.default_campaign_id || null,
+            import_job_id: jobId, // Track which import this lead came from
           }
 
           Object.entries(fieldMapping).forEach(([csvCol, leadField]) => {
