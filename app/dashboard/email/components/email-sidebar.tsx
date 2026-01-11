@@ -101,11 +101,12 @@ export function EmailSidebar({ userId }: EmailSidebarProps) {
     setAiDraftsCount(count || 0)
   }
 
+  // Load folder counts whenever accounts change
   useEffect(() => {
-    if (selectedAccount) {
-      loadFolderCounts(selectedAccount.id)
+    if (accounts.length > 0) {
+      loadFolderCounts(accounts.map(a => a.id))
     }
-  }, [selectedAccount])
+  }, [accounts])
 
   const loadAccounts = async () => {
     const supabase = createClient()
@@ -141,9 +142,6 @@ export function EmailSidebar({ userId }: EmailSidebarProps) {
         if (result.results?.some((r: any) => r.created > 0)) {
           console.log('[Email Sidebar] New emails found, refreshing...')
           loadAccounts()
-          if (selectedAccount) {
-            loadFolderCounts(selectedAccount.id)
-          }
         }
       }
     } catch (error) {
@@ -164,9 +162,6 @@ export function EmailSidebar({ userId }: EmailSidebarProps) {
       if (response.ok) {
         // Reload to show new emails
         loadAccounts()
-        if (selectedAccount) {
-          loadFolderCounts(selectedAccount.id)
-        }
       }
     } catch (error) {
       console.error('[Email Sidebar] Sync error:', error)
@@ -174,12 +169,14 @@ export function EmailSidebar({ userId }: EmailSidebarProps) {
     setSyncing(false)
   }
 
-  const loadFolderCounts = async (accountId: string) => {
+  const loadFolderCounts = async (accountIds: string[]) => {
+    if (accountIds.length === 0) return
+
     const supabase = createClient()
     const { data } = await supabase
       .from('email_threads')
       .select('folder, is_read')
-      .eq('email_account_id', accountId)
+      .in('email_account_id', accountIds)
       .eq('is_deleted', false)
 
     if (data) {

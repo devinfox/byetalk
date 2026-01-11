@@ -102,7 +102,7 @@ export default async function DashboardPage() {
       .eq('is_read', false)
       .eq('is_inbound', true)
       .order('created_at', { ascending: false })
-      .limit(5)
+      .limit(50) // Show all unread (up to 50)
 
     unreadEmails = data || []
   }
@@ -198,6 +198,11 @@ export default async function DashboardPage() {
             <div className="flex items-center gap-2">
               <Inbox className="w-5 h-5 text-yellow-400" />
               <h2 className="text-lg font-semibold text-white uppercase tracking-wide">Inbox</h2>
+              {unreadEmails.length > 0 && (
+                <span className="px-2 py-0.5 text-xs font-medium bg-yellow-500 text-black rounded-full">
+                  {unreadEmails.length}
+                </span>
+              )}
             </div>
             <Link href="/dashboard/email" className="text-yellow-400 hover:text-yellow-300 text-sm flex items-center gap-1">
               View All <ArrowRight className="w-4 h-4" />
@@ -205,7 +210,7 @@ export default async function DashboardPage() {
           </div>
 
           {unreadEmails && unreadEmails.length > 0 ? (
-            <div className="space-y-2">
+            <div className="space-y-2 max-h-80 overflow-y-auto">
               {unreadEmails.map((email) => (
                 <Link
                   key={email.id}
