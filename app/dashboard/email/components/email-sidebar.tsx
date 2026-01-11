@@ -58,7 +58,17 @@ export function EmailSidebar({ userId }: EmailSidebarProps) {
     loadAccounts()
     loadAiDraftsCount()
     triggerInitialMicrosoftSync()
-  }, [userId])
+
+    // Set up automatic email polling every 60 seconds for Microsoft accounts
+    const pollInterval = setInterval(() => {
+      if (hasMicrosoftAccount && !syncing) {
+        console.log('[Email Sidebar] Auto-polling for new emails...')
+        handleAutoSync()
+      }
+    }, 60000) // 60 seconds
+
+    return () => clearInterval(pollInterval)
+  }, [userId, hasMicrosoftAccount, syncing])
 
   // Trigger initial Microsoft email sync if needed (runs once on first login)
   const triggerInitialMicrosoftSync = async () => {
@@ -115,6 +125,30 @@ export function EmailSidebar({ userId }: EmailSidebarProps) {
       setHasMicrosoftAccount(data.some((a: any) => a.provider === 'microsoft'))
     }
     setLoading(false)
+  }
+
+  // Auto sync for polling (silent, doesn't show loading state)
+  const handleAutoSync = async () => {
+    try {
+      const response = await fetch('/api/email/microsoft/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fullSync: false }),
+      })
+      if (response.ok) {
+        const result = await response.json()
+        // Only reload if new emails were created
+        if (result.results?.some((r: any) => r.created > 0)) {
+          console.log('[Email Sidebar] New emails found, refreshing...')
+          loadAccounts()
+          if (selectedAccount) {
+            loadFolderCounts(selectedAccount.id)
+          }
+        }
+      }
+    } catch (error) {
+      console.error('[Email Sidebar] Auto-sync error:', error)
+    }
   }
 
   // Manual sync for Microsoft accounts

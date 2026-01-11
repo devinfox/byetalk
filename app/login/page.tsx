@@ -190,7 +190,7 @@ function LoginForm() {
       </button>
 
       {isMicrosoftEmail && (
-        <p className="text-center text-xs text-gray-500">
+        <p className="text-center text-xs text-white/80">
           You&apos;ll be redirected to Microsoft to sign in
         </p>
       )}
@@ -278,8 +278,8 @@ export default function LoginPage() {
         </Suspense>
 
         {/* Footer */}
-        <div className="mt-8 pt-6 border-t border-gray-200/50">
-          <p className="text-center text-xs text-gray-400">
+        <div className="mt-8 pt-6 border-t border-white/20">
+          <p className="text-center text-xs text-white/70">
             Secure cloud communications platform
           </p>
         </div>

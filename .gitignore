@@ -42,3 +42,4 @@ next-env.d.ts
 public/nimbus-intro-animation.mov
 scripts/check-sendgrid.mjs
 twilio-numbers/
+push-env.sh

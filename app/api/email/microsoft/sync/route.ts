@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import {
+  listEmails,
   listEmailsDelta,
   extractEmailFromRecipient,
   mapGraphFolderToEmailFolder,
@@ -110,23 +111,69 @@ export async function POST(request: NextRequest) {
           .select('id')
           .single()
 
-        // Perform sync
-        const deltaToken = fullSync ? undefined : token.mail_delta_token
+        // Always fetch recent messages directly (more reliable than delta for new messages)
+        // This ensures we always get the latest emails even if delta sync has delays
+        console.log(`[Microsoft Sync] Fetching recent messages for ${token.email}`)
+
         let messages: GraphMessage[] = []
         let newDeltaToken: string | undefined
-        let nextLink: string | undefined = deltaToken || undefined
 
-        // Fetch all pages
-        do {
-          const response = await listEmailsDelta(accessToken, {
+        try {
+          // Fetch last 100 messages directly from inbox
+          const recentResponse = await listEmails(accessToken, {
             folderId: 'inbox',
-            deltaToken: nextLink,
+            top: 100,
+            orderBy: 'receivedDateTime desc',
           })
+          messages = recentResponse.value || []
+          console.log(`[Microsoft Sync] Fetched ${messages.length} recent messages`)
+        } catch (recentError) {
+          console.error(`[Microsoft Sync] Error fetching recent messages:`, recentError)
+        }
 
-          messages = [...messages, ...response.value]
-          nextLink = response['@odata.nextLink']
-          newDeltaToken = response['@odata.deltaLink'] || newDeltaToken
-        } while (nextLink && !nextLink.includes('deltaLink'))
+        // Also try delta sync to get any messages that might have been missed
+        // and to maintain the delta token for future incremental syncs
+        if (!fullSync && token.mail_delta_token) {
+          try {
+            const deltaResponse = await listEmailsDelta(accessToken, {
+              folderId: 'inbox',
+              deltaToken: token.mail_delta_token,
+            })
+
+            // Add any delta messages we don't already have
+            const existingIds = new Set(messages.map(m => m.id))
+            for (const msg of deltaResponse.value || []) {
+              if (!existingIds.has(msg.id)) {
+                messages.push(msg)
+              }
+            }
+
+            newDeltaToken = deltaResponse['@odata.deltaLink']
+            console.log(`[Microsoft Sync] Delta sync added ${deltaResponse.value?.length || 0} messages`)
+          } catch (deltaError) {
+            console.error(`[Microsoft Sync] Delta sync error (continuing with recent messages):`, deltaError)
+          }
+        }
+
+        // If no delta token, initialize one for future syncs
+        if (!newDeltaToken) {
+          try {
+            const initDelta = await listEmailsDelta(accessToken, { folderId: 'inbox' })
+            // Follow pagination to get the final delta token
+            let nextLink = initDelta['@odata.nextLink']
+            newDeltaToken = initDelta['@odata.deltaLink']
+
+            while (nextLink && !newDeltaToken) {
+              const nextResponse = await listEmailsDelta(accessToken, { deltaToken: nextLink })
+              nextLink = nextResponse['@odata.nextLink']
+              newDeltaToken = nextResponse['@odata.deltaLink']
+            }
+          } catch (initError) {
+            console.error(`[Microsoft Sync] Error initializing delta token:`, initError)
+          }
+        }
+
+        console.log(`[Microsoft Sync] Processing ${messages.length} total messages`)
 
         // Process messages
         let created = 0
