@@ -53,6 +53,9 @@ export function CallsClient({ leads, recentCalls, currentUser, initialPhone }: C
   const [callStartTime, setCallStartTime] = useState<Date | null>(null)
   const [callDuration, setCallDuration] = useState(0)
 
+  // Check if user is admin/manager
+  const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'manager'
+
   const {
     status,
     error,
@@ -197,9 +200,11 @@ export function CallsClient({ leads, recentCalls, currentUser, initialPhone }: C
           </h1>
           <p className="text-gray-400 mt-1">Make calls and manage your call history</p>
         </div>
-        <div className="flex items-center gap-4">
-          <TurboModeToggle />
-        </div>
+        {isAdmin && (
+          <div className="flex items-center gap-4">
+            <TurboModeToggle />
+          </div>
+        )}
       </div>
 
       {/* Error display */}
@@ -209,10 +214,10 @@ export function CallsClient({ leads, recentCalls, currentUser, initialPhone }: C
         </div>
       )}
 
-      {/* Turbo Mode Panel */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Turbo Mode Panel - Active calls for all, queue only for admins */}
+      <div className={`grid grid-cols-1 ${isAdmin ? 'lg:grid-cols-2' : ''} gap-6`}>
         <TurboActiveCallsPanel />
-        <TurboQueuePanel />
+        {isAdmin && <TurboQueuePanel />}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
