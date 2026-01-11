@@ -1,12 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { createClient as createServerClient } from '@/lib/supabase-server'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { validateDomain, getDomainAuthentication } from '@/lib/sendgrid'
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 // POST /api/email/domains/[id]/verify - Verify DNS records for a domain
 export async function POST(
@@ -47,7 +42,7 @@ export async function POST(
     }
 
     // Update status to verifying
-    await supabaseAdmin
+    await getSupabaseAdmin()
       .from('email_domains')
       .update({
         verification_status: 'verifying',
@@ -109,7 +104,7 @@ export async function POST(
         console.error('SendGrid verification error:', sgError)
 
         // Update with error
-        await supabaseAdmin
+        await getSupabaseAdmin()
           .from('email_domains')
           .update({
             verification_status: 'failed',
@@ -142,7 +137,7 @@ export async function POST(
     }
 
     // Update domain status
-    const { error: updateError } = await supabaseAdmin
+    const { error: updateError } = await getSupabaseAdmin()
       .from('email_domains')
       .update({
         verification_status: verified ? 'verified' : 'pending',

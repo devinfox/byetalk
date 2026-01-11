@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import OpenAI from 'openai'
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 let openaiInstance: OpenAI | null = null
 
@@ -16,7 +11,7 @@ async function expireOldDrafts(): Promise<{ expiredCount: number }> {
   const expirationDate = new Date()
   expirationDate.setDate(expirationDate.getDate() - DRAFT_EXPIRATION_DAYS)
 
-  const { data: expiredDrafts, error: fetchError } = await supabaseAdmin
+  const { data: expiredDrafts, error: fetchError } = await getSupabaseAdmin()
     .from('email_drafts')
     .select('id')
     .eq('status', 'pending')
@@ -28,7 +23,7 @@ async function expireOldDrafts(): Promise<{ expiredCount: number }> {
 
   const expiredIds = expiredDrafts.map(d => d.id)
 
-  const { error: updateError } = await supabaseAdmin
+  const { error: updateError } = await getSupabaseAdmin()
     .from('email_drafts')
     .update({
       status: 'expired',
@@ -91,7 +86,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 1. Fetch lead info
-    const { data: lead, error: leadError } = await supabaseAdmin
+    const { data: lead, error: leadError } = await getSupabaseAdmin()
       .from('leads')
       .select('id, first_name, last_name, email, phone')
       .eq('id', lead_id)
@@ -106,7 +101,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. Fetch user info
-    const { data: userProfile } = await supabaseAdmin
+    const { data: userProfile } = await getSupabaseAdmin()
       .from('users')
       .select('id, first_name, last_name, email')
       .eq('id', user_id)
@@ -117,7 +112,7 @@ export async function POST(request: NextRequest) {
       : 'Sales Representative'
 
     // 3. Fetch user's primary email account
-    const { data: emailAccount } = await supabaseAdmin
+    const { data: emailAccount } = await getSupabaseAdmin()
       .from('email_accounts')
       .select('id, email_address, display_name')
       .eq('user_id', user_id)
@@ -127,7 +122,7 @@ export async function POST(request: NextRequest) {
     // 4. Fetch call transcription if call_id provided
     let callTranscript = ''
     if (call_id) {
-      const { data: call } = await supabaseAdmin
+      const { data: call } = await getSupabaseAdmin()
         .from('calls')
         .select('transcription, ai_summary')
         .eq('id', call_id)
@@ -139,7 +134,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 5. Fetch recent email history with this lead
-    const { data: recentEmails } = await supabaseAdmin
+    const { data: recentEmails } = await getSupabaseAdmin()
       .from('emails')
       .select('subject, body_text, from_address, is_inbound, created_at')
       .eq('lead_id', lead_id)
@@ -156,7 +151,7 @@ export async function POST(request: NextRequest) {
     // 6. Fetch document details if document_ids provided
     let attachmentInfo: string[] = []
     if (document_ids.length > 0) {
-      const { data: docs } = await supabaseAdmin
+      const { data: docs } = await getSupabaseAdmin()
         .from('documents')
         .select('id, file_name')
         .in('id', document_ids)
@@ -253,7 +248,7 @@ Do NOT include any markdown formatting. Return valid JSON only.`
     const draftContent = JSON.parse(jsonStr)
 
     // 8. Save draft to database
-    const { data: draft, error: insertError } = await supabaseAdmin
+    const { data: draft, error: insertError } = await getSupabaseAdmin()
       .from('email_drafts')
       .insert({
         user_id,
@@ -338,7 +333,7 @@ export async function GET(request: NextRequest) {
     // Run expiration in background when fetching a specific draft
     expireOldDrafts().catch(err => console.error('[Email Draft API] Background expiration failed:', err))
 
-    const { data: draft, error } = await supabaseAdmin
+    const { data: draft, error } = await getSupabaseAdmin()
       .from('email_drafts')
       .select(`
         *,
@@ -355,7 +350,7 @@ export async function GET(request: NextRequest) {
     // Fetch attachment details
     let attachments: any[] = []
     if (draft.attachment_ids?.length > 0) {
-      const { data: docs } = await supabaseAdmin
+      const { data: docs } = await getSupabaseAdmin()
         .from('documents')
         .select('id, file_name, public_url, mime_type, file_size_bytes')
         .in('id', draft.attachment_ids)
@@ -401,7 +396,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     // First, get the draft to check for linked task
-    const { data: draft, error: fetchError } = await supabaseAdmin
+    const { data: draft, error: fetchError } = await getSupabaseAdmin()
       .from('email_drafts')
       .select('task_id, to_name')
       .eq('id', draft_id)
@@ -416,7 +411,7 @@ export async function PATCH(request: NextRequest) {
       updateData.dismissed_at = new Date().toISOString()
     }
 
-    const { error } = await supabaseAdmin
+    const { error } = await getSupabaseAdmin()
       .from('email_drafts')
       .update(updateData)
       .eq('id', draft_id)
@@ -431,7 +426,7 @@ export async function PATCH(request: NextRequest) {
     // If draft was sent and has a linked task, mark task as completed
     let taskCompleted = false
     if (status === 'sent' && draft?.task_id) {
-      const { error: taskError } = await supabaseAdmin
+      const { error: taskError } = await getSupabaseAdmin()
         .from('tasks')
         .update({
           status: 'completed',
@@ -478,14 +473,14 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Get the draft first to check for linked task
-    const { data: draft } = await supabaseAdmin
+    const { data: draft } = await getSupabaseAdmin()
       .from('email_drafts')
       .select('task_id')
       .eq('id', draftId)
       .single()
 
     // Delete the draft
-    const { error: deleteError } = await supabaseAdmin
+    const { error: deleteError } = await getSupabaseAdmin()
       .from('email_drafts')
       .delete()
       .eq('id', draftId)
@@ -501,7 +496,7 @@ export async function DELETE(request: NextRequest) {
     // If requested and there's a linked task, delete it too
     let taskDeleted = false
     if (deleteTask && draft?.task_id) {
-      const { error: taskError } = await supabaseAdmin
+      const { error: taskError } = await getSupabaseAdmin()
         .from('tasks')
         .delete()
         .eq('id', draft.task_id)

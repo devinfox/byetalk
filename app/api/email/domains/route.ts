@@ -1,15 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { createClient as createServerClient } from '@/lib/supabase-server'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import {
   createDomainAuthentication,
   formatDNSRecordsFromSendGrid,
 } from '@/lib/sendgrid'
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 // GET /api/email/domains - List all domains for current user
 export async function GET(request: NextRequest) {
@@ -86,7 +81,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if domain already exists
-    const { data: existingDomain } = await supabaseAdmin
+    const { data: existingDomain } = await getSupabaseAdmin()
       .from('email_domains')
       .select('id')
       .eq('domain', domain.toLowerCase())
@@ -129,7 +124,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create domain record in database
-    const { data: newDomain, error: insertError } = await supabaseAdmin
+    const { data: newDomain, error: insertError } = await getSupabaseAdmin()
       .from('email_domains')
       .insert({
         domain: domain.toLowerCase(),

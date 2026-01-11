@@ -1,13 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
-import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { listAllRecordings, getRecordingAccessLink, DailyRecording } from '@/lib/daily'
-
-// Admin client for operations that bypass RLS
-const supabaseAdmin = createAdminClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 // POST /api/meetings/recordings/sync - Sync recordings from Daily.co
 export async function POST(request: NextRequest) {
@@ -48,7 +42,7 @@ export async function POST(request: NextRequest) {
     console.log(`Found ${allRecordings.length} recordings in Daily.co`)
 
     // Get all meetings with daily room names for matching
-    const { data: meetings } = await supabaseAdmin
+    const { data: meetings } = await getSupabaseAdmin()
       .from('meetings')
       .select('id, daily_room_name, title')
       .not('daily_room_name', 'is', null)
@@ -76,7 +70,7 @@ export async function POST(request: NextRequest) {
     for (const recording of allRecordings) {
       try {
         // Check if recording already exists in database
-        const { data: existingRecording } = await supabaseAdmin
+        const { data: existingRecording } = await getSupabaseAdmin()
           .from('meeting_recordings')
           .select('id')
           .eq('recording_id', recording.id)
@@ -121,7 +115,7 @@ export async function POST(request: NextRequest) {
           insertData.meeting_id = matchedMeeting.id
         }
 
-        const { error: insertError } = await supabaseAdmin
+        const { error: insertError } = await getSupabaseAdmin()
           .from('meeting_recordings')
           .insert(insertData)
 

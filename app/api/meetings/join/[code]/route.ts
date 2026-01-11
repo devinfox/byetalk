@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { createGuestToken, getMeetingUrl, extendRoomExpiration } from '@/lib/daily'
-
-// Admin client for public access (no user auth)
-const supabase = createAdminClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 // GET /api/meetings/join/[code] - Get meeting info by invite code (public)
 export async function GET(
@@ -17,7 +11,7 @@ export async function GET(
     const { code } = await params
 
     // Find meeting by invite code
-    const { data: meeting, error } = await supabase
+    const { data: meeting, error } = await getSupabaseAdmin()
       .from('meetings')
       .select(`
         id, title, description, scheduled_at, duration_minutes, status,
@@ -89,7 +83,7 @@ export async function POST(
     const guestEmail = body.email?.trim() || null
 
     // Find meeting by invite code
-    const { data: meeting, error: meetingError } = await supabase
+    const { data: meeting, error: meetingError } = await getSupabaseAdmin()
       .from('meetings')
       .select(`
         id, title, status, is_public, require_approval,
@@ -125,7 +119,7 @@ export async function POST(
 
     // Check if guest with same email already exists
     if (guestEmail) {
-      const { data: existingParticipant } = await supabase
+      const { data: existingParticipant } = await getSupabaseAdmin()
         .from('meeting_participants')
         .select('id')
         .eq('meeting_id', meeting.id)
@@ -134,7 +128,7 @@ export async function POST(
 
       if (existingParticipant) {
         // Update existing participant
-        await supabase
+        await getSupabaseAdmin()
           .from('meeting_participants')
           .update({
             name: guestName,
@@ -149,7 +143,7 @@ export async function POST(
     const guestId = `guest-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`
 
     // Create participant record
-    const { data: participant, error: participantError } = await supabase
+    const { data: participant, error: participantError } = await getSupabaseAdmin()
       .from('meeting_participants')
       .insert({
         meeting_id: meeting.id,
@@ -194,7 +188,7 @@ export async function POST(
 
     // Update meeting status if first join
     if (meeting.status === 'scheduled') {
-      await supabase
+      await getSupabaseAdmin()
         .from('meetings')
         .update({
           status: 'in_progress',

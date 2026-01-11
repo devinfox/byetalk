@@ -1,14 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
-import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { deleteDailyRoom, updateDailyRoom } from '@/lib/daily'
 import type { MeetingUpdate } from '@/types/meeting.types'
-
-// Admin client for operations that need to bypass RLS
-const supabaseAdmin = createAdminClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 // GET /api/meetings/[id] - Get a single meeting
 export async function GET(
@@ -259,7 +253,7 @@ export async function DELETE(
     }
 
     // Soft delete meeting using admin client
-    const { error: deleteError } = await supabaseAdmin
+    const { error: deleteError } = await getSupabaseAdmin()
       .from('meetings')
       .update({
         is_deleted: true,
@@ -275,7 +269,7 @@ export async function DELETE(
 
     // Delete linked task
     if (existingMeeting.task_id) {
-      await supabaseAdmin
+      await getSupabaseAdmin()
         .from('tasks')
         .update({
           is_deleted: true,

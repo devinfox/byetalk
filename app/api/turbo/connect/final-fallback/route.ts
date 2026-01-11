@@ -1,14 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import twilio from 'twilio'
-import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 const VoiceResponse = twilio.twiml.VoiceResponse
-
-// Admin client for bypassing RLS
-const supabase = createAdminClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 /**
  * POST /api/turbo/connect/final-fallback
@@ -56,7 +50,7 @@ export async function POST(request: NextRequest) {
     twiml.hangup()
 
     // Update call status
-    await supabase
+    await getSupabaseAdmin()
       .from('turbo_active_calls')
       .update({ status: 'no_answer' })
       .eq('call_sid', callSid)

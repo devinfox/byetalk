@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { createClient as createServerClient } from '@/lib/supabase-server'
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 // GET /api/email/accounts/[id] - Get a single email account
 export async function GET(
@@ -97,7 +92,7 @@ export async function PATCH(
 
     // If setting as default, unset other defaults first
     if (is_primary === true) {
-      await supabaseAdmin
+      await getSupabaseAdmin()
         .from('email_accounts')
         .update({ is_primary: false, updated_at: new Date().toISOString() })
         .eq('user_id', userData.id)
@@ -114,7 +109,7 @@ export async function PATCH(
     if (is_primary !== undefined) updateData.is_primary = is_primary
     if (is_active !== undefined) updateData.is_active = is_active
 
-    const { data: updatedAccount, error: updateError } = await supabaseAdmin
+    const { data: updatedAccount, error: updateError } = await getSupabaseAdmin()
       .from('email_accounts')
       .update(updateData)
       .eq('id', id)
@@ -178,7 +173,7 @@ export async function DELETE(
     }
 
     // Soft delete the account
-    const { error: deleteError } = await supabaseAdmin
+    const { error: deleteError } = await getSupabaseAdmin()
       .from('email_accounts')
       .update({
         is_deleted: true,
@@ -195,7 +190,7 @@ export async function DELETE(
 
     // If this was the default account, set another as default
     if (account.is_primary) {
-      const { data: remainingAccounts } = await supabaseAdmin
+      const { data: remainingAccounts } = await getSupabaseAdmin()
         .from('email_accounts')
         .select('id')
         .eq('user_id', userData.id)
@@ -204,7 +199,7 @@ export async function DELETE(
         .limit(1)
 
       if (remainingAccounts && remainingAccounts.length > 0) {
-        await supabaseAdmin
+        await getSupabaseAdmin()
           .from('email_accounts')
           .update({ is_primary: true, updated_at: new Date().toISOString() })
           .eq('id', remainingAccounts[0].id)

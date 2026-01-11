@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { verifyWebhookSignature } from '@/lib/sendgrid'
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 interface SendGridEvent {
   email: string
@@ -58,7 +53,7 @@ export async function POST(request: NextRequest) {
       const cleanMessageId = sgMessageId.replace(/[<>]/g, '').split('.')[0]
 
       // Find the email by SendGrid message ID
-      const { data: email } = await supabaseAdmin
+      const { data: email } = await getSupabaseAdmin()
         .from('emails')
         .select('id, account_id, status')
         .or(`sendgrid_message_id.eq.${cleanMessageId},sendgrid_message_id.eq.${sgMessageId}`)
@@ -71,7 +66,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Create event record
-      await supabaseAdmin.from('email_events').insert({
+      await getSupabaseAdmin().from('email_events').insert({
         email_id: email.id,
         event_type: event.event,
         event_data: {
@@ -103,11 +98,11 @@ export async function POST(request: NextRequest) {
             newStatus = 'opened'
           }
           updates.opened_at = new Date(event.timestamp * 1000).toISOString()
-          updates.open_count = supabaseAdmin.rpc('increment', { x: 1 })
+          updates.open_count = getSupabaseAdmin().rpc('increment', { x: 1 })
           break
         case 'click':
           newStatus = 'clicked'
-          updates.click_count = supabaseAdmin.rpc('increment', { x: 1 })
+          updates.click_count = getSupabaseAdmin().rpc('increment', { x: 1 })
           break
         case 'bounce':
           newStatus = 'bounced'
@@ -136,7 +131,7 @@ export async function POST(request: NextRequest) {
         }
         updates.updated_at = new Date().toISOString()
 
-        await supabaseAdmin
+        await getSupabaseAdmin()
           .from('emails')
           .update(updates)
           .eq('id', email.id)

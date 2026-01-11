@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import {
   listEmails,
   extractEmailFromRecipient,
@@ -11,12 +11,6 @@ import {
 } from '@/lib/microsoft-auth'
 import { GraphMessage } from '@/types/microsoft.types'
 import { createClient } from '@/lib/supabase-server'
-
-// Admin client for database operations
-const supabaseAdmin = createAdminClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 // Number of emails to import on initial sync
 const INITIAL_SYNC_LIMIT = 100
@@ -40,7 +34,7 @@ export async function POST(request: NextRequest) {
 
     // Get user's CRM profile (check both auth_id and auth_user_id)
     let profile = null
-    const { data: profileByAuthId } = await supabaseAdmin
+    const { data: profileByAuthId } = await getSupabaseAdmin()
       .from('users')
       .select('id')
       .eq('auth_id', user.id)
@@ -49,7 +43,7 @@ export async function POST(request: NextRequest) {
     if (profileByAuthId) {
       profile = profileByAuthId
     } else {
-      const { data: profileByAuthUserId } = await supabaseAdmin
+      const { data: profileByAuthUserId } = await getSupabaseAdmin()
         .from('users')
         .select('id')
         .eq('auth_user_id', user.id)
@@ -62,7 +56,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get Microsoft tokens that need initial sync
-    const { data: tokens } = await supabaseAdmin
+    const { data: tokens } = await getSupabaseAdmin()
       .from('microsoft_oauth_tokens')
       .select('*')
       .eq('user_id', profile.id)
@@ -89,7 +83,7 @@ export async function POST(request: NextRequest) {
           accessToken = newTokens.access_token
 
           // Update stored tokens
-          await supabaseAdmin
+          await getSupabaseAdmin()
             .from('microsoft_oauth_tokens')
             .update({
               access_token: newTokens.access_token,
@@ -101,7 +95,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Get email account for this Microsoft token
-        const { data: emailAccount } = await supabaseAdmin
+        const { data: emailAccount } = await getSupabaseAdmin()
           .from('email_accounts')
           .select('id')
           .eq('microsoft_token_id', token.id)
@@ -117,7 +111,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Create sync log entry
-        const { data: syncLog } = await supabaseAdmin
+        const { data: syncLog } = await getSupabaseAdmin()
           .from('microsoft_sync_log')
           .insert({
             token_id: token.id,
@@ -154,7 +148,7 @@ export async function POST(request: NextRequest) {
         for (const msg of allMessages) {
           try {
             // Check if email already exists
-            const { data: existing } = await supabaseAdmin
+            const { data: existing } = await getSupabaseAdmin()
               .from('emails')
               .select('id')
               .eq('graph_message_id', msg.id)
@@ -169,7 +163,7 @@ export async function POST(request: NextRequest) {
 
             // Create or find thread
             const threadId = await getOrCreateThread(
-              supabaseAdmin,
+              getSupabaseAdmin(),
               emailAccount.id,
               msg,
               profile.id,
@@ -177,7 +171,7 @@ export async function POST(request: NextRequest) {
             )
 
             // Insert email
-            await supabaseAdmin.from('emails').insert({
+            await getSupabaseAdmin().from('emails').insert({
               ...emailData,
               thread_id: threadId,
             })
@@ -188,7 +182,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Update sync log
-        await supabaseAdmin
+        await getSupabaseAdmin()
           .from('microsoft_sync_log')
           .update({
             status: 'completed',
@@ -200,7 +194,7 @@ export async function POST(request: NextRequest) {
           .eq('id', syncLog?.id)
 
         // Mark initial sync as completed
-        await supabaseAdmin
+        await getSupabaseAdmin()
           .from('microsoft_oauth_tokens')
           .update({
             initial_sync_completed: true,
@@ -221,7 +215,7 @@ export async function POST(request: NextRequest) {
         console.error(`[Initial Sync] Error for token ${token.id}:`, error)
 
         // Mark sync as failed but completed (so we don't retry endlessly)
-        await supabaseAdmin
+        await getSupabaseAdmin()
           .from('microsoft_oauth_tokens')
           .update({
             initial_sync_completed: true, // Don't retry on failure

@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
-import { createClient as createAdminClient } from '@supabase/supabase-js'
-
-// Admin client to bypass RLS for queue queries
-const supabaseAdmin = createAdminClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 /**
  * GET /api/turbo/queue
@@ -24,7 +18,7 @@ export async function GET(request: NextRequest) {
 
     // Get user's organization (check both auth_user_id and auth_id) - use admin to bypass RLS
     let userData = null
-    const { data: userByAuthUserId } = await supabaseAdmin
+    const { data: userByAuthUserId } = await getSupabaseAdmin()
       .from('users')
       .select('id, organization_id')
       .eq('auth_user_id', user.id)
@@ -33,7 +27,7 @@ export async function GET(request: NextRequest) {
     if (userByAuthUserId) {
       userData = userByAuthUserId
     } else {
-      const { data: userByAuthId } = await supabaseAdmin
+      const { data: userByAuthId } = await getSupabaseAdmin()
         .from('users')
         .select('id, organization_id')
         .eq('auth_id', user.id)
@@ -48,7 +42,7 @@ export async function GET(request: NextRequest) {
     const orgId = userData.organization_id
 
     // Get queue items with lead info (use admin client to bypass RLS)
-    const { data: queueItems, error: queueError } = await supabaseAdmin
+    const { data: queueItems, error: queueError } = await getSupabaseAdmin()
       .from('turbo_call_queue')
       .select(`
         id,
@@ -72,7 +66,7 @@ export async function GET(request: NextRequest) {
       .limit(50)
 
     // Get active turbo sessions (reps in turbo mode)
-    const { data: activeSessions, error: sessionsError } = await supabaseAdmin
+    const { data: activeSessions, error: sessionsError } = await getSupabaseAdmin()
       .from('turbo_mode_sessions')
       .select(`
         id,
@@ -91,7 +85,7 @@ export async function GET(request: NextRequest) {
       .eq('status', 'active')
 
     // Get active calls
-    const { data: activeCalls, error: callsError } = await supabaseAdmin
+    const { data: activeCalls, error: callsError } = await getSupabaseAdmin()
       .from('turbo_active_calls')
       .select(`
         id,
@@ -110,7 +104,7 @@ export async function GET(request: NextRequest) {
       .order('dialed_at', { ascending: false })
 
     // Get queue count
-    const { count: queueCount } = await supabaseAdmin
+    const { count: queueCount } = await getSupabaseAdmin()
       .from('turbo_call_queue')
       .select('*', { count: 'exact', head: true })
       .eq('organization_id', orgId)
@@ -159,7 +153,7 @@ export async function DELETE(request: NextRequest) {
 
     // Get user's organization (check both auth_user_id and auth_id) - use admin to bypass RLS
     let userData = null
-    const { data: userByAuthUserId } = await supabaseAdmin
+    const { data: userByAuthUserId } = await getSupabaseAdmin()
       .from('users')
       .select('id, organization_id')
       .eq('auth_user_id', user.id)
@@ -168,7 +162,7 @@ export async function DELETE(request: NextRequest) {
     if (userByAuthUserId) {
       userData = userByAuthUserId
     } else {
-      const { data: userByAuthId } = await supabaseAdmin
+      const { data: userByAuthId } = await getSupabaseAdmin()
         .from('users')
         .select('id, organization_id')
         .eq('auth_id', user.id)
@@ -182,7 +176,7 @@ export async function DELETE(request: NextRequest) {
 
     if (clearAll) {
       // Clear entire queue for org
-      const { error } = await supabaseAdmin
+      const { error } = await getSupabaseAdmin()
         .from('turbo_call_queue')
         .delete()
         .eq('organization_id', userData.organization_id)
@@ -197,7 +191,7 @@ export async function DELETE(request: NextRequest) {
 
     if (leadId) {
       // Remove specific lead
-      const { error } = await supabaseAdmin
+      const { error } = await getSupabaseAdmin()
         .from('turbo_call_queue')
         .delete()
         .eq('organization_id', userData.organization_id)

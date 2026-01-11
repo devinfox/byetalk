@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { createClient as createServerClient } from '@/lib/supabase-server'
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 // Shared domain that all users can create accounts on
 const SHARED_DOMAIN = 'bookaestheticala.com'
@@ -82,7 +77,7 @@ export async function POST(request: NextRequest) {
       const firstName = nameParts[0] || user.email?.split('@')[0] || 'User'
       const lastName = nameParts.slice(1).join(' ') || ''
 
-      const { data: newUser, error: createError } = await supabaseAdmin
+      const { data: newUser, error: createError } = await getSupabaseAdmin()
         .from('users')
         .insert({
           auth_id: user.id,
@@ -131,7 +126,7 @@ export async function POST(request: NextRequest) {
     let domain = null
 
     // Check if it's the shared domain (accessible to all users)
-    const { data: sharedDomain } = await supabaseAdmin
+    const { data: sharedDomain } = await getSupabaseAdmin()
       .from('email_domains')
       .select('id, domain, verification_status')
       .eq('id', domain_id)
@@ -162,7 +157,7 @@ export async function POST(request: NextRequest) {
     const fullEmailAddress = `${email_address.toLowerCase()}@${domain.domain}`
 
     // Check if email already exists
-    const { data: existingAccount } = await supabaseAdmin
+    const { data: existingAccount } = await getSupabaseAdmin()
       .from('email_accounts')
       .select('id')
       .eq('email_address', fullEmailAddress)
@@ -178,7 +173,7 @@ export async function POST(request: NextRequest) {
 
     // If setting as default, unset other defaults first
     if (is_primary) {
-      await supabaseAdmin
+      await getSupabaseAdmin()
         .from('email_accounts')
         .update({ is_primary: false, updated_at: new Date().toISOString() })
         .eq('user_id', userData.id)
@@ -186,7 +181,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if this is the first account (make it default)
-    const { count } = await supabaseAdmin
+    const { count } = await getSupabaseAdmin()
       .from('email_accounts')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userData.id)
@@ -195,7 +190,7 @@ export async function POST(request: NextRequest) {
     const shouldBeDefault = is_primary || count === 0
 
     // Create the email account
-    const { data: newAccount, error: insertError } = await supabaseAdmin
+    const { data: newAccount, error: insertError } = await getSupabaseAdmin()
       .from('email_accounts')
       .insert({
         domain_id,

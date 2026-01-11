@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
-import { createClient as createAdminClient } from '@supabase/supabase-js'
-
-// Admin client to bypass RLS
-const supabaseAdmin = createAdminClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 /**
  * POST /api/turbo/session/stop
@@ -24,7 +18,7 @@ export async function POST(request: NextRequest) {
 
     // Get user's info (check both auth_user_id and auth_id) - use admin to bypass RLS
     let userData = null
-    const { data: userByAuthUserId } = await supabaseAdmin
+    const { data: userByAuthUserId } = await getSupabaseAdmin()
       .from('users')
       .select('id, first_name, last_name')
       .eq('auth_user_id', user.id)
@@ -33,7 +27,7 @@ export async function POST(request: NextRequest) {
     if (userByAuthUserId) {
       userData = userByAuthUserId
     } else {
-      const { data: userByAuthId } = await supabaseAdmin
+      const { data: userByAuthId } = await getSupabaseAdmin()
         .from('users')
         .select('id, first_name, last_name')
         .eq('auth_id', user.id)
@@ -46,7 +40,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Find and end active session
-    const { data: session, error: sessionError } = await supabaseAdmin
+    const { data: session, error: sessionError } = await getSupabaseAdmin()
       .from('turbo_mode_sessions')
       .update({
         status: 'ended',
@@ -70,7 +64,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Cancel any active calls assigned to this user (that aren't connected)
-    await supabaseAdmin
+    await getSupabaseAdmin()
       .from('turbo_active_calls')
       .update({
         status: 'completed',

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import {
   verifyWebhookSignature,
   getRecordingAccessLink,
@@ -11,12 +11,6 @@ import {
   parseActionItemDueDate,
   type TranscriptUtterance,
 } from '@/lib/meeting-ai'
-
-// Admin client for webhook operations
-const supabase = createAdminClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 interface DailyWebhookPayload {
   version: string
@@ -133,7 +127,7 @@ async function handleRecordingStarted(payload: DailyWebhookPayload) {
   if (!recording_id || !room_name) return
 
   // Find meeting by room name
-  const { data: meeting } = await supabase
+  const { data: meeting } = await getSupabaseAdmin()
     .from('meetings')
     .select('id')
     .eq('daily_room_name', room_name)
@@ -145,7 +139,7 @@ async function handleRecordingStarted(payload: DailyWebhookPayload) {
   }
 
   // Create recording record
-  await supabase.from('meeting_recordings').insert({
+  await getSupabaseAdmin().from('meeting_recordings').insert({
     meeting_id: meeting.id,
     recording_id,
     status: 'processing',
@@ -164,7 +158,7 @@ async function handleRecordingReady(payload: DailyWebhookPayload) {
 
   try {
     // Check if recording already exists
-    const { data: existingRecording } = await supabase
+    const { data: existingRecording } = await getSupabaseAdmin()
       .from('meeting_recordings')
       .select('id')
       .eq('recording_id', recording_id)
@@ -174,7 +168,7 @@ async function handleRecordingReady(payload: DailyWebhookPayload) {
 
     if (existingRecording) {
       // Update existing recording
-      const { error } = await supabase
+      const { error } = await getSupabaseAdmin()
         .from('meeting_recordings')
         .update({
           status: 'ready',
@@ -192,7 +186,7 @@ async function handleRecordingReady(payload: DailyWebhookPayload) {
     } else {
       // Create new recording (for recordings not started through our system)
       // Find meeting by room name
-      const { data: meeting } = await supabase
+      const { data: meeting } = await getSupabaseAdmin()
         .from('meetings')
         .select('id, title, host_id')
         .eq('daily_room_name', room_name)
@@ -208,7 +202,7 @@ async function handleRecordingReady(payload: DailyWebhookPayload) {
       }
 
       // Insert new recording
-      const { data: newRecording, error: insertError } = await supabase
+      const { data: newRecording, error: insertError } = await getSupabaseAdmin()
         .from('meeting_recordings')
         .insert({
           meeting_id: meeting?.id || null,
@@ -249,7 +243,7 @@ async function handleRecordingReady(payload: DailyWebhookPayload) {
         transcriptionRequested = true
 
         // Update recording to mark transcription as processing
-        await supabase
+        await getSupabaseAdmin()
           .from('meeting_recordings')
           .update({
             transcription_status: 'processing',
@@ -265,7 +259,7 @@ async function handleRecordingReady(payload: DailyWebhookPayload) {
           await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount - 1)))
         } else {
           // All retries failed - mark as failed so we can retry later
-          await supabase
+          await getSupabaseAdmin()
             .from('meeting_recordings')
             .update({
               transcription_status: 'failed',
@@ -286,7 +280,7 @@ async function handleRecordingError(payload: DailyWebhookPayload) {
 
   if (!recording_id) return
 
-  await supabase
+  await getSupabaseAdmin()
     .from('meeting_recordings')
     .update({
       status: 'failed',
@@ -302,7 +296,7 @@ async function handleMeetingStarted(payload: DailyWebhookPayload) {
 
   if (!room_name) return
 
-  await supabase
+  await getSupabaseAdmin()
     .from('meetings')
     .update({
       status: 'in_progress',
@@ -320,7 +314,7 @@ async function handleMeetingEnded(payload: DailyWebhookPayload) {
 
   if (!room_name) return
 
-  await supabase
+  await getSupabaseAdmin()
     .from('meetings')
     .update({
       status: 'completed',
@@ -340,7 +334,7 @@ async function handleParticipantJoined(payload: DailyWebhookPayload) {
   if (!room_name || !user_id) return
 
   // Find meeting
-  const { data: meeting } = await supabase
+  const { data: meeting } = await getSupabaseAdmin()
     .from('meetings')
     .select('id, max_concurrent_participants')
     .eq('daily_room_name', room_name)
@@ -352,12 +346,12 @@ async function handleParticipantJoined(payload: DailyWebhookPayload) {
   const isGuest = user_id.startsWith('guest-')
 
   if (!isGuest) {
-    await supabase
+    await getSupabaseAdmin()
       .from('meeting_participants')
       .update({
         joined_at: new Date().toISOString(),
         invite_status: 'attended',
-        join_count: supabase.rpc('increment', { value: 1 }),
+        join_count: getSupabaseAdmin().rpc('increment', { value: 1 }),
         updated_at: new Date().toISOString(),
       })
       .eq('meeting_id', meeting.id)
@@ -367,7 +361,7 @@ async function handleParticipantJoined(payload: DailyWebhookPayload) {
   // Update max concurrent participants
   // Get current count from Daily.co presence would be more accurate
   // but for now we'll just increment
-  await supabase.rpc('update_max_concurrent_participants', {
+  await getSupabaseAdmin().rpc('update_max_concurrent_participants', {
     meeting_id: meeting.id,
   })
 
@@ -380,7 +374,7 @@ async function handleParticipantLeft(payload: DailyWebhookPayload) {
   if (!room_name || !user_id) return
 
   // Find meeting
-  const { data: meeting } = await supabase
+  const { data: meeting } = await getSupabaseAdmin()
     .from('meetings')
     .select('id')
     .eq('daily_room_name', room_name)
@@ -392,7 +386,7 @@ async function handleParticipantLeft(payload: DailyWebhookPayload) {
 
   if (!isGuest) {
     // Update participant
-    await supabase
+    await getSupabaseAdmin()
       .from('meeting_participants')
       .update({
         left_at: new Date().toISOString(),
@@ -421,7 +415,7 @@ async function handleTranscriptionReady(payload: DailyWebhookPayload) {
 
   try {
     // Get the recording from our database
-    const { data: recording, error: recordingError } = await supabase
+    const { data: recording, error: recordingError } = await getSupabaseAdmin()
       .from('meeting_recordings')
       .select(`
         id, meeting_id, room_name, recording_id,
@@ -442,7 +436,7 @@ async function handleTranscriptionReady(payload: DailyWebhookPayload) {
       console.log('Transcript not complete:', transcript.status, transcript.error)
 
       // Update recording status
-      await supabase
+      await getSupabaseAdmin()
         .from('meeting_recordings')
         .update({
           transcription_status: transcript.status === 'error' ? 'failed' : transcript.status,
@@ -464,7 +458,7 @@ async function handleTranscriptionReady(payload: DailyWebhookPayload) {
     }))
 
     // Create transcript record
-    const { data: transcriptRecord, error: transcriptError } = await supabase
+    const { data: transcriptRecord, error: transcriptError } = await getSupabaseAdmin()
       .from('meeting_transcripts')
       .insert({
         meeting_id: recording.meeting_id,
@@ -499,11 +493,11 @@ async function handleTranscriptionReady(payload: DailyWebhookPayload) {
         sequence_number: index,
       }))
 
-      await supabase.from('transcript_utterances').insert(utteranceInserts)
+      await getSupabaseAdmin().from('transcript_utterances').insert(utteranceInserts)
     }
 
     // Update recording status
-    await supabase
+    await getSupabaseAdmin()
       .from('meeting_recordings')
       .update({
         transcription_status: 'completed',
@@ -524,7 +518,7 @@ async function handleTranscriptionReady(payload: DailyWebhookPayload) {
       console.log(`⚠️ Transcript too short for AI analysis (${wordCount} words, ${utteranceCount} utterances). Skipping.`)
 
       // Store a "no content" insight instead of fake analysis
-      await supabase
+      await getSupabaseAdmin()
         .from('meeting_insights')
         .insert({
           transcript_id: transcriptRecord.id,
@@ -568,7 +562,7 @@ async function handleTranscriptionReady(payload: DailyWebhookPayload) {
       console.log('AI analysis complete, creating insights and tasks...')
 
       // Store insights
-      const { data: insight, error: insightError } = await supabase
+      const { data: insight, error: insightError } = await getSupabaseAdmin()
         .from('meeting_insights')
         .insert({
           transcript_id: transcriptRecord.id,
@@ -626,7 +620,7 @@ async function handleTranscriptionReady(payload: DailyWebhookPayload) {
           }
         })
 
-        const { error: tasksError } = await supabase.from('tasks').insert(taskInserts)
+        const { error: tasksError } = await getSupabaseAdmin().from('tasks').insert(taskInserts)
 
         if (tasksError) {
           console.error('Error creating tasks:', tasksError)

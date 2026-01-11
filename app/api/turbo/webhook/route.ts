@@ -1,11 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient as createAdminClient } from '@supabase/supabase-js'
-
-// Admin client for bypassing RLS
-const supabase = createAdminClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 /**
  * POST /api/turbo/webhook
@@ -28,7 +22,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Find the active turbo call
-    const { data: activeCall, error: findError } = await supabase
+    const { data: activeCall, error: findError } = await getSupabaseAdmin()
       .from('turbo_active_calls')
       .select('id, queue_item_id, organization_id, session_id, status')
       .eq('call_sid', callSid)
@@ -95,14 +89,14 @@ export async function POST(request: NextRequest) {
 
     // Update the active call record
     updates.status = newStatus
-    await supabase
+    await getSupabaseAdmin()
       .from('turbo_active_calls')
       .update(updates)
       .eq('id', activeCall.id)
 
     // Update queue item status
     if (['completed', 'busy', 'no_answer', 'failed'].includes(newStatus)) {
-      await supabase
+      await getSupabaseAdmin()
         .from('turbo_call_queue')
         .update({
           status: newStatus,
@@ -113,7 +107,7 @@ export async function POST(request: NextRequest) {
       // If call was connected (has duration > 0), increment session stats
       if (newStatus === 'completed' && duration && parseInt(duration) > 0) {
         try {
-          await supabase.rpc('increment_turbo_session_connected', {
+          await getSupabaseAdmin().rpc('increment_turbo_session_connected', {
             p_session_id: activeCall.session_id,
           })
         } catch {

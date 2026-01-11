@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { createClient as createServerClient } from '@/lib/supabase-server'
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 // Shared domain that all users can create accounts on
 const SHARED_DOMAIN = 'bookaestheticala.com'
@@ -21,7 +16,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get the shared domain
-    const { data: domain, error } = await supabaseAdmin
+    const { data: domain, error } = await getSupabaseAdmin()
       .from('email_domains')
       .select('id, domain, verification_status')
       .eq('domain', SHARED_DOMAIN)

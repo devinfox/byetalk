@@ -1,11 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient as createAdminClient } from '@supabase/supabase-js'
-
-// Admin client for bypassing RLS
-const supabase = createAdminClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 /**
  * POST /api/turbo/voicemail/transcription
@@ -25,7 +19,7 @@ export async function POST(request: NextRequest) {
 
     if (callSid && transcriptionText && transcriptionStatus === 'completed') {
       // Update the active turbo call with transcription
-      const { error: updateError } = await supabase
+      const { error: updateError } = await getSupabaseAdmin()
         .from('turbo_active_calls')
         .update({
           voicemail_transcription: transcriptionText,
@@ -39,14 +33,14 @@ export async function POST(request: NextRequest) {
       }
 
       // Also try to update the main calls table if there's a linked call
-      const { data: activeCall } = await supabase
+      const { data: activeCall } = await getSupabaseAdmin()
         .from('turbo_active_calls')
         .select('call_id')
         .eq('call_sid', callSid)
         .single()
 
       if (activeCall?.call_id) {
-        await supabase
+        await getSupabaseAdmin()
           .from('calls')
           .update({
             transcription: transcriptionText,

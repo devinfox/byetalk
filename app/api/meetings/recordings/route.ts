@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
-import { createClient as createAdminClient } from '@supabase/supabase-js'
-
-// Admin client for operations that bypass RLS
-const supabaseAdmin = createAdminClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 // GET /api/meetings/recordings - List all recordings
 export async function GET(request: NextRequest) {
@@ -48,7 +42,7 @@ export async function GET(request: NextRequest) {
     const offset = parseInt(searchParams.get('offset') || '0')
 
     // Build query for recordings
-    let query = supabaseAdmin
+    let query = getSupabaseAdmin()
       .from('meeting_recordings')
       .select(`
         id, recording_id, room_name, status, download_url, playback_url,

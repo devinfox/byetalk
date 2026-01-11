@@ -1,13 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
-import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { getRecordingAccessLink, deleteRecording as deleteDailyRecording } from '@/lib/daily'
-
-// Admin client for operations that bypass RLS
-const supabaseAdmin = createAdminClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 // GET /api/meetings/recordings/[id] - Get recording with fresh playback link
 export async function GET(
@@ -24,7 +18,7 @@ export async function GET(
     }
 
     // Get the recording
-    const { data: recording, error } = await supabaseAdmin
+    const { data: recording, error } = await getSupabaseAdmin()
       .from('meeting_recordings')
       .select(`
         *,
@@ -47,7 +41,7 @@ export async function GET(
       playbackUrl = access.download_link
 
       // Update the stored URL
-      await supabaseAdmin
+      await getSupabaseAdmin()
         .from('meeting_recordings')
         .update({
           playback_url: playbackUrl,
@@ -113,7 +107,7 @@ export async function DELETE(
     }
 
     // Get the recording with meeting info
-    const { data: recording, error } = await supabaseAdmin
+    const { data: recording, error } = await getSupabaseAdmin()
       .from('meeting_recordings')
       .select(`
         *,
@@ -143,7 +137,7 @@ export async function DELETE(
     }
 
     // Delete from database
-    const { error: deleteError } = await supabaseAdmin
+    const { error: deleteError } = await getSupabaseAdmin()
       .from('meeting_recordings')
       .delete()
       .eq('id', id)

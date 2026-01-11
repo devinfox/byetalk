@@ -1,14 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import twilio from 'twilio'
-import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 const VoiceResponse = twilio.twiml.VoiceResponse
-
-// Admin client for bypassing RLS
-const supabase = createAdminClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 /**
  * POST /api/turbo/connect
@@ -43,7 +37,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Find the active turbo call
-    const { data: activeCall, error: findError } = await supabase
+    const { data: activeCall, error: findError } = await getSupabaseAdmin()
       .from('turbo_active_calls')
       .select('id, organization_id, lead_id, lead_name, lead_phone, caller_id, session_id')
       .eq('call_sid', callSid)
@@ -59,7 +53,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Find an available rep in turbo mode
-    const { data: availableRep, error: repError } = await supabase
+    const { data: availableRep, error: repError } = await getSupabaseAdmin()
       .rpc('get_available_turbo_rep', {
         p_organization_id: activeCall.organization_id,
       })
@@ -82,7 +76,7 @@ export async function POST(request: NextRequest) {
       twiml.say({ voice: 'alice' }, 'We did not receive your message. Goodbye.')
 
       // Update call status
-      await supabase
+      await getSupabaseAdmin()
         .from('turbo_active_calls')
         .update({ status: 'no_answer' }) // Treated as no-answer since no rep
         .eq('id', activeCall.id)
@@ -113,7 +107,7 @@ export async function POST(request: NextRequest) {
     }, rep.client_identity)
 
     // Update the active call with assigned rep
-    await supabase
+    await getSupabaseAdmin()
       .from('turbo_active_calls')
       .update({
         status: 'connected',
@@ -123,7 +117,7 @@ export async function POST(request: NextRequest) {
       .eq('id', activeCall.id)
 
     // Assign the lead to this rep (they are now the go-to person for this lead)
-    await supabase
+    await getSupabaseAdmin()
       .from('leads')
       .update({
         owner_id: rep.user_id,
@@ -135,7 +129,7 @@ export async function POST(request: NextRequest) {
     console.log(`[Turbo Connect] Assigned lead ${activeCall.lead_id} to rep ${rep.user_id}`)
 
     // Create a record in the main calls table
-    const { data: callRecord } = await supabase
+    const { data: callRecord } = await getSupabaseAdmin()
       .from('calls')
       .insert({
         call_sid: callSid,
@@ -152,14 +146,14 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (callRecord) {
-      await supabase
+      await getSupabaseAdmin()
         .from('turbo_active_calls')
         .update({ call_id: callRecord.id })
         .eq('id', activeCall.id)
     }
 
     // Increment session connected count atomically
-    await supabase.rpc('increment_turbo_session_connected', {
+    await getSupabaseAdmin().rpc('increment_turbo_session_connected', {
       p_session_id: rep.session_id,
     })
 

@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { createClient as createServerClient } from '@/lib/supabase-server'
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 // GET /api/email/domains/[id] - Get a single domain
 export async function GET(
@@ -90,13 +85,13 @@ export async function DELETE(
     }
 
     // Soft delete associated email accounts
-    await supabaseAdmin
+    await getSupabaseAdmin()
       .from('email_accounts')
       .update({ is_deleted: true, updated_at: new Date().toISOString() })
       .eq('domain_id', id)
 
     // Soft delete the domain
-    const { error: deleteError } = await supabaseAdmin
+    const { error: deleteError } = await getSupabaseAdmin()
       .from('email_domains')
       .update({ is_deleted: true, updated_at: new Date().toISOString() })
       .eq('id', id)

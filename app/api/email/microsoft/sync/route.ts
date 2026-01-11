@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import {
   listEmailsDelta,
   extractEmailFromRecipient,
@@ -12,12 +12,6 @@ import {
 } from '@/lib/microsoft-auth'
 import { GraphMessage } from '@/types/microsoft.types'
 import { createClient } from '@/lib/supabase-server'
-
-// Admin client for database operations
-const supabaseAdmin = createAdminClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 /**
  * POST /api/email/microsoft/sync
@@ -38,7 +32,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get user's CRM profile
-    const { data: profile } = await supabaseAdmin
+    const { data: profile } = await getSupabaseAdmin()
       .from('users')
       .select('id')
       .eq('auth_id', user.id)
@@ -51,7 +45,7 @@ export async function POST(request: NextRequest) {
     const { tokenId, fullSync = false } = await request.json()
 
     // Get Microsoft token
-    let tokenQuery = supabaseAdmin
+    let tokenQuery = getSupabaseAdmin()
       .from('microsoft_oauth_tokens')
       .select('*')
       .eq('user_id', profile.id)
@@ -78,7 +72,7 @@ export async function POST(request: NextRequest) {
           accessToken = newTokens.access_token
 
           // Update stored tokens
-          await supabaseAdmin
+          await getSupabaseAdmin()
             .from('microsoft_oauth_tokens')
             .update({
               access_token: newTokens.access_token,
@@ -90,7 +84,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Get email account for this Microsoft token
-        const { data: emailAccount } = await supabaseAdmin
+        const { data: emailAccount } = await getSupabaseAdmin()
           .from('email_accounts')
           .select('id')
           .eq('microsoft_token_id', token.id)
@@ -106,7 +100,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Create sync log entry
-        const { data: syncLog } = await supabaseAdmin
+        const { data: syncLog } = await getSupabaseAdmin()
           .from('microsoft_sync_log')
           .insert({
             token_id: token.id,
@@ -142,7 +136,7 @@ export async function POST(request: NextRequest) {
           const emailData = convertGraphMessageToEmail(msg, emailAccount.id)
 
           // Check if email already exists
-          const { data: existing } = await supabaseAdmin
+          const { data: existing } = await getSupabaseAdmin()
             .from('emails')
             .select('id')
             .eq('graph_message_id', msg.id)
@@ -150,7 +144,7 @@ export async function POST(request: NextRequest) {
 
           if (existing) {
             // Update existing
-            await supabaseAdmin
+            await getSupabaseAdmin()
               .from('emails')
               .update({
                 is_read: msg.isRead,
@@ -161,14 +155,14 @@ export async function POST(request: NextRequest) {
           } else {
             // Create new - first create or find thread
             const threadId = await getOrCreateThread(
-              supabaseAdmin,
+              getSupabaseAdmin(),
               emailAccount.id,
               msg,
               profile.id
             )
 
             // Insert email
-            await supabaseAdmin.from('emails').insert({
+            await getSupabaseAdmin().from('emails').insert({
               ...emailData,
               thread_id: threadId,
             })
@@ -177,7 +171,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Update sync log
-        await supabaseAdmin
+        await getSupabaseAdmin()
           .from('microsoft_sync_log')
           .update({
             status: 'completed',
@@ -191,7 +185,7 @@ export async function POST(request: NextRequest) {
 
         // Update token with new delta token
         if (newDeltaToken) {
-          await supabaseAdmin
+          await getSupabaseAdmin()
             .from('microsoft_oauth_tokens')
             .update({
               mail_delta_token: newDeltaToken,

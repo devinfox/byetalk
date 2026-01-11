@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { getEmail, extractEmailFromRecipient } from '@/lib/microsoft-graph'
 import {
   refreshMicrosoftToken,
@@ -7,12 +7,6 @@ import {
   calculateExpiresAt,
 } from '@/lib/microsoft-auth'
 import { GraphWebhookNotification } from '@/types/microsoft.types'
-
-// Admin client for database operations
-const supabaseAdmin = createAdminClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 /**
  * POST /api/email/webhooks/microsoft
@@ -42,7 +36,7 @@ export async function POST(request: NextRequest) {
       // In production, verify this matches your expected client state
 
       // Find the token by subscription ID
-      const { data: token } = await supabaseAdmin
+      const { data: token } = await getSupabaseAdmin()
         .from('microsoft_oauth_tokens')
         .select('*, email_accounts!microsoft_oauth_tokens_user_id_fkey(id)')
         .eq('webhook_subscription_id', subscriptionId)
@@ -60,7 +54,7 @@ export async function POST(request: NextRequest) {
           const newTokens = await refreshMicrosoftToken(token.refresh_token)
           accessToken = newTokens.access_token
 
-          await supabaseAdmin
+          await getSupabaseAdmin()
             .from('microsoft_oauth_tokens')
             .update({
               access_token: newTokens.access_token,
@@ -76,7 +70,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Get email account
-      const { data: emailAccount } = await supabaseAdmin
+      const { data: emailAccount } = await getSupabaseAdmin()
         .from('email_accounts')
         .select('id')
         .eq('microsoft_token_id', token.id)
@@ -126,7 +120,7 @@ async function handleNewEmail(
     const msg = await getEmail(accessToken, messageId)
 
     // Check if already exists
-    const { data: existing } = await supabaseAdmin
+    const { data: existing } = await getSupabaseAdmin()
       .from('emails')
       .select('id')
       .eq('graph_message_id', messageId)
@@ -144,7 +138,7 @@ async function handleNewEmail(
     const to = msg.toRecipients?.map(extractEmailFromRecipient) || []
     const cc = msg.ccRecipients?.map(extractEmailFromRecipient) || []
 
-    await supabaseAdmin.from('emails').insert({
+    await getSupabaseAdmin().from('emails').insert({
       email_account_id: emailAccountId,
       thread_id: threadId,
       message_id: msg.internetMessageId,
@@ -171,13 +165,13 @@ async function handleNewEmail(
 
     // Update thread counts
     if (threadId) {
-      const { data: thread } = await supabaseAdmin
+      const { data: thread } = await getSupabaseAdmin()
         .from('email_threads')
         .select('message_count, unread_count')
         .eq('id', threadId)
         .single()
 
-      await supabaseAdmin
+      await getSupabaseAdmin()
         .from('email_threads')
         .update({
           last_message_at: msg.receivedDateTime,
@@ -203,7 +197,7 @@ async function handleUpdatedEmail(accessToken: string, messageId: string) {
     const msg = await getEmail(accessToken, messageId)
 
     // Update local record
-    await supabaseAdmin
+    await getSupabaseAdmin()
       .from('emails')
       .update({
         is_read: msg.isRead,
@@ -224,7 +218,7 @@ async function handleUpdatedEmail(accessToken: string, messageId: string) {
 async function handleDeletedEmail(messageId: string) {
   try {
     // Soft delete local record
-    await supabaseAdmin
+    await getSupabaseAdmin()
       .from('emails')
       .update({
         is_deleted: true,
@@ -243,7 +237,7 @@ async function handleDeletedEmail(messageId: string) {
  */
 async function findOrCreateThread(emailAccountId: string, msg: any): Promise<string | null> {
   // Try to find by conversation ID
-  const { data: emails } = await supabaseAdmin
+  const { data: emails } = await getSupabaseAdmin()
     .from('emails')
     .select('thread_id')
     .eq('graph_conversation_id', msg.conversationId)
@@ -257,7 +251,7 @@ async function findOrCreateThread(emailAccountId: string, msg: any): Promise<str
   // Try to find by subject
   const cleanSubject = msg.subject?.replace(/^(Re:|Fwd:|RE:|FW:)\s*/gi, '').trim()
   if (cleanSubject) {
-    const { data: threadBySubject } = await supabaseAdmin
+    const { data: threadBySubject } = await getSupabaseAdmin()
       .from('email_threads')
       .select('id')
       .eq('email_account_id', emailAccountId)
@@ -273,7 +267,7 @@ async function findOrCreateThread(emailAccountId: string, msg: any): Promise<str
   const from = extractEmailFromRecipient(msg.from || msg.sender)
   const to = msg.toRecipients?.map(extractEmailFromRecipient) || []
 
-  const { data: newThread } = await supabaseAdmin
+  const { data: newThread } = await getSupabaseAdmin()
     .from('email_threads')
     .insert({
       email_account_id: emailAccountId,

@@ -1,18 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
-import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { getRecordingAccessLink } from '@/lib/daily'
 import {
   transcribeMeetingRecording,
   analyzeMeetingTranscript,
   parseActionItemDueDate,
 } from '@/lib/meeting-ai'
-
-// Admin client for operations that bypass RLS
-const supabaseAdmin = createAdminClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 // POST /api/meetings/recordings/[id]/transcribe - Transcribe and analyze a recording
 export async function POST(
@@ -29,7 +23,7 @@ export async function POST(
     }
 
     // Get the recording with meeting info
-    const { data: recording, error: recordingError } = await supabaseAdmin
+    const { data: recording, error: recordingError } = await getSupabaseAdmin()
       .from('meeting_recordings')
       .select(`
         *,
@@ -49,7 +43,7 @@ export async function POST(
     }
 
     // Check if transcript already exists
-    const { data: existingTranscript } = await supabaseAdmin
+    const { data: existingTranscript } = await getSupabaseAdmin()
       .from('meeting_transcripts')
       .select('id, status')
       .eq('recording_id', recordingId)
@@ -83,7 +77,7 @@ export async function POST(
     }
 
     // Create transcript record (pending)
-    const { data: transcript, error: transcriptError } = await supabaseAdmin
+    const { data: transcript, error: transcriptError } = await getSupabaseAdmin()
       .from('meeting_transcripts')
       .insert({
         meeting_id: recording.meeting_id,
@@ -115,7 +109,7 @@ export async function POST(
     )
 
     if (!transcriptionResult) {
-      await supabaseAdmin
+      await getSupabaseAdmin()
         .from('meeting_transcripts')
         .update({
           status: 'failed',
@@ -128,7 +122,7 @@ export async function POST(
     }
 
     // Update transcript with results
-    await supabaseAdmin
+    await getSupabaseAdmin()
       .from('meeting_transcripts')
       .update({
         provider_transcript_id: transcriptionResult.id,
@@ -155,7 +149,7 @@ export async function POST(
         sequence_number: index,
       }))
 
-      await supabaseAdmin.from('transcript_utterances').insert(utteranceInserts)
+      await getSupabaseAdmin().from('transcript_utterances').insert(utteranceInserts)
     }
 
     // Check if transcript has meaningful content before AI analysis
@@ -167,7 +161,7 @@ export async function POST(
       // Not enough content for meaningful analysis
       console.log(`Transcript too short for AI analysis: ${wordCount} words, ${utteranceCount} utterances`)
 
-      await supabaseAdmin
+      await getSupabaseAdmin()
         .from('meeting_insights')
         .insert({
           transcript_id: transcript.id,
@@ -195,7 +189,7 @@ export async function POST(
 
       if (analysis) {
         // Store insights
-        const { data: insight } = await supabaseAdmin
+        const { data: insight } = await getSupabaseAdmin()
           .from('meeting_insights')
           .insert({
             transcript_id: transcript.id,
@@ -249,12 +243,12 @@ export async function POST(
             }
           })
 
-          await supabaseAdmin.from('tasks').insert(taskInserts)
+          await getSupabaseAdmin().from('tasks').insert(taskInserts)
           actionItemsCreated = taskInserts.length
         }
       } else {
         // Analysis returned null (e.g., OpenAI not configured or validation failed)
-        await supabaseAdmin
+        await getSupabaseAdmin()
           .from('meeting_insights')
           .insert({
             transcript_id: transcript.id,
@@ -307,7 +301,7 @@ export async function GET(
     }
 
     // Get transcript with utterances and insights
-    const { data: transcript, error } = await supabaseAdmin
+    const { data: transcript, error } = await getSupabaseAdmin()
       .from('meeting_transcripts')
       .select(`
         *,

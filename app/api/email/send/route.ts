@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { createClient as createServerClient } from '@/lib/supabase-server'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { sendEmail as sendSendgridEmail } from '@/lib/sendgrid'
 import { sendEmail as sendMicrosoftEmail } from '@/lib/microsoft-graph'
 import { getValidAccessToken } from '@/lib/microsoft-auth'
@@ -8,11 +8,6 @@ import { generateMessageId, parseEmailAddress, generateSnippet, stripHtml } from
 import { EmailParticipant } from '@/types/email.types'
 import { v4 as uuidv4 } from 'uuid'
 import { processEmailForAI } from '@/lib/email-ai'
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 // POST /api/email/send - Send an email
 export async function POST(request: NextRequest) {
@@ -38,7 +33,7 @@ export async function POST(request: NextRequest) {
       const firstName = nameParts[0] || user.email?.split('@')[0] || 'User'
       const lastName = nameParts.slice(1).join(' ') || ''
 
-      const { data: newUser, error: createError } = await supabaseAdmin
+      const { data: newUser, error: createError } = await getSupabaseAdmin()
         .from('users')
         .insert({
           auth_id: user.id,
@@ -91,7 +86,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get the sender's email account (use admin to bypass RLS for domain join)
-    const { data: fromAccount } = await supabaseAdmin
+    const { data: fromAccount } = await getSupabaseAdmin()
       .from('email_accounts')
       .select(`
         *,
@@ -154,7 +149,7 @@ export async function POST(request: NextRequest) {
 
     if (!finalThreadId) {
       // Create new thread
-      const { data: newThread, error: threadError } = await supabaseAdmin
+      const { data: newThread, error: threadError } = await getSupabaseAdmin()
         .from('email_threads')
         .insert({
           email_account_id: from_account_id,
@@ -190,7 +185,7 @@ export async function POST(request: NextRequest) {
 
     // Create email record in database (status: sending)
     const emailId = uuidv4()
-    const { error: emailError } = await supabaseAdmin
+    const { error: emailError } = await getSupabaseAdmin()
       .from('emails')
       .insert({
         id: emailId,
@@ -231,7 +226,7 @@ export async function POST(request: NextRequest) {
         is_inline: att.is_inline || false,
       }))
 
-      await supabaseAdmin.from('email_attachments').insert(attachmentRecords)
+      await getSupabaseAdmin().from('email_attachments').insert(attachmentRecords)
     }
 
     // If scheduled, don't send now
@@ -250,7 +245,7 @@ export async function POST(request: NextRequest) {
       if (isMicrosoftAccount) {
         // Send via Microsoft Graph API
         // Get Microsoft OAuth tokens for this account
-        const { data: tokenData } = await supabaseAdmin
+        const { data: tokenData } = await getSupabaseAdmin()
           .from('microsoft_oauth_tokens')
           .select('access_token, refresh_token, expires_at')
           .eq('user_id', userData.id)
@@ -271,7 +266,7 @@ export async function POST(request: NextRequest) {
           tokenData.expires_at,
           async (newTokens) => {
             // Update tokens in database
-            await supabaseAdmin
+            await getSupabaseAdmin()
               .from('microsoft_oauth_tokens')
               .update({
                 access_token: newTokens.access_token,
@@ -311,7 +306,7 @@ export async function POST(request: NextRequest) {
         })
 
         // Update email status to sent
-        await supabaseAdmin
+        await getSupabaseAdmin()
           .from('emails')
           .update({
             status: 'sent',
@@ -349,7 +344,7 @@ export async function POST(request: NextRequest) {
         })
 
         // Update email status to sent
-        await supabaseAdmin
+        await getSupabaseAdmin()
           .from('emails')
           .update({
             status: 'sent',
@@ -360,7 +355,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Update thread's last_message_at
-      await supabaseAdmin
+      await getSupabaseAdmin()
         .from('email_threads')
         .update({
           last_message_at: new Date().toISOString(),
@@ -399,7 +394,7 @@ export async function POST(request: NextRequest) {
       console.error('Email send error:', sendError)
 
       // Update email status to failed
-      await supabaseAdmin
+      await getSupabaseAdmin()
         .from('emails')
         .update({
           status: 'failed',

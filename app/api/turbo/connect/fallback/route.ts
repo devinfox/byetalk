@@ -1,14 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import twilio from 'twilio'
-import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 const VoiceResponse = twilio.twiml.VoiceResponse
-
-// Admin client for bypassing RLS
-const supabase = createAdminClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 /**
  * POST /api/turbo/connect/fallback
@@ -33,7 +27,7 @@ export async function POST(request: NextRequest) {
     const twiml = new VoiceResponse()
 
     // Find the active turbo call
-    const { data: activeCall, error: findError } = await supabase
+    const { data: activeCall, error: findError } = await getSupabaseAdmin()
       .from('turbo_active_calls')
       .select('id, organization_id, lead_id, lead_name, session_id')
       .eq('call_sid', callSid)
@@ -51,7 +45,7 @@ export async function POST(request: NextRequest) {
     // If dial failed/no-answer, try to find another rep
     if (dialCallStatus === 'no-answer' || dialCallStatus === 'busy' || dialCallStatus === 'failed') {
       // Try to find another available rep
-      const { data: availableRep, error: repError } = await supabase
+      const { data: availableRep, error: repError } = await getSupabaseAdmin()
         .rpc('get_available_turbo_rep', {
           p_organization_id: activeCall.organization_id,
         })
@@ -71,7 +65,7 @@ export async function POST(request: NextRequest) {
         dial.client(rep.client_identity)
 
         // Update assigned rep
-        await supabase
+        await getSupabaseAdmin()
           .from('turbo_active_calls')
           .update({
             assigned_to: rep.user_id,
@@ -81,7 +75,7 @@ export async function POST(request: NextRequest) {
           .eq('id', activeCall.id)
 
         // Assign the lead to this rep
-        await supabase
+        await getSupabaseAdmin()
           .from('leads')
           .update({
             owner_id: rep.user_id,
@@ -116,7 +110,7 @@ export async function POST(request: NextRequest) {
     twiml.hangup()
 
     // Update call status
-    await supabase
+    await getSupabaseAdmin()
       .from('turbo_active_calls')
       .update({ status: 'no_answer' })
       .eq('id', activeCall.id)

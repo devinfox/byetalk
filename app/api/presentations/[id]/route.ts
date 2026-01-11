@@ -1,13 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
-import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import type { PresentationUpdate } from '@/types/presentation.types'
-
-// Admin client for operations that need to bypass RLS
-const supabaseAdmin = createAdminClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 interface RouteContext {
   params: Promise<{ id: string }>
@@ -181,7 +175,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     }
 
     // Soft delete using admin client to bypass RLS
-    const { data: updated, error } = await supabaseAdmin
+    const { data: updated, error } = await getSupabaseAdmin()
       .from('presentations')
       .update({
         is_deleted: true,

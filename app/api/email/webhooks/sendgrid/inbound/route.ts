@@ -1,13 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { parseEmailAddress, generateSnippet, stripHtml, parseReferences } from '@/lib/email-utils'
 import { v4 as uuidv4 } from 'uuid'
 import { processEmailForAI } from '@/lib/email-ai'
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 // POST /api/email/webhooks/sendgrid/inbound - Handle inbound emails from SendGrid
 export async function POST(request: NextRequest) {
@@ -39,7 +34,7 @@ export async function POST(request: NextRequest) {
     const ccAddresses = cc ? cc.split(',').map(e => parseEmailAddress(e.trim()).email) : []
 
     // Find matching email account
-    const { data: matchingAccounts } = await supabaseAdmin
+    const { data: matchingAccounts } = await getSupabaseAdmin()
       .from('email_accounts')
       .select('id, email_address, user_id')
       .in('email_address', [...toAddresses, ...ccAddresses])
@@ -82,7 +77,7 @@ export async function POST(request: NextRequest) {
         const refsToSearch = [inReplyTo, ...(references ? parseReferences(references) : [])].filter(Boolean)
 
         if (refsToSearch.length > 0) {
-          const { data: existingEmail } = await supabaseAdmin
+          const { data: existingEmail } = await getSupabaseAdmin()
             .from('emails')
             .select('thread_id')
             .eq('email_account_id', account.id)
@@ -104,7 +99,7 @@ export async function POST(request: NextRequest) {
           .trim()
           .toLowerCase()
 
-        const { data: threadBySubject } = await supabaseAdmin
+        const { data: threadBySubject } = await getSupabaseAdmin()
           .from('email_threads')
           .select('id')
           .eq('email_account_id', account.id)
@@ -120,7 +115,7 @@ export async function POST(request: NextRequest) {
 
       // Create new thread if needed
       if (!threadId) {
-        const { data: newThread, error: threadError } = await supabaseAdmin
+        const { data: newThread, error: threadError } = await getSupabaseAdmin()
           .from('email_threads')
           .insert({
             email_account_id: account.id,
@@ -140,7 +135,7 @@ export async function POST(request: NextRequest) {
         threadId = newThread.id
       } else {
         // Update existing thread
-        await supabaseAdmin
+        await getSupabaseAdmin()
           .from('email_threads')
           .update({
             is_read: false,
@@ -152,7 +147,7 @@ export async function POST(request: NextRequest) {
 
       // Create email record
       const emailId = uuidv4()
-      const { error: emailError } = await supabaseAdmin
+      const { error: emailError } = await getSupabaseAdmin()
         .from('emails')
         .insert({
           id: emailId,
@@ -193,7 +188,7 @@ export async function POST(request: NextRequest) {
               // Upload to Supabase Storage
               const storagePath = `emails/${emailId}/${attInfo.filename}`
 
-              const { error: uploadError } = await supabaseAdmin.storage
+              const { error: uploadError } = await getSupabaseAdmin().storage
                 .from('email-attachments')
                 .upload(storagePath, fileData, {
                   contentType: attInfo.type,
@@ -205,12 +200,12 @@ export async function POST(request: NextRequest) {
               }
 
               // Get public URL
-              const { data: { publicUrl } } = supabaseAdmin.storage
+              const { data: { publicUrl } } = getSupabaseAdmin().storage
                 .from('email-attachments')
                 .getPublicUrl(storagePath)
 
               // Create attachment record
-              await supabaseAdmin.from('email_attachments').insert({
+              await getSupabaseAdmin().from('email_attachments').insert({
                 email_id: emailId,
                 filename: attInfo.filename,
                 content_type: attInfo.type,
@@ -223,7 +218,7 @@ export async function POST(request: NextRequest) {
           }
 
           // Update thread has_attachments
-          await supabaseAdmin
+          await getSupabaseAdmin()
             .from('email_threads')
             .update({ has_attachments: true })
             .eq('id', threadId)

@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import OpenAI from 'openai'
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 let openaiInstance: OpenAI | null = null
 
@@ -44,7 +39,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch user's documents
-    const { data: documents, error: fetchError } = await supabaseAdmin
+    const { data: documents, error: fetchError } = await getSupabaseAdmin()
       .from('documents')
       .select('id, file_name, file_type, description, tags, public_url, mime_type')
       .eq('uploaded_by', user_id)

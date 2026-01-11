@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
-import { createClient as createAdminClient } from '@supabase/supabase-js'
-
-// Admin client to bypass RLS for queue operations
-const supabaseAdmin = createAdminClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
 /**
  * POST /api/turbo/queue/add
@@ -30,7 +24,7 @@ export async function POST(request: NextRequest) {
 
     // Get user's organization (check both auth_user_id and auth_id) - use admin to bypass RLS
     let userData = null
-    const { data: userByAuthUserId } = await supabaseAdmin
+    const { data: userByAuthUserId } = await getSupabaseAdmin()
       .from('users')
       .select('id, organization_id')
       .eq('auth_user_id', user.id)
@@ -39,7 +33,7 @@ export async function POST(request: NextRequest) {
     if (userByAuthUserId) {
       userData = userByAuthUserId
     } else {
-      const { data: userByAuthId } = await supabaseAdmin
+      const { data: userByAuthId } = await getSupabaseAdmin()
         .from('users')
         .select('id, organization_id')
         .eq('auth_id', user.id)
@@ -52,7 +46,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify leads exist and have phone numbers - use admin to bypass RLS
-    const { data: validLeads, error: leadsError } = await supabaseAdmin
+    const { data: validLeads, error: leadsError } = await getSupabaseAdmin()
       .from('leads')
       .select('id, phone')
       .in('id', lead_ids)
@@ -78,7 +72,7 @@ export async function POST(request: NextRequest) {
       added_at: new Date().toISOString(),
     }))
 
-    const { data: inserted, error: insertError } = await supabaseAdmin
+    const { data: inserted, error: insertError } = await getSupabaseAdmin()
       .from('turbo_call_queue')
       .upsert(queueItems, {
         onConflict: 'organization_id,lead_id',
@@ -92,7 +86,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get updated queue count
-    const { count } = await supabaseAdmin
+    const { count } = await getSupabaseAdmin()
       .from('turbo_call_queue')
       .select('*', { count: 'exact', head: true })
       .eq('organization_id', userData.organization_id)

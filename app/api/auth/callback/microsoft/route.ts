@@ -10,11 +10,13 @@ import {
   MICROSOFT_SCOPES,
 } from '@/lib/microsoft-auth'
 
-// Admin client for user creation (bypasses RLS)
-const supabaseAdmin = createAdminClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+// Lazy-loaded admin client for user creation (bypasses RLS)
+function getSupabaseAdmin() {
+  return createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 /**
  * GET /api/auth/callback/microsoft
@@ -57,14 +59,14 @@ export async function GET(request: NextRequest) {
     const domain = email.split('@')[1].toLowerCase()
 
     // Create or get organization
-    const { data: orgData } = await supabaseAdmin.rpc('get_or_create_organization', {
+    const { data: orgData } = await getSupabaseAdmin().rpc('get_or_create_organization', {
       p_domain: domain,
       p_name: domain,
     })
     const organizationId = orgData
 
     // Check if user exists in auth.users
-    const { data: existingAuthUsers } = await supabaseAdmin.auth.admin.listUsers()
+    const { data: existingAuthUsers } = await getSupabaseAdmin().auth.admin.listUsers()
     const existingAuthUser = existingAuthUsers?.users?.find((u) => u.email === email.toLowerCase())
 
     let authUserId: string
@@ -72,7 +74,7 @@ export async function GET(request: NextRequest) {
     if (existingAuthUser) {
       // Update existing user's metadata
       authUserId = existingAuthUser.id
-      await supabaseAdmin.auth.admin.updateUserById(authUserId, {
+      await getSupabaseAdmin().auth.admin.updateUserById(authUserId, {
         user_metadata: {
           full_name: profile.displayName,
           first_name: profile.givenName,
@@ -83,7 +85,7 @@ export async function GET(request: NextRequest) {
       })
     } else {
       // Create new auth user
-      const { data: newAuthUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+      const { data: newAuthUser, error: createError } = await getSupabaseAdmin().auth.admin.createUser({
         email: email.toLowerCase(),
         email_confirm: true, // Microsoft already verified the email
         user_metadata: {
@@ -104,7 +106,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if user exists in users table
-    const { data: existingUser } = await supabaseAdmin
+    const { data: existingUser } = await getSupabaseAdmin()
       .from('users')
       .select('id')
       .eq('auth_id', authUserId)
@@ -115,7 +117,7 @@ export async function GET(request: NextRequest) {
     if (existingUser) {
       userId = existingUser.id
       // Update user with organization link
-      await supabaseAdmin
+      await getSupabaseAdmin()
         .from('users')
         .update({
           organization_id: organizationId,
@@ -126,7 +128,7 @@ export async function GET(request: NextRequest) {
         .eq('id', userId)
     } else {
       // Create new user in users table
-      const { data: newUser, error: insertError } = await supabaseAdmin
+      const { data: newUser, error: insertError } = await getSupabaseAdmin()
         .from('users')
         .insert({
           auth_id: authUserId,
@@ -151,7 +153,7 @@ export async function GET(request: NextRequest) {
 
     // Auto-assign extension for citadelgold.com users
     if (domain === 'citadelgold.com') {
-      const { data: extResult } = await supabaseAdmin.rpc('assign_user_extension', {
+      const { data: extResult } = await getSupabaseAdmin().rpc('assign_user_extension', {
         p_user_id: userId,
       })
       if (extResult) {
@@ -161,7 +163,7 @@ export async function GET(request: NextRequest) {
 
     // Store Microsoft OAuth tokens
     const expiresAt = calculateExpiresAt(tokens.expires_in)
-    const { error: tokenError } = await supabaseAdmin.from('microsoft_oauth_tokens').upsert(
+    const { error: tokenError } = await getSupabaseAdmin().from('microsoft_oauth_tokens').upsert(
       {
         user_id: userId,
         email: email.toLowerCase(),
@@ -183,7 +185,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Create email account for Microsoft
-    const { data: existingEmailAccount } = await supabaseAdmin
+    const { data: existingEmailAccount } = await getSupabaseAdmin()
       .from('email_accounts')
       .select('id')
       .eq('email_address', email.toLowerCase())
@@ -192,14 +194,14 @@ export async function GET(request: NextRequest) {
 
     if (!existingEmailAccount) {
       // Get the token ID we just created
-      const { data: tokenData } = await supabaseAdmin
+      const { data: tokenData } = await getSupabaseAdmin()
         .from('microsoft_oauth_tokens')
         .select('id')
         .eq('user_id', userId)
         .eq('email', email.toLowerCase())
         .single()
 
-      await supabaseAdmin.from('email_accounts').insert({
+      await getSupabaseAdmin().from('email_accounts').insert({
         email_address: email.toLowerCase(),
         display_name: profile.displayName,
         user_id: userId,
@@ -213,7 +215,7 @@ export async function GET(request: NextRequest) {
     // Create Supabase session for the user
     // We use a magic link approach by generating a one-time sign-in link
     const { data: sessionData, error: sessionError } =
-      await supabaseAdmin.auth.admin.generateLink({
+      await getSupabaseAdmin().auth.admin.generateLink({
         type: 'magiclink',
         email: email.toLowerCase(),
         options: {
