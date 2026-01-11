@@ -16,6 +16,7 @@ import {
   Bot,
   UserPlus,
   Users,
+  Inbox,
 } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 
@@ -174,6 +175,9 @@ export function LeadImportGroups() {
     if (group.file_name === 'individually-added') {
       return <UserPlus className="w-5 h-5 text-blue-400" />
     }
+    if (group.file_name === 'uncategorized') {
+      return <Inbox className="w-5 h-5 text-gray-400" />
+    }
     return <FileSpreadsheet className="w-5 h-5 text-yellow-400" />
   }
 
@@ -183,6 +187,9 @@ export function LeadImportGroups() {
     }
     if (group.file_name === 'individually-added') {
       return 'bg-blue-500/20'
+    }
+    if (group.file_name === 'uncategorized') {
+      return 'bg-gray-500/20'
     }
     return 'bg-yellow-500/20'
   }
@@ -285,19 +292,21 @@ export function LeadImportGroups() {
                     </span>
                   )}
 
-                  {/* Turbo toggle */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-400">Turbo</span>
-                    <Switch
-                      checked={group.is_turbo_enabled}
-                      onCheckedChange={(checked) => toggleTurbo(group.id, checked)}
-                      disabled={!!toggling[group.id] || group.lead_count === 0}
-                      aria-label={`Toggle turbo mode for ${group.name}`}
-                    />
-                    {toggling[group.id] && (
-                      <Loader2 className="w-4 h-4 animate-spin text-yellow-400" />
-                    )}
-                  </div>
+                  {/* Turbo toggle - hide for uncategorized virtual group */}
+                  {group.id !== 'uncategorized' && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-400">Turbo</span>
+                      <Switch
+                        checked={group.is_turbo_enabled}
+                        onCheckedChange={(checked) => toggleTurbo(group.id, checked)}
+                        disabled={!!toggling[group.id] || group.lead_count === 0}
+                        aria-label={`Toggle turbo mode for ${group.name}`}
+                      />
+                      {toggling[group.id] && (
+                        <Loader2 className="w-4 h-4 animate-spin text-yellow-400" />
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

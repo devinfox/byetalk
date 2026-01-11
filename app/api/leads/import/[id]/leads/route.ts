@@ -45,13 +45,21 @@ export async function GET(
     let allowedLeadIds: string[] | null = null
     if (!isAdmin) {
       // Get leads this user owns that have at least one connected call
-      const { data: connectedLeads } = await getSupabaseAdmin()
+      let connectedLeadsQuery = getSupabaseAdmin()
         .from('leads')
         .select('id')
-        .eq('import_job_id', id)
         .eq('owner_id', userData.id)
         .eq('is_deleted', false)
         .in('status', ['contacted', 'qualified', 'converted', 'lost'])
+
+      // Handle special 'uncategorized' group
+      if (id === 'uncategorized') {
+        connectedLeadsQuery = connectedLeadsQuery.is('import_job_id', null)
+      } else {
+        connectedLeadsQuery = connectedLeadsQuery.eq('import_job_id', id)
+      }
+
+      const { data: connectedLeads } = await connectedLeadsQuery
 
       allowedLeadIds = connectedLeads?.map(l => l.id) || []
 
@@ -80,9 +88,15 @@ export async function GET(
         created_at,
         owner:users!leads_owner_id_fkey(id, first_name, last_name)
       `, { count: 'exact' })
-      .eq('import_job_id', id)
       .eq('is_deleted', false)
       .order('created_at', { ascending: false })
+
+    // Handle special 'uncategorized' group (leads without import_job_id)
+    if (id === 'uncategorized') {
+      query = query.is('import_job_id', null)
+    } else {
+      query = query.eq('import_job_id', id)
+    }
 
     // For non-admins, filter to only their connected leads
     if (!isAdmin && allowedLeadIds) {

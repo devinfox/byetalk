@@ -100,6 +100,28 @@ export async function GET(request: NextRequest) {
       ? validGroups
       : validGroups.filter(g => g.lead_count > 0)
 
+    // For admins, also check for leads without an import_job_id (uncategorized)
+    if (isAdmin) {
+      const { count: uncategorizedCount } = await getSupabaseAdmin()
+        .from('leads')
+        .select('id', { count: 'exact', head: true })
+        .is('import_job_id', null)
+        .eq('is_deleted', false)
+
+      if (uncategorizedCount && uncategorizedCount > 0) {
+        filteredGroups.push({
+          id: 'uncategorized',
+          name: 'Uncategorized',
+          file_name: 'uncategorized',
+          is_system: true,
+          lead_count: uncategorizedCount,
+          queued_count: 0,
+          is_turbo_enabled: false,
+          created_at: new Date().toISOString(),
+        })
+      }
+    }
+
     // Sort: system groups first (if they exist), then by date
     filteredGroups.sort((a, b) => {
       if (a.is_system && !b.is_system) return -1
