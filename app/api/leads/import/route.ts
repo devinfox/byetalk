@@ -5,9 +5,41 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin'
 // Allow up to 5 minutes for large file uploads
 export const maxDuration = 300
 
+const BATCH_SIZE = 500 // Insert 500 rows at a time
+
+/**
+ * Parse a CSV line, handling quoted values
+ */
+function parseCSVLine(line: string): string[] {
+  const result: string[] = []
+  let current = ''
+  let inQuotes = false
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i]
+
+    if (char === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        current += '"'
+        i++
+      } else {
+        inQuotes = !inQuotes
+      }
+    } else if (char === ',' && !inQuotes) {
+      result.push(current.trim())
+      current = ''
+    } else {
+      current += char
+    }
+  }
+
+  result.push(current.trim())
+  return result
+}
+
 /**
  * POST /api/leads/import
- * Upload CSV and create import job - returns immediately, processes in background
+ * Upload CSV and process import inline
  */
 export async function POST(request: NextRequest) {
   try {
@@ -62,23 +94,10 @@ export async function POST(request: NextRequest) {
     }
 
     const totalRows = lines.length - 1 // Exclude header
+    const headers = parseCSVLine(lines[0])
+    const duplicateCheckFields = duplicateCheckFieldsStr.split(',').map(f => f.trim())
 
-    // Store CSV content in Supabase Storage for background processing
-    const csvFileName = `imports/${currentUser.id}/${Date.now()}_${file.name}`
-    const { error: uploadError } = await getSupabaseAdmin()
-      .storage
-      .from('documents')
-      .upload(csvFileName, content, {
-        contentType: 'text/csv',
-        upsert: true
-      })
-
-    if (uploadError) {
-      console.error('[Import] Error uploading CSV:', uploadError)
-      return NextResponse.json({ error: 'Failed to upload CSV file' }, { status: 500 })
-    }
-
-    // Create import job with 'pending' status
+    // Create import job
     const { data: importJob, error: createError } = await getSupabaseAdmin()
       .from('lead_import_jobs')
       .insert({
@@ -90,12 +109,11 @@ export async function POST(request: NextRequest) {
         default_owner_id: defaultOwnerId || null,
         default_campaign_id: defaultCampaignId || null,
         skip_duplicates: skipDuplicates,
-        duplicate_check_fields: duplicateCheckFieldsStr.split(',').map(f => f.trim()),
+        duplicate_check_fields: duplicateCheckFields,
         created_by: currentUser.id,
         organization_id: currentUser.organization_id,
-        status: 'pending',
-        // Store the storage path for background processing
-        storage_path: csvFileName,
+        status: 'processing',
+        started_at: new Date().toISOString(),
       })
       .select()
       .single()
@@ -105,23 +123,156 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create import job' }, { status: 500 })
     }
 
-    // Trigger background processing (fire and forget)
-    const baseUrl = request.nextUrl.origin
-    fetch(`${baseUrl}/api/leads/import/process`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ jobId: importJob.id }),
-    }).catch(err => {
-      console.error('[Import] Failed to trigger background processing:', err)
-    })
+    const jobId = importJob.id
+    let processedRows = 0
+    let successfulRows = 0
+    let failedRows = 0
+    let duplicateRows = 0
 
-    // Return immediately - processing happens in background
+    console.log(`[Import] Starting job ${jobId}: ${totalRows} rows`)
+
+    // Process in batches
+    for (let i = 1; i <= totalRows; i += BATCH_SIZE) {
+      const batchEnd = Math.min(i + BATCH_SIZE, totalRows + 1)
+      const batchLines = lines.slice(i, batchEnd)
+      const leadsToInsert: Record<string, unknown>[] = []
+
+      for (const line of batchLines) {
+        if (!line.trim()) {
+          processedRows++
+          continue
+        }
+
+        try {
+          const values = parseCSVLine(line)
+          const rowData: Record<string, string> = {}
+
+          // Map CSV values to headers
+          headers.forEach((header, idx) => {
+            rowData[header] = values[idx] || ''
+          })
+
+          // Map to lead fields
+          const lead: Record<string, unknown> = {
+            status: defaultStatus || 'new',
+            owner_id: defaultOwnerId || null,
+            campaign_id: defaultCampaignId || null,
+            import_job_id: jobId,
+          }
+
+          Object.entries(fieldMapping).forEach(([csvCol, leadField]) => {
+            if (leadField && rowData[csvCol] !== undefined) {
+              let value = rowData[csvCol].trim()
+
+              // Clean phone numbers
+              if (leadField === 'phone' || leadField === 'phone_secondary') {
+                value = value.replace(/\D/g, '').slice(-10)
+                if (value.length === 10) {
+                  lead[leadField] = value
+                }
+              } else if (value) {
+                lead[leadField] = value
+              }
+            }
+          })
+
+          // Check for required data
+          const hasName = lead.first_name || lead.last_name
+          const hasContact = lead.phone || lead.email
+
+          if (!hasName && !hasContact) {
+            failedRows++
+            processedRows++
+            continue
+          }
+
+          // Check for duplicates
+          if (skipDuplicates && duplicateCheckFields.length > 0) {
+            const duplicateConditions: string[] = []
+
+            for (const field of duplicateCheckFields) {
+              if (lead[field]) {
+                duplicateConditions.push(`${field}.eq.${lead[field]}`)
+              }
+            }
+
+            if (duplicateConditions.length > 0) {
+              const { data: existing } = await getSupabaseAdmin()
+                .from('leads')
+                .select('id')
+                .or(duplicateConditions.join(','))
+                .eq('is_deleted', false)
+                .limit(1)
+
+              if (existing && existing.length > 0) {
+                duplicateRows++
+                processedRows++
+                continue
+              }
+            }
+          }
+
+          leadsToInsert.push(lead)
+        } catch (err) {
+          console.error('[Import] Row parse error:', err)
+          failedRows++
+          processedRows++
+        }
+      }
+
+      // Bulk insert this batch
+      if (leadsToInsert.length > 0) {
+        const { error: insertError } = await getSupabaseAdmin()
+          .from('leads')
+          .insert(leadsToInsert)
+
+        if (insertError) {
+          console.error('[Import] Batch insert error:', insertError)
+          failedRows += leadsToInsert.length
+        } else {
+          successfulRows += leadsToInsert.length
+        }
+        processedRows += leadsToInsert.length
+      }
+
+      // Update progress
+      await getSupabaseAdmin()
+        .from('lead_import_jobs')
+        .update({
+          processed_rows: processedRows,
+          successful_rows: successfulRows,
+          failed_rows: failedRows,
+          duplicate_rows: duplicateRows,
+        })
+        .eq('id', jobId)
+    }
+
+    // Mark job as completed
+    const finalStatus = failedRows > 0 && successfulRows === 0 ? 'failed' : 'completed'
+    await getSupabaseAdmin()
+      .from('lead_import_jobs')
+      .update({
+        status: finalStatus,
+        processed_rows: processedRows,
+        successful_rows: successfulRows,
+        failed_rows: failedRows,
+        duplicate_rows: duplicateRows,
+        completed_at: new Date().toISOString(),
+      })
+      .eq('id', jobId)
+
+    console.log(`[Import] Job ${jobId}: Completed - ${successfulRows} successful, ${failedRows} failed, ${duplicateRows} duplicates`)
+
     return NextResponse.json({
       success: true,
-      importJobId: importJob.id,
+      importJobId: jobId,
       totalRows,
-      message: 'Import started. You can close this page - we\'ll process your leads in the background.',
-      status: 'pending',
+      processedRows,
+      successfulRows,
+      failedRows,
+      duplicateRows,
+      status: finalStatus,
+      message: `Import completed: ${successfulRows} leads imported${duplicateRows > 0 ? `, ${duplicateRows} duplicates skipped` : ''}${failedRows > 0 ? `, ${failedRows} failed` : ''}`,
     })
   } catch (error) {
     console.error('[Import] Error:', error)

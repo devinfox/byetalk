@@ -460,12 +460,17 @@ export function ImportLeadsModal({ onClose, users, campaigns, currentUserId }: I
             </div>
           )}
 
-          {/* Step 4: Importing (initial upload) */}
+          {/* Step 4: Importing */}
           {step === 'importing' && (
             <div className="flex flex-col items-center justify-center py-12">
               <Loader2 className="w-16 h-16 text-yellow-400 animate-spin mb-6" />
-              <p className="text-white text-lg mb-2">Uploading file...</p>
-              <p className="text-gray-400 text-sm">Please wait while we prepare your import</p>
+              <p className="text-white text-lg mb-2">Importing leads...</p>
+              <p className="text-gray-400 text-sm mb-4">This may take a minute for large files</p>
+              {preview && (
+                <p className="text-gray-500 text-xs">
+                  Processing {preview.totalRows.toLocaleString()} rows
+                </p>
+              )}
             </div>
           )}
 
