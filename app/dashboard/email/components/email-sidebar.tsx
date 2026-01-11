@@ -170,13 +170,32 @@ export function EmailSidebar({ userId }: EmailSidebarProps) {
   }
 
   const loadFolderCounts = async (accountIds: string[]) => {
-    if (accountIds.length === 0) return
+    if (accountIds.length === 0) {
+      setFolderCounts({})
+      return
+    }
 
     const supabase = createClient()
+
+    // Double-check that we only query accounts belonging to this user
+    const { data: verifiedAccounts } = await supabase
+      .from('email_accounts')
+      .select('id')
+      .in('id', accountIds)
+      .eq('user_id', userId)
+      .eq('is_deleted', false)
+
+    const verifiedAccountIds = verifiedAccounts?.map(a => a.id) || []
+
+    if (verifiedAccountIds.length === 0) {
+      setFolderCounts({})
+      return
+    }
+
     const { data } = await supabase
       .from('email_threads')
       .select('folder, is_read')
-      .in('email_account_id', accountIds)
+      .in('email_account_id', verifiedAccountIds)
       .eq('is_deleted', false)
 
     if (data) {
