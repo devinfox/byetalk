@@ -17,6 +17,7 @@ import {
   UserPlus,
   Users,
   Inbox,
+  Trash2,
 } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 
@@ -61,6 +62,10 @@ export function LeadImportGroups() {
   const [groupLeads, setGroupLeads] = useState<Record<string, LeadsResponse>>({})
   const [groupSearches, setGroupSearches] = useState<Record<string, string>>({})
   const [loadingLeads, setLoadingLeads] = useState<Record<string, boolean>>({})
+
+  // Delete state
+  const [deletingGroup, setDeletingGroup] = useState<string | null>(null)
+  const [deletingLead, setDeletingLead] = useState<string | null>(null)
 
   const fetchGroups = useCallback(async () => {
     try {
@@ -157,6 +162,65 @@ export function LeadImportGroups() {
         delete next[groupId]
         return next
       })
+    }
+  }
+
+  const deleteGroup = async (groupId: string, groupName: string) => {
+    if (!confirm(`Are you sure you want to delete "${groupName}" and all its leads? This cannot be undone.`)) {
+      return
+    }
+
+    setDeletingGroup(groupId)
+    try {
+      const response = await fetch(`/api/leads/groups/${groupId}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        alert(data.error || 'Failed to delete group')
+        return
+      }
+
+      // Remove from local state
+      setGroups(prev => prev.filter(g => g.id !== groupId))
+      setExpandedGroup(null)
+    } catch (error) {
+      console.error('Error deleting group:', error)
+      alert('Failed to delete group')
+    } finally {
+      setDeletingGroup(null)
+    }
+  }
+
+  const deleteLead = async (groupId: string, leadId: string) => {
+    if (!confirm('Are you sure you want to delete this lead? This cannot be undone.')) {
+      return
+    }
+
+    setDeletingLead(leadId)
+    try {
+      const response = await fetch(`/api/leads/${leadId}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        alert(data.error || 'Failed to delete lead')
+        return
+      }
+
+      // Refresh leads for this group
+      await fetchLeads(groupId, groupLeads[groupId]?.page || 1, groupSearches[groupId] || '')
+      // Update group count
+      setGroups(prev => prev.map(g =>
+        g.id === groupId ? { ...g, lead_count: g.lead_count - 1 } : g
+      ))
+    } catch (error) {
+      console.error('Error deleting lead:', error)
+      alert('Failed to delete lead')
+    } finally {
+      setDeletingLead(null)
     }
   }
 
@@ -292,8 +356,8 @@ export function LeadImportGroups() {
                     </span>
                   )}
 
-                  {/* Turbo toggle - hide for uncategorized virtual group */}
-                  {group.id !== 'uncategorized' && (
+                  {/* Turbo toggle - hide for uncategorized and system virtual groups */}
+                  {group.id !== 'uncategorized' && !group.is_system && (
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-gray-400">Turbo</span>
                       <Switch
@@ -306,6 +370,25 @@ export function LeadImportGroups() {
                         <Loader2 className="w-4 h-4 animate-spin text-yellow-400" />
                       )}
                     </div>
+                  )}
+
+                  {/* Delete button - hide for system groups */}
+                  {!group.is_system && group.id !== 'uncategorized' && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        deleteGroup(group.id, group.name)
+                      }}
+                      disabled={deletingGroup === group.id}
+                      className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
+                      title="Delete group and all leads"
+                    >
+                      {deletingGroup === group.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4" />
+                      )}
+                    </button>
                   )}
                 </div>
               )}
@@ -345,6 +428,9 @@ export function LeadImportGroups() {
                             <th className="px-4 py-3 text-left text-xs text-gray-400 uppercase tracking-wide">Status</th>
                             {isAdmin && (
                               <th className="px-4 py-3 text-left text-xs text-gray-400 uppercase tracking-wide">Owner</th>
+                            )}
+                            {isAdmin && (
+                              <th className="px-4 py-3 text-right text-xs text-gray-400 uppercase tracking-wide w-16"></th>
                             )}
                           </tr>
                         </thead>
@@ -399,6 +485,22 @@ export function LeadImportGroups() {
                                   ) : (
                                     <span className="text-gray-600 text-sm">Unassigned</span>
                                   )}
+                                </td>
+                              )}
+                              {isAdmin && (
+                                <td className="px-4 py-3 text-right">
+                                  <button
+                                    onClick={() => deleteLead(group.id, lead.id)}
+                                    disabled={deletingLead === lead.id}
+                                    className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors disabled:opacity-50"
+                                    title="Delete lead"
+                                  >
+                                    {deletingLead === lead.id ? (
+                                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    ) : (
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    )}
+                                  </button>
                                 </td>
                               )}
                             </tr>

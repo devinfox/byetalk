@@ -232,6 +232,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData()
     const file = formData.get('file') as File | null
     const fieldMappingStr = formData.get('fieldMapping') as string | null
+    const listName = formData.get('listName') as string || ''
     const defaultStatus = formData.get('defaultStatus') as string || 'new'
     const defaultOwnerId = formData.get('defaultOwnerId') as string || null
     const defaultCampaignId = formData.get('defaultCampaignId') as string || null
@@ -270,6 +271,7 @@ export async function POST(request: NextRequest) {
       .from('lead_import_jobs')
       .insert({
         file_name: file.name,
+        display_name: listName || null, // Use custom name if provided
         file_size: file.size,
         total_rows: totalRows,
         field_mapping: fieldMapping,

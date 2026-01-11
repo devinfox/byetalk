@@ -89,14 +89,40 @@ export async function GET(request: NextRequest) {
 
           const { count } = await leadCountQuery
 
+          // Get turbo queue count for this group (for admins)
+          let queuedCount = 0
+          let isTurboEnabled = false
+          if (isAdmin) {
+            // Get lead IDs for this job
+            const { data: jobLeads } = await getSupabaseAdmin()
+              .from('leads')
+              .select('id')
+              .eq('import_job_id', job.id)
+              .eq('is_deleted', false)
+              .not('phone', 'is', null)
+
+            const leadIds = jobLeads?.map(l => l.id) || []
+
+            if (leadIds.length > 0) {
+              const { count: turboCount } = await getSupabaseAdmin()
+                .from('turbo_call_queue')
+                .select('*', { count: 'exact', head: true })
+                .eq('status', 'queued')
+                .in('lead_id', leadIds)
+
+              queuedCount = turboCount || 0
+              isTurboEnabled = queuedCount > 0
+            }
+          }
+
           return {
             id: job.id,
             name: job.display_name || job.file_name?.replace(/\.csv$/i, '') || 'Unnamed',
             file_name: job.file_name || '',
             is_system: job.is_system || false,
             lead_count: count || 0,
-            queued_count: 0, // Skip turbo queue for now to speed up
-            is_turbo_enabled: false,
+            queued_count: queuedCount,
+            is_turbo_enabled: isTurboEnabled,
             created_at: job.created_at,
           }
         } catch (err) {

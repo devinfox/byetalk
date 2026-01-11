@@ -15,12 +15,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get user and check if admin/manager
-    const { data: userData } = await getSupabaseAdmin()
+    // Get user and check if admin/manager - try auth_user_id first, then fall back to auth_id
+    let userData = null
+    const { data: userByAuthUserId } = await getSupabaseAdmin()
       .from('users')
       .select('id, role, organization_id')
-      .or(`auth_user_id.eq.${user.id},auth_id.eq.${user.id}`)
+      .eq('auth_user_id', user.id)
       .single()
+
+    if (userByAuthUserId) {
+      userData = userByAuthUserId
+    } else {
+      const { data: userByAuthId } = await getSupabaseAdmin()
+        .from('users')
+        .select('id, role, organization_id')
+        .eq('auth_id', user.id)
+        .single()
+      userData = userByAuthId
+    }
 
     if (!userData) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
@@ -108,12 +120,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get user and check if admin/manager
-    const { data: userData } = await getSupabaseAdmin()
+    // Get user and check if admin/manager - try auth_user_id first, then fall back to auth_id
+    let userData = null
+    const { data: userByAuthUserId } = await getSupabaseAdmin()
       .from('users')
       .select('id, role, organization_id')
-      .or(`auth_user_id.eq.${user.id},auth_id.eq.${user.id}`)
+      .eq('auth_user_id', user.id)
       .single()
+
+    if (userByAuthUserId) {
+      userData = userByAuthUserId
+    } else {
+      const { data: userByAuthId } = await getSupabaseAdmin()
+        .from('users')
+        .select('id, role, organization_id')
+        .eq('auth_id', user.id)
+        .single()
+      userData = userByAuthId
+    }
 
     if (!userData) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
@@ -195,12 +219,24 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get user and check if admin/manager
-    const { data: userData } = await getSupabaseAdmin()
+    // Get user and check if admin/manager - try auth_user_id first, then fall back to auth_id
+    let userData = null
+    const { data: userByAuthUserId } = await getSupabaseAdmin()
       .from('users')
       .select('id, role, organization_id')
-      .or(`auth_user_id.eq.${user.id},auth_id.eq.${user.id}`)
+      .eq('auth_user_id', user.id)
       .single()
+
+    if (userByAuthUserId) {
+      userData = userByAuthUserId
+    } else {
+      const { data: userByAuthId } = await getSupabaseAdmin()
+        .from('users')
+        .select('id, role, organization_id')
+        .eq('auth_id', user.id)
+        .single()
+      userData = userByAuthId
+    }
 
     if (!userData) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
