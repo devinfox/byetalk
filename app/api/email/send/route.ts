@@ -2,12 +2,18 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createServerClient } from '@/lib/supabase-server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { sendEmail as sendSendgridEmail } from '@/lib/sendgrid'
-import { sendEmail as sendMicrosoftEmail } from '@/lib/microsoft-graph'
+import { sendEmail as sendMicrosoftEmail, sendEmailWithLargeAttachments } from '@/lib/microsoft-graph'
 import { getValidAccessToken } from '@/lib/microsoft-auth'
 import { generateMessageId, parseEmailAddress, generateSnippet, stripHtml } from '@/lib/email-utils'
 import { EmailParticipant } from '@/types/email.types'
 import { v4 as uuidv4 } from 'uuid'
 import { processEmailForAI } from '@/lib/email-ai'
+
+// For Next.js App Router, the body size limit is configured differently
+// The default limit is 4MB. For larger attachments, we handle chunked uploads.
+
+// Max size for inline attachments in Microsoft Graph (3MB)
+const MS_GRAPH_INLINE_ATTACHMENT_LIMIT = 3 * 1024 * 1024
 
 // POST /api/email/send - Send an email
 export async function POST(request: NextRequest) {
@@ -278,16 +284,14 @@ export async function POST(request: NextRequest) {
           }
         )
 
-        // Prepare Microsoft Graph attachments
-        const msAttachments = attachments?.map((att: any) => ({
-          '@odata.type': '#microsoft.graph.fileAttachment',
-          name: att.filename,
-          contentType: att.content_type || 'application/octet-stream',
-          contentBytes: att.content, // base64 encoded
-        }))
+        // Check if any attachment exceeds the inline limit
+        const hasLargeAttachments = attachments?.some((att: any) => {
+          // Base64 encoded size is roughly 4/3 of original size
+          const estimatedSize = att.content ? (att.content.length * 3) / 4 : 0
+          return estimatedSize > MS_GRAPH_INLINE_ATTACHMENT_LIMIT
+        })
 
-        // Send via Microsoft Graph
-        await sendMicrosoftEmail(accessToken, {
+        const messageData = {
           to: toRecipients.map(r => ({
             emailAddress: { address: r.email, name: r.name || undefined }
           })),
@@ -299,11 +303,35 @@ export async function POST(request: NextRequest) {
           })) : undefined,
           subject: subject || '',
           body: {
-            contentType: body_html ? 'html' : 'text',
+            contentType: (body_html ? 'html' : 'text') as 'html' | 'text',
             content: body_html || body_text || '',
           },
-          attachments: msAttachments,
-        })
+        }
+
+        if (hasLargeAttachments && attachments?.length > 0) {
+          // Use upload session for large attachments
+          console.log('[Email Send] Using upload session for large attachments')
+          await sendEmailWithLargeAttachments(accessToken, messageData, attachments.map((att: any) => ({
+            name: att.filename,
+            contentType: att.content_type || 'application/octet-stream',
+            contentBytes: att.content,
+            size: att.size || Math.ceil((att.content?.length || 0) * 3 / 4),
+          })))
+        } else {
+          // Prepare Microsoft Graph attachments for inline sending
+          const msAttachments = attachments?.map((att: any) => ({
+            '@odata.type': '#microsoft.graph.fileAttachment',
+            name: att.filename,
+            contentType: att.content_type || 'application/octet-stream',
+            contentBytes: att.content, // base64 encoded
+          }))
+
+          // Send via Microsoft Graph
+          await sendMicrosoftEmail(accessToken, {
+            ...messageData,
+            attachments: msAttachments,
+          })
+        }
 
         // Update email status to sent
         await getSupabaseAdmin()

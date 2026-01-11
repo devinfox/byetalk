@@ -143,6 +143,57 @@ export async function POST(request: NextRequest) {
       // Outbound call from browser
       console.log('[Twilio Voice] Handling outbound call to:', to)
 
+      // Store the actual CallSid for outbound calls so the client can retrieve it
+      // Extract user ID from the client identity (format: FirstName_LastName_userId8chars)
+      if (supabase && from?.startsWith('client:')) {
+        const clientIdentity = from.replace('client:', '')
+        const parts = clientIdentity.split('_')
+        if (parts.length >= 3) {
+          const userIdPrefix = parts[parts.length - 1]
+          const cleanedTo = to.replace(/\D/g, '').slice(-10)
+
+          // Find the user by their ID prefix and update their most recent call
+          supabase
+            .from('users')
+            .select('id')
+            .ilike('id', `${userIdPrefix}%`)
+            .single()
+            .then(async ({ data: userData, error: userError }) => {
+              if (userError || !userData) {
+                console.error('[Twilio Voice] Could not find user for identity:', clientIdentity)
+                return
+              }
+
+              // Find the most recent call from this user without a call_sid
+              const { data: callData } = await supabase
+                .from('calls')
+                .select('id')
+                .is('call_sid', null)
+                .eq('direction', 'outbound')
+                .eq('user_id', userData.id)
+                .ilike('to_number', `%${cleanedTo}`)
+                .order('started_at', { ascending: false })
+                .limit(1)
+                .single()
+
+              if (callData) {
+                const { error: updateError } = await supabase
+                  .from('calls')
+                  .update({ call_sid: callSid })
+                  .eq('id', callData.id)
+
+                if (updateError) {
+                  console.error('[Twilio Voice] Error updating call with CallSid:', updateError)
+                } else {
+                  console.log('[Twilio Voice] Updated call record with CallSid:', callSid)
+                }
+              } else {
+                console.log('[Twilio Voice] No matching call record found to update')
+              }
+            })
+        }
+      }
+
       // Clean the phone number - handle various formats
       let cleanedNumber = to.replace(/\D/g, '') // Remove non-digits
 

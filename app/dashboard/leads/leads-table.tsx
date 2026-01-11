@@ -15,6 +15,10 @@ import {
   Search,
   Filter,
   Zap,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import { Switch } from '@/components/ui/switch'
@@ -30,6 +34,9 @@ interface LeadsTableProps {
   users: Pick<User, 'id' | 'first_name' | 'last_name' | 'role'>[]
   campaigns: Pick<Campaign, 'id' | 'name' | 'code'>[]
   currentUser: User | null
+  currentPage: number
+  totalPages: number
+  totalCount: number
 }
 
 const statusColors: Record<string, string> = {
@@ -41,7 +48,7 @@ const statusColors: Record<string, string> = {
   dead: 'bg-red-500/10 text-red-400 border-red-500/20',
 }
 
-export function LeadsTable({ leads, users, campaigns, currentUser }: LeadsTableProps) {
+export function LeadsTable({ leads, users, campaigns, currentUser, currentPage, totalPages, totalCount }: LeadsTableProps) {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -52,6 +59,43 @@ export function LeadsTable({ leads, users, campaigns, currentUser }: LeadsTableP
   // Turbo mode queue state - using Record for reliable React state updates
   const [turboQueueLeadIds, setTurboQueueLeadIds] = useState<Record<string, boolean>>({})
   const [turboLoading, setTurboLoading] = useState<Record<string, boolean>>({})
+
+  // Handle search with debounce
+  const handleSearch = (value: string) => {
+    setSearchQuery(value)
+    // Debounce the URL update
+    const timeoutId = setTimeout(() => {
+      const params = new URLSearchParams(window.location.search)
+      if (value) {
+        params.set('search', value)
+      } else {
+        params.delete('search')
+      }
+      params.set('page', '1')
+      router.push(`/dashboard/leads?${params.toString()}`)
+    }, 300)
+    return () => clearTimeout(timeoutId)
+  }
+
+  // Handle status filter
+  const handleStatusFilter = (status: string) => {
+    setStatusFilter(status)
+    const params = new URLSearchParams(window.location.search)
+    if (status !== 'all') {
+      params.set('status', status)
+    } else {
+      params.delete('status')
+    }
+    params.set('page', '1')
+    router.push(`/dashboard/leads?${params.toString()}`)
+  }
+
+  // Handle pagination
+  const goToPage = (page: number) => {
+    const params = new URLSearchParams(window.location.search)
+    params.set('page', page.toString())
+    router.push(`/dashboard/leads?${params.toString()}`)
+  }
 
   // Fetch turbo queue status
   const fetchTurboQueue = useCallback(async () => {
@@ -124,18 +168,8 @@ export function LeadsTable({ leads, users, campaigns, currentUser }: LeadsTableP
     }
   }
 
-  // Filter leads
-  const filteredLeads = leads.filter(lead => {
-    const matchesSearch =
-      searchQuery === '' ||
-      `${lead.first_name} ${lead.last_name}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      lead.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      lead.phone?.includes(searchQuery)
-
-    const matchesStatus = statusFilter === 'all' || lead.status === statusFilter
-
-    return matchesSearch && matchesStatus
-  })
+  // Use leads directly (server-side filtered)
+  const filteredLeads = leads
 
   const handleAssign = async (leadId: string, userId: string) => {
     const supabase = createClient()
@@ -207,7 +241,7 @@ export function LeadsTable({ leads, users, campaigns, currentUser }: LeadsTableP
               type="text"
               placeholder="Search leads..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => handleSearch(e.target.value)}
               className="glass-input w-full pl-10 pr-4"
             />
           </div>
@@ -215,7 +249,7 @@ export function LeadsTable({ leads, users, campaigns, currentUser }: LeadsTableP
             <Filter className="w-4 h-4 text-yellow-400" />
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => handleStatusFilter(e.target.value)}
               className="glass-select"
             >
               <option value="all">All Status</option>
@@ -440,6 +474,80 @@ export function LeadsTable({ leads, users, campaigns, currentUser }: LeadsTableP
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="p-4 border-t border-white/10 flex items-center justify-between">
+            <div className="text-sm text-gray-400">
+              Showing {((currentPage - 1) * 25) + 1} to {Math.min(currentPage * 25, totalCount)} of {totalCount.toLocaleString()} leads
+            </div>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => goToPage(1)}
+                disabled={currentPage === 1}
+                className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                title="First page"
+              >
+                <ChevronsLeft className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => goToPage(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                title="Previous page"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              <div className="flex items-center gap-1 px-2">
+                {/* Page numbers */}
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum: number
+                  if (totalPages <= 5) {
+                    pageNum = i + 1
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i
+                  } else {
+                    pageNum = currentPage - 2 + i
+                  }
+
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => goToPage(pageNum)}
+                      className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
+                        currentPage === pageNum
+                          ? 'bg-yellow-500 text-black'
+                          : 'text-gray-400 hover:text-white hover:bg-white/10'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  )
+                })}
+              </div>
+
+              <button
+                onClick={() => goToPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                title="Next page"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => goToPage(totalPages)}
+                disabled={currentPage === totalPages}
+                className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                title="Last page"
+              >
+                <ChevronsRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Edit Modal */}

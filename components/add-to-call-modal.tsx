@@ -55,7 +55,12 @@ export function AddToCallModal({
   }
 
   const handleAddColleague = async (colleague: Colleague) => {
-    if (!callSid || adding) return
+    if (adding) return
+
+    if (!callSid) {
+      setError('Call is still connecting. Please wait a moment and try again.')
+      return
+    }
 
     setAdding(colleague.id)
     setError(null)

@@ -1,11 +1,21 @@
 import { createClient, getCurrentUser } from '@/lib/supabase-server'
 import { LeadsTable } from './leads-table'
-import { CreateLeadButton } from './create-lead-button'
+import { LeadsHeader } from './leads-header'
 import { Users, UserPlus, Phone, CheckCircle, ArrowRight } from 'lucide-react'
 
-export default async function LeadsPage() {
+const LEADS_PER_PAGE = 25
+
+export default async function LeadsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string; status?: string; search?: string }>
+}) {
+  const params = await searchParams
   const supabase = await createClient()
   const user = await getCurrentUser()
+  const currentPage = parseInt(params.page || '1')
+  const statusFilter = params.status || 'all'
+  const searchQuery = params.search || ''
 
   // Build query based on user role
   let query = supabase
@@ -14,7 +24,7 @@ export default async function LeadsPage() {
       *,
       owner:users!leads_owner_id_fkey(id, first_name, last_name),
       campaign:campaigns(id, name, code)
-    `)
+    `, { count: 'exact' })
     .eq('is_deleted', false)
     .order('created_at', { ascending: false })
 
@@ -23,7 +33,21 @@ export default async function LeadsPage() {
     query = query.eq('owner_id', user.id)
   }
 
-  const { data: leads, error } = await query.limit(100)
+  // Apply status filter
+  if (statusFilter !== 'all') {
+    query = query.eq('status', statusFilter)
+  }
+
+  // Apply search filter
+  if (searchQuery) {
+    query = query.or(`first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`)
+  }
+
+  // Pagination
+  const offset = (currentPage - 1) * LEADS_PER_PAGE
+  const { data: leads, error, count } = await query.range(offset, offset + LEADS_PER_PAGE - 1)
+
+  const totalPages = Math.ceil((count || 0) / LEADS_PER_PAGE)
 
   // Get users for assignment dropdown
   const { data: users } = await supabase
@@ -59,15 +83,11 @@ export default async function LeadsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-light text-white tracking-wide">
-            MANAGE <span className="text-gold-gradient font-semibold">LEADS</span>
-          </h1>
-          <p className="text-gray-400 mt-1">Track and convert your prospects</p>
-        </div>
-        <CreateLeadButton users={users || []} campaigns={campaigns || []} currentUserId={user?.id} />
-      </div>
+      <LeadsHeader
+        users={users || []}
+        campaigns={campaigns || []}
+        currentUserId={user?.id}
+      />
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -84,6 +104,9 @@ export default async function LeadsPage() {
         users={users || []}
         campaigns={campaigns || []}
         currentUser={user}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalCount={count || 0}
       />
     </div>
   )

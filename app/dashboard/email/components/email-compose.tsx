@@ -254,11 +254,53 @@ export function EmailCompose({
     emails.forEach(email => addRecipient(type, email))
   }
 
+  // Max total attachment size (25MB for most email providers)
+  const MAX_TOTAL_SIZE = 25 * 1024 * 1024
+  const MAX_SINGLE_FILE_SIZE = 25 * 1024 * 1024
+
+  const getTotalAttachmentSize = () => {
+    return attachments.reduce((total, file) => total + file.size, 0)
+  }
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + ' B'
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
+  }
+
   const handleAttachment = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
-    if (files) {
-      setAttachments([...attachments, ...Array.from(files)])
+    if (!files) return
+
+    const newFiles = Array.from(files)
+    const currentSize = getTotalAttachmentSize()
+    let addedSize = 0
+    const validFiles: File[] = []
+    const errors: string[] = []
+
+    for (const file of newFiles) {
+      if (file.size > MAX_SINGLE_FILE_SIZE) {
+        errors.push(`"${file.name}" exceeds 25MB limit`)
+        continue
+      }
+      if (currentSize + addedSize + file.size > MAX_TOTAL_SIZE) {
+        errors.push(`Adding "${file.name}" would exceed 25MB total limit`)
+        continue
+      }
+      validFiles.push(file)
+      addedSize += file.size
     }
+
+    if (errors.length > 0) {
+      setError(errors.join('. '))
+    }
+
+    if (validFiles.length > 0) {
+      setAttachments([...attachments, ...validFiles])
+    }
+
+    // Reset the input so the same file can be selected again
+    e.target.value = ''
   }
 
   const removeAttachment = (index: number) => {
@@ -712,6 +754,14 @@ export function EmailCompose({
       {/* Attachments */}
       {attachments.length > 0 && (
         <div className="px-4 py-2 border-t border-white/10">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs text-gray-400">
+              {attachments.length} attachment{attachments.length > 1 ? 's' : ''} ({formatFileSize(getTotalAttachmentSize())})
+            </span>
+            <span className="text-xs text-gray-500">
+              Max 25MB total
+            </span>
+          </div>
           <div className="flex flex-wrap gap-2">
             {attachments.map((file, index) => (
               <div
@@ -721,7 +771,7 @@ export function EmailCompose({
                 <Paperclip className="w-4 h-4 text-gray-400" />
                 <span className="text-white truncate max-w-[150px]">{file.name}</span>
                 <span className="text-gray-500 text-xs">
-                  {(file.size / 1024).toFixed(0)}KB
+                  {formatFileSize(file.size)}
                 </span>
                 <button
                   onClick={() => removeAttachment(index)}

@@ -254,6 +254,165 @@ export async function sendEmail(
 }
 
 /**
+ * Send an email with large attachments using upload sessions
+ * This is required for attachments over 3MB
+ */
+export async function sendEmailWithLargeAttachments(
+  accessToken: string,
+  message: {
+    to: GraphRecipient[]
+    cc?: GraphRecipient[]
+    bcc?: GraphRecipient[]
+    subject: string
+    body: GraphItemBody
+  },
+  attachments: Array<{
+    name: string
+    contentType: string
+    contentBytes: string // base64 encoded
+    size: number
+  }>
+): Promise<void> {
+  // Step 1: Create a draft message
+  const draftResponse = await fetch(`${GRAPH_BASE_URL}/me/messages`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      subject: message.subject,
+      body: message.body,
+      toRecipients: message.to,
+      ccRecipients: message.cc || [],
+      bccRecipients: message.bcc || [],
+    }),
+  })
+
+  if (!draftResponse.ok) {
+    const error = await draftResponse.json()
+    throw new Error(error.error?.message || 'Failed to create draft message')
+  }
+
+  const draft = await draftResponse.json()
+  const messageId = draft.id
+
+  try {
+    // Step 2: Upload each attachment
+    for (const attachment of attachments) {
+      const fileBytes = Buffer.from(attachment.contentBytes, 'base64')
+      const fileSize = fileBytes.length
+
+      if (fileSize <= 3 * 1024 * 1024) {
+        // Small attachment - add directly
+        const addAttResponse = await fetch(
+          `${GRAPH_BASE_URL}/me/messages/${messageId}/attachments`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              '@odata.type': '#microsoft.graph.fileAttachment',
+              name: attachment.name,
+              contentType: attachment.contentType,
+              contentBytes: attachment.contentBytes,
+            }),
+          }
+        )
+
+        if (!addAttResponse.ok) {
+          const error = await addAttResponse.json()
+          throw new Error(error.error?.message || `Failed to add attachment: ${attachment.name}`)
+        }
+      } else {
+        // Large attachment - use upload session
+        // Step 2a: Create upload session
+        const sessionResponse = await fetch(
+          `${GRAPH_BASE_URL}/me/messages/${messageId}/attachments/createUploadSession`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              AttachmentItem: {
+                attachmentType: 'file',
+                name: attachment.name,
+                size: fileSize,
+                contentType: attachment.contentType,
+              },
+            }),
+          }
+        )
+
+        if (!sessionResponse.ok) {
+          const error = await sessionResponse.json()
+          throw new Error(error.error?.message || `Failed to create upload session for: ${attachment.name}`)
+        }
+
+        const session = await sessionResponse.json()
+        const uploadUrl = session.uploadUrl
+
+        // Step 2b: Upload file in chunks (4MB chunks)
+        const chunkSize = 4 * 1024 * 1024 // 4MB
+        let offset = 0
+
+        while (offset < fileSize) {
+          const end = Math.min(offset + chunkSize, fileSize)
+          const chunk = fileBytes.slice(offset, end)
+
+          const uploadResponse = await fetch(uploadUrl, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/octet-stream',
+              'Content-Length': chunk.length.toString(),
+              'Content-Range': `bytes ${offset}-${end - 1}/${fileSize}`,
+            },
+            body: chunk,
+          })
+
+          if (!uploadResponse.ok && uploadResponse.status !== 201 && uploadResponse.status !== 200) {
+            const error = await uploadResponse.text()
+            throw new Error(`Failed to upload chunk for: ${attachment.name}. Error: ${error}`)
+          }
+
+          offset = end
+        }
+      }
+    }
+
+    // Step 3: Send the message
+    const sendResponse = await fetch(`${GRAPH_BASE_URL}/me/messages/${messageId}/send`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+
+    if (!sendResponse.ok) {
+      const error = await sendResponse.json()
+      throw new Error(error.error?.message || 'Failed to send email with attachments')
+    }
+  } catch (error) {
+    // Clean up: delete the draft if sending failed
+    try {
+      await fetch(`${GRAPH_BASE_URL}/me/messages/${messageId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      })
+    } catch {
+      // Ignore cleanup errors
+    }
+    throw error
+  }
+}
+
+/**
  * Reply to an email
  */
 export async function replyToEmail(

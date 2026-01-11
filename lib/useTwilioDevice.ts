@@ -218,10 +218,39 @@ export function useTwilioDevice(): UseTwilioDeviceReturn {
       // Set up call event listeners
       outgoingCall.on('ringing', () => {
         setStatus('ringing')
+        // Try to get CallSid during ringing if not already set
+        const ringingSid = outgoingCall.parameters?.CallSid || null
+        if (ringingSid) {
+          console.log('[Twilio] Call ringing, CallSid:', ringingSid)
+          setCallSid(ringingSid)
+        }
       })
 
-      outgoingCall.on('accept', () => {
+      outgoingCall.on('accept', async () => {
         setStatus('connected')
+        // Update CallSid when call is accepted - it should be available now
+        const acceptedSid = outgoingCall.parameters?.CallSid || null
+        if (acceptedSid) {
+          console.log('[Twilio] Call accepted, CallSid from SDK:', acceptedSid)
+          setCallSid(acceptedSid)
+        } else {
+          // The SDK might not have the CallSid - fetch it from our server
+          console.log('[Twilio] CallSid not available from SDK, fetching from server...')
+          // Small delay to allow server to update the call record
+          await new Promise(resolve => setTimeout(resolve, 500))
+          try {
+            const response = await fetch('/api/twilio/active-call')
+            if (response.ok) {
+              const { callSid: serverCallSid } = await response.json()
+              if (serverCallSid) {
+                console.log('[Twilio] Got CallSid from server:', serverCallSid)
+                setCallSid(serverCallSid)
+              }
+            }
+          } catch (err) {
+            console.error('[Twilio] Failed to fetch CallSid from server:', err)
+          }
+        }
       })
 
       outgoingCall.on('disconnect', () => {
