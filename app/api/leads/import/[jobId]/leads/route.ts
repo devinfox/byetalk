@@ -7,6 +7,8 @@ const LEADS_PER_PAGE = 10
 /**
  * GET /api/leads/import/[jobId]/leads
  * Get paginated leads for a specific import job
+ * - Admins/managers see all leads in the group
+ * - Sales reps see only leads they own AND have connected with (have a call record)
  */
 export async function GET(
   request: NextRequest,
@@ -32,15 +34,38 @@ export async function GET(
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    // Only admins/managers can view leads by import job
-    if (userData.role !== 'admin' && userData.role !== 'manager') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
-    }
+    const isAdmin = userData.role === 'admin' || userData.role === 'manager'
 
     // Get query params
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
     const search = searchParams.get('search') || ''
+
+    // For non-admins, first get lead IDs they've connected with (have calls)
+    let allowedLeadIds: string[] | null = null
+    if (!isAdmin) {
+      // Get leads this user owns that have at least one connected call
+      const { data: connectedLeads } = await getSupabaseAdmin()
+        .from('leads')
+        .select('id')
+        .eq('import_job_id', jobId)
+        .eq('owner_id', userData.id)
+        .eq('is_deleted', false)
+        .in('status', ['contacted', 'qualified', 'converted', 'lost'])
+
+      allowedLeadIds = connectedLeads?.map(l => l.id) || []
+
+      if (allowedLeadIds.length === 0) {
+        // No leads to show
+        return NextResponse.json({
+          leads: [],
+          total: 0,
+          page,
+          totalPages: 0,
+          perPage: LEADS_PER_PAGE,
+        })
+      }
+    }
 
     // Build query
     let query = getSupabaseAdmin()
@@ -58,6 +83,11 @@ export async function GET(
       .eq('import_job_id', jobId)
       .eq('is_deleted', false)
       .order('created_at', { ascending: false })
+
+    // For non-admins, filter to only their connected leads
+    if (!isAdmin && allowedLeadIds) {
+      query = query.in('id', allowedLeadIds)
+    }
 
     // Apply search filter
     if (search) {

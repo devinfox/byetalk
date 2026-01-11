@@ -5,6 +5,49 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { findLeadByPhone } from '@/lib/email-ai'
 import { findMatchingFunnelSemantic } from '@/lib/funnel-matcher'
 
+/**
+ * Get or create the AI Generated system import group for an organization
+ */
+async function getAIGeneratedGroup(organizationId: string): Promise<string | null> {
+  if (!organizationId) return null
+
+  const admin = getSupabaseAdmin()
+
+  // Check if group exists
+  const { data: existingGroup } = await admin
+    .from('lead_import_jobs')
+    .select('id')
+    .eq('organization_id', organizationId)
+    .eq('is_system', true)
+    .eq('file_name', 'ai-generated')
+    .single()
+
+  if (existingGroup) {
+    return existingGroup.id
+  }
+
+  // Create the group
+  const { data: newGroup, error } = await admin
+    .from('lead_import_jobs')
+    .insert({
+      file_name: 'ai-generated',
+      display_name: 'AI Generated',
+      organization_id: organizationId,
+      is_system: true,
+      status: 'completed',
+      field_mapping: {},
+    })
+    .select('id')
+    .single()
+
+  if (error) {
+    console.error('[Calls Process] Error creating AI Generated group:', error)
+    return null
+  }
+
+  return newGroup.id
+}
+
 // OpenAI for all AI analysis (summary, sentiment, tasks, etc.)
 // Lazy initialization to avoid errors when API key is missing
 let openaiInstance: OpenAI | null = null
@@ -98,13 +141,14 @@ export async function POST(request: NextRequest) {
     // For inbound calls, this is the person who answered
     // For outbound calls, this is the person who made the call
     let ownerId = call.user_id
+    let organizationId: string | null = null
 
     // If no user_id on call, try to find an active user as fallback
     if (!ownerId) {
       console.log('⚠️ No user_id on call record, attempting to find fallback owner...')
       const { data: activeUsers } = await getSupabaseAdmin()
         .from('users')
-        .select('id')
+        .select('id, organization_id')
         .eq('is_active', true)
         .eq('is_deleted', false)
         .limit(1)
@@ -112,6 +156,7 @@ export async function POST(request: NextRequest) {
 
       if (activeUsers) {
         ownerId = activeUsers.id
+        organizationId = activeUsers.organization_id
         console.log('Using fallback owner:', ownerId)
 
         // Update the call record with the owner
@@ -119,6 +164,17 @@ export async function POST(request: NextRequest) {
           .from('calls')
           .update({ user_id: ownerId })
           .eq('id', callId)
+      }
+    } else {
+      // Get the owner's organization
+      const { data: ownerData } = await getSupabaseAdmin()
+        .from('users')
+        .select('organization_id')
+        .eq('id', ownerId)
+        .single()
+
+      if (ownerData) {
+        organizationId = ownerData.organization_id
       }
     }
 
@@ -582,6 +638,9 @@ Leave fields null if not clearly mentioned by the customer.`
             notesContent = notesContent ? `${notesContent}\n${extractedLeadInfo.notes}` : extractedLeadInfo.notes
           }
 
+          // Get the AI Generated system group for this lead
+          const aiGroupId = organizationId ? await getAIGeneratedGroup(organizationId) : null
+
           const leadData: Record<string, unknown> = {
             first_name: extractedLeadInfo.first_name || 'Unknown',
             last_name: extractedLeadInfo.last_name || '',
@@ -593,6 +652,8 @@ Leave fields null if not clearly mentioned by the customer.`
             notes: notesContent || null,
             city: extractedLeadInfo.city || null,
             state: extractedLeadInfo.state || null,
+            organization_id: organizationId,
+            import_job_id: aiGroupId, // Assign to AI Generated group
           }
 
           console.log('Creating new lead with data:', {
@@ -601,6 +662,7 @@ Leave fields null if not clearly mentioned by the customer.`
             email: leadData.email,
             owner_id: leadData.owner_id,
             source: leadData.source_type,
+            import_job_id: leadData.import_job_id,
           })
 
           const { data: newLead, error: leadError } = await getSupabaseAdmin()

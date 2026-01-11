@@ -1,81 +1,46 @@
 import { createClient, getCurrentUser } from '@/lib/supabase-server'
-import { LeadsTable } from './leads-table'
 import { LeadsHeader } from './leads-header'
 import { LeadImportGroups } from './lead-import-groups'
 import { Users, UserPlus, Phone, CheckCircle, ArrowRight } from 'lucide-react'
 
-const LEADS_PER_PAGE = 25
-
-export default async function LeadsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ page?: string; status?: string; search?: string }>
-}) {
-  const params = await searchParams
+export default async function LeadsPage() {
   const supabase = await createClient()
   const user = await getCurrentUser()
-  const currentPage = parseInt(params.page || '1')
-  const statusFilter = params.status || 'all'
-  const searchQuery = params.search || ''
 
-  // Build query based on user role
-  let query = supabase
-    .from('leads')
-    .select(`
-      *,
-      owner:users!leads_owner_id_fkey(id, first_name, last_name),
-      campaign:campaigns(id, name, code)
-    `, { count: 'exact' })
-    .eq('is_deleted', false)
-    .order('created_at', { ascending: false })
+  const isAdmin = user?.role === 'admin' || user?.role === 'manager'
 
-  // If not manager/admin, only show own leads
-  if (user?.role === 'sales_rep' || user?.role === 'senior_rep' || user?.role === 'closer') {
-    query = query.eq('owner_id', user.id)
-  }
+  // Get users for assignment dropdown (admin only)
+  const { data: users } = isAdmin
+    ? await supabase
+        .from('users')
+        .select('id, first_name, last_name, role')
+        .eq('is_deleted', false)
+        .eq('is_active', true)
+        .in('role', ['sales_rep', 'senior_rep', 'closer'])
+        .order('first_name')
+    : { data: [] }
 
-  // Apply status filter
-  if (statusFilter !== 'all') {
-    query = query.eq('status', statusFilter)
-  }
+  // Get campaigns for dropdown (admin only)
+  const { data: campaigns } = isAdmin
+    ? await supabase
+        .from('campaigns')
+        .select('id, name, code')
+        .eq('is_deleted', false)
+        .eq('is_active', true)
+        .order('name')
+    : { data: [] }
 
-  // Apply search filter
-  if (searchQuery) {
-    query = query.or(`first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`)
-  }
-
-  // Pagination
-  const offset = (currentPage - 1) * LEADS_PER_PAGE
-  const { data: leads, error, count } = await query.range(offset, offset + LEADS_PER_PAGE - 1)
-
-  const totalPages = Math.ceil((count || 0) / LEADS_PER_PAGE)
-
-  // Get users for assignment dropdown
-  const { data: users } = await supabase
-    .from('users')
-    .select('id, first_name, last_name, role')
-    .eq('is_deleted', false)
-    .eq('is_active', true)
-    .in('role', ['sales_rep', 'senior_rep', 'closer'])
-    .order('first_name')
-
-  // Get campaigns for dropdown
-  const { data: campaigns } = await supabase
-    .from('campaigns')
-    .select('id, name, code')
-    .eq('is_deleted', false)
-    .eq('is_active', true)
-    .order('name')
-
-  // Get lead stats (filtered by user for non-admin roles)
+  // Get lead stats based on role
   let statsQuery = supabase
     .from('leads')
     .select('status')
     .eq('is_deleted', false)
 
-  // If not manager/admin, only count own leads
-  if (user?.role === 'sales_rep' || user?.role === 'senior_rep' || user?.role === 'closer') {
-    statsQuery = statsQuery.eq('owner_id', user.id)
+  // Non-admin users only see stats for leads they've connected with
+  if (!isAdmin) {
+    statsQuery = statsQuery
+      .eq('owner_id', user?.id)
+      .in('status', ['contacted', 'qualified', 'converted', 'lost'])
   }
 
   const { data: stats } = await statsQuery
@@ -90,37 +55,38 @@ export default async function LeadsPage({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <LeadsHeader
-        users={users || []}
-        campaigns={campaigns || []}
-        currentUserId={user?.id}
-      />
+      {/* Header - only show import button for admins */}
+      {isAdmin && (
+        <LeadsHeader
+          users={users || []}
+          campaigns={campaigns || []}
+          currentUserId={user?.id}
+        />
+      )}
+
+      {/* Page Title for non-admins */}
+      {!isAdmin && (
+        <div>
+          <h1 className="text-3xl font-light text-white tracking-wide">
+            <span className="text-gold-gradient font-semibold">MY LEADS</span>
+          </h1>
+          <p className="text-gray-400 mt-1">
+            Leads you've connected with through calls
+          </p>
+        </div>
+      )}
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <StatCard label="Total Leads" value={leadStats.total} icon={Users} />
-        <StatCard label="New" value={leadStats.new} icon={UserPlus} color="blue" />
+      <div className={`grid gap-4 ${isAdmin ? 'grid-cols-2 md:grid-cols-5' : 'grid-cols-2 md:grid-cols-4'}`}>
+        <StatCard label="Total" value={leadStats.total} icon={Users} />
+        {isAdmin && <StatCard label="New" value={leadStats.new} icon={UserPlus} color="blue" />}
         <StatCard label="Contacted" value={leadStats.contacted} icon={Phone} color="yellow" />
         <StatCard label="Qualified" value={leadStats.qualified} icon={CheckCircle} color="green" />
         <StatCard label="Converted" value={leadStats.converted} icon={ArrowRight} color="purple" />
       </div>
 
-      {/* Lead Import Groups - Admin/Manager only */}
-      {(user?.role === 'admin' || user?.role === 'manager') && (
-        <LeadImportGroups />
-      )}
-
-      {/* Leads Table */}
-      <LeadsTable
-        leads={leads || []}
-        users={users || []}
-        campaigns={campaigns || []}
-        currentUser={user}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        totalCount={count || 0}
-      />
+      {/* Lead Groups - shown for everyone */}
+      <LeadImportGroups />
     </div>
   )
 }

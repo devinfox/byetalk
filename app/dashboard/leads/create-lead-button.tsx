@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, X } from 'lucide-react'
-import { createClient } from '@/lib/supabase'
 import type { User, Campaign } from '@/types/database.types'
 
 interface CreateLeadButtonProps {
@@ -35,43 +34,48 @@ export function CreateLeadButton({ users, campaigns, currentUserId }: CreateLead
     setError(null)
     setLoading(true)
 
-    const supabase = createClient()
+    try {
+      const response = await fetch('/api/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          first_name: formData.first_name || null,
+          last_name: formData.last_name || null,
+          email: formData.email || null,
+          phone: formData.phone || null,
+          city: formData.city || null,
+          state: formData.state || null,
+          source_type: formData.source_type || null,
+          campaign_id: formData.campaign_id || null,
+          owner_id: currentUserId || null,
+          notes: formData.notes || null,
+          is_ai_generated: false, // Manual lead
+        }),
+      })
 
-    const { error: insertError } = await supabase.from('leads').insert({
-      first_name: formData.first_name || null,
-      last_name: formData.last_name || null,
-      email: formData.email || null,
-      phone: formData.phone || null,
-      city: formData.city || null,
-      state: formData.state || null,
-      source_type: formData.source_type || null,
-      campaign_id: formData.campaign_id || null,
-      owner_id: currentUserId || null, // Always assign to current user
-      assigned_at: currentUserId ? new Date().toISOString() : null,
-      notes: formData.notes || null,
-      status: 'new',
-    })
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to create lead')
+      }
 
-    if (insertError) {
-      setError(insertError.message)
+      setIsOpen(false)
+      setFormData({
+        first_name: '',
+        last_name: '',
+        email: '',
+        phone: '',
+        city: '',
+        state: '',
+        source_type: '',
+        campaign_id: '',
+        notes: '',
+      })
+      router.refresh()
+    } catch (err) {
+      setError((err as Error).message)
+    } finally {
       setLoading(false)
-      return
     }
-
-    setLoading(false)
-    setIsOpen(false)
-    setFormData({
-      first_name: '',
-      last_name: '',
-      email: '',
-      phone: '',
-      city: '',
-      state: '',
-      source_type: '',
-      campaign_id: '',
-      notes: '',
-    })
-    router.refresh()
   }
 
   return (
