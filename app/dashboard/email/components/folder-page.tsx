@@ -84,9 +84,9 @@ export async function FolderPage({ folder, title, emptyMessage, isStarred, curre
   const selectedAccountId = accountIds[0]
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="p-4 border-b border-white/10">
+      <div className="p-4 border-b border-white/10 flex-shrink-0">
         <h1 className="text-xl font-light text-white">{title}</h1>
       </div>
 

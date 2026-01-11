@@ -91,9 +91,9 @@ export default async function EmailInboxPage({
   const selectedAccount = accounts.find(a => a.id === selectedAccountId) || accounts[0]
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-white/10">
+      <div className="px-6 py-4 border-b border-white/10 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-light text-white">
