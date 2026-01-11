@@ -10,8 +10,7 @@ export default async function CalendarPage() {
     redirect('/login')
   }
 
-  // Get tasks with due dates (past 30 days to next 60 days)
-  // Note: RLS policies already filter by user access
+  // Get tasks with due dates - only pending tasks assigned to current user
   const { data: tasks } = await supabase
     .from('tasks')
     .select(`
@@ -27,7 +26,9 @@ export default async function CalendarPage() {
       contact:contacts(id, first_name, last_name),
       deal:deals(id, name)
     `)
+    .eq('assigned_to', currentUser.id)
     .eq('is_deleted', false)
+    .eq('status', 'pending')
     .not('due_at', 'is', null)
     .order('due_at', { ascending: true })
     .limit(200)
