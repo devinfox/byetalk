@@ -3,14 +3,17 @@ import { redirect } from 'next/navigation'
 import { EmailList } from './email-list'
 import { NoAccountsSetup } from './no-accounts-setup'
 
+const PAGE_SIZE = 20
+
 interface FolderPageProps {
   folder: 'inbox' | 'sent' | 'drafts' | 'trash' | 'spam' | 'archive'
   title: string
   emptyMessage: string
   isStarred?: boolean
+  currentPage?: number
 }
 
-export async function FolderPage({ folder, title, emptyMessage, isStarred }: FolderPageProps) {
+export async function FolderPage({ folder, title, emptyMessage, isStarred, currentPage = 1 }: FolderPageProps) {
   const user = await getCurrentUser()
 
   if (!user) {
@@ -32,7 +35,23 @@ export async function FolderPage({ folder, title, emptyMessage, isStarred }: Fol
 
   const accountIds = accounts.map((a: any) => a.id)
 
-  // Build query for threads
+  // Get total count first
+  let countQuery = supabase
+    .from('email_threads')
+    .select('*', { count: 'exact', head: true })
+    .in('email_account_id', accountIds)
+    .eq('is_deleted', false)
+
+  if (isStarred) {
+    countQuery = countQuery.eq('is_starred', true).neq('folder', 'trash')
+  } else {
+    countQuery = countQuery.eq('folder', folder)
+  }
+
+  const { count: totalCount } = await countQuery
+
+  // Build query for threads with pagination
+  const offset = (currentPage - 1) * PAGE_SIZE
   let query = supabase
     .from('email_threads')
     .select(`
@@ -50,7 +69,7 @@ export async function FolderPage({ folder, title, emptyMessage, isStarred }: Fol
     .in('email_account_id', accountIds)
     .eq('is_deleted', false)
     .order('last_message_at', { ascending: false })
-    .limit(50)
+    .range(offset, offset + PAGE_SIZE - 1)
 
   // Filter by folder or starred
   if (isStarred) {
@@ -83,6 +102,9 @@ export async function FolderPage({ folder, title, emptyMessage, isStarred }: Fol
           }))}
           selectedAccountId={selectedAccountId}
           emptyMessage={emptyMessage}
+          currentPage={currentPage}
+          totalCount={totalCount || 0}
+          pageSize={PAGE_SIZE}
         />
       </div>
     </div>

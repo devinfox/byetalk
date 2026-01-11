@@ -4,12 +4,15 @@ import { redirect } from 'next/navigation'
 import { EmailList } from './components/email-list'
 import { NoAccountsSetup } from './components/no-accounts-setup'
 
+const PAGE_SIZE = 20
+
 export default async function EmailInboxPage({
   searchParams,
 }: {
-  searchParams: Promise<{ starred?: string; account?: string }>
+  searchParams: Promise<{ starred?: string; account?: string; page?: string }>
 }) {
   const params = await searchParams
+  const currentPage = Math.max(1, parseInt(params.page || '1', 10))
   const user = await getCurrentUser()
 
   if (!user) {
@@ -38,7 +41,22 @@ export default async function EmailInboxPage({
   // Get selected account or default to primary
   const selectedAccountId = params.account || accounts.find(a => a.is_primary)?.id || accounts[0].id
 
-  // Fetch threads for inbox
+  // Get total count first
+  let countQuery = supabase
+    .from('email_threads')
+    .select('*', { count: 'exact', head: true })
+    .eq('email_account_id', selectedAccountId)
+    .eq('is_deleted', false)
+    .eq('folder', 'inbox')
+
+  if (params.starred === 'true') {
+    countQuery = countQuery.eq('is_starred', true)
+  }
+
+  const { count: totalCount } = await countQuery
+
+  // Fetch threads for inbox with pagination
+  const offset = (currentPage - 1) * PAGE_SIZE
   let query = supabase
     .from('email_threads')
     .select(`
@@ -57,7 +75,7 @@ export default async function EmailInboxPage({
     .eq('is_deleted', false)
     .eq('folder', 'inbox')
     .order('last_message_at', { ascending: false })
-    .limit(50)
+    .range(offset, offset + PAGE_SIZE - 1)
 
   // Filter by starred if requested
   if (params.starred === 'true') {
@@ -87,7 +105,7 @@ export default async function EmailInboxPage({
           </div>
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-400">
-              {threads?.length || 0} conversations
+              {totalCount || 0} conversations
             </span>
           </div>
         </div>
@@ -103,6 +121,9 @@ export default async function EmailInboxPage({
               ? 'No starred emails'
               : 'Your inbox is empty'
           }
+          currentPage={currentPage}
+          totalCount={totalCount || 0}
+          pageSize={PAGE_SIZE}
         />
       </div>
     </div>

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
 import {
   Star,
   Paperclip,
@@ -11,11 +12,12 @@ import {
   Mail,
   CheckSquare,
   Square,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import { EmailThread } from '@/types/email.types'
 import { formatEmailDate } from '@/lib/email-utils'
-import { useRouter } from 'next/navigation'
 
 interface EmailListProps {
   threads: (EmailThread & {
@@ -31,11 +33,36 @@ interface EmailListProps {
   })[]
   selectedAccountId: string
   emptyMessage?: string
+  currentPage?: number
+  totalCount?: number
+  pageSize?: number
 }
 
-export function EmailList({ threads, selectedAccountId, emptyMessage = 'No emails' }: EmailListProps) {
+export function EmailList({
+  threads,
+  selectedAccountId,
+  emptyMessage = 'No emails',
+  currentPage = 1,
+  totalCount = 0,
+  pageSize = 20,
+}: EmailListProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+
+  const totalPages = Math.ceil(totalCount / pageSize)
+  const hasPrevPage = currentPage > 1
+  const hasNextPage = currentPage < totalPages
+
+  const goToPage = (page: number) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (page === 1) {
+      params.delete('page')
+    } else {
+      params.set('page', String(page))
+    }
+    router.push(`?${params.toString()}`)
+  }
   const [loading, setLoading] = useState<string | null>(null)
 
   const toggleSelect = (id: string, e: React.MouseEvent) => {
@@ -244,6 +271,34 @@ export function EmailList({ threads, selectedAccountId, emptyMessage = 'No email
           )
         })}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="px-4 py-3 border-t border-white/10 flex items-center justify-between">
+          <div className="text-sm text-gray-400">
+            Showing {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, totalCount)} of {totalCount}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => goToPage(currentPage - 1)}
+              disabled={!hasPrevPage}
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <span className="text-sm text-gray-400">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              onClick={() => goToPage(currentPage + 1)}
+              disabled={!hasNextPage}
+              className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
