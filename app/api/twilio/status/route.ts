@@ -293,7 +293,9 @@ export async function POST(request: NextRequest) {
     // We await this to ensure it completes before the serverless function terminates
     // Twilio's RecordingStatus: completed callback only fires when recording is ready
     if (recordingUrl) {
-      const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/$/, '')
+      // Use NEXT_PUBLIC_APP_URL with fallback to localhost for local dev
+      const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/$/, '')
+      console.log('Triggering AI processing with baseUrl:', baseUrl)
       await triggerAIProcessing(existingCall.id, baseUrl)
     }
 

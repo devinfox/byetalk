@@ -313,7 +313,7 @@ export function ThreadView({ thread, emails, accounts }: ThreadViewProps) {
       {(showReply || showForward) && replyToEmail && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <EmailCompose
-            accounts={accounts.filter((a: any) => a.domain?.verification_status === 'verified')}
+            accounts={accounts.filter((a: any) => a.provider === 'microsoft' || a.provider === 'gmail' || a.domain?.verification_status === 'verified')}
             defaultAccountId={thread.email_account_id}
             replyTo={showReply ? {
               email_id: replyToEmail.id,

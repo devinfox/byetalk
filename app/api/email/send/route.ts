@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createClient as createServerClient } from '@/lib/supabase-server'
-import { sendEmail } from '@/lib/sendgrid'
+import { sendEmail as sendSendgridEmail } from '@/lib/sendgrid'
+import { sendEmail as sendMicrosoftEmail } from '@/lib/microsoft-graph'
+import { getValidAccessToken } from '@/lib/microsoft-auth'
 import { generateMessageId, parseEmailAddress, generateSnippet, stripHtml } from '@/lib/email-utils'
 import { EmailParticipant } from '@/types/email.types'
 import { v4 as uuidv4 } from 'uuid'
@@ -104,8 +106,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email account not found' }, { status: 404 })
     }
 
-    // Check if domain is verified
-    if (fromAccount.domain?.verification_status !== 'verified') {
+    // Check if domain is verified (only for SendGrid accounts, not for Microsoft/Gmail)
+    const isMicrosoftAccount = fromAccount.provider === 'microsoft'
+    const isGmailAccount = fromAccount.provider === 'gmail'
+
+    if (!isMicrosoftAccount && !isGmailAccount && fromAccount.domain?.verification_status !== 'verified') {
       return NextResponse.json(
         { error: 'Domain is not verified. Please complete DNS verification before sending emails.' },
         { status: 400 }
@@ -118,7 +123,8 @@ export async function POST(request: NextRequest) {
     const bccRecipients: EmailParticipant[] = bcc?.map((email: string) => parseEmailAddress(email)) || []
 
     // Generate message ID
-    const messageId = generateMessageId(fromAccount.domain.domain)
+    const emailDomain = fromAccount.domain?.domain || fromAccount.email_address.split('@')[1]
+    const messageId = generateMessageId(emailDomain)
 
     // Get reply headers if this is a reply
     let inReplyTo: string | null = null
@@ -239,45 +245,119 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Send via SendGrid
+    // Send email via appropriate provider
     try {
-      // Prepare SendGrid attachments
-      const sgAttachments = attachments?.map((att: any) => ({
-        content: att.content, // base64 encoded
-        filename: att.filename,
-        type: att.content_type,
-        disposition: att.is_inline ? 'inline' : 'attachment',
-        contentId: att.content_id,
-      }))
+      if (isMicrosoftAccount) {
+        // Send via Microsoft Graph API
+        // Get Microsoft OAuth tokens for this account
+        const { data: tokenData } = await supabaseAdmin
+          .from('microsoft_oauth_tokens')
+          .select('access_token, refresh_token, expires_at')
+          .eq('user_id', userData.id)
+          .eq('email', fromAccount.email_address.toLowerCase())
+          .single()
 
-      const result = await sendEmail({
-        to: toRecipients,
-        cc: ccRecipients.length > 0 ? ccRecipients : undefined,
-        bcc: bccRecipients.length > 0 ? bccRecipients : undefined,
-        from: {
-          email: fromAccount.email_address,
-          name: fromAccount.display_name || undefined,
-        },
-        subject: subject || '',
-        text: body_text,
-        html: body_html,
-        headers,
-        attachments: sgAttachments,
-        trackingSettings: {
-          clickTracking: { enable: true },
-          openTracking: { enable: true },
-        },
-      })
+        if (!tokenData) {
+          return NextResponse.json(
+            { error: 'Microsoft account not connected. Please reconnect your Outlook account.' },
+            { status: 400 }
+          )
+        }
 
-      // Update email status to sent
-      await supabaseAdmin
-        .from('emails')
-        .update({
-          status: 'sent',
-          sent_at: new Date().toISOString(),
-          sendgrid_message_id: result.messageId,
+        // Get valid access token (refresh if needed)
+        const accessToken = await getValidAccessToken(
+          tokenData.access_token,
+          tokenData.refresh_token,
+          tokenData.expires_at,
+          async (newTokens) => {
+            // Update tokens in database
+            await supabaseAdmin
+              .from('microsoft_oauth_tokens')
+              .update({
+                access_token: newTokens.access_token,
+                refresh_token: newTokens.refresh_token || tokenData.refresh_token,
+                expires_at: new Date(Date.now() + newTokens.expires_in * 1000).toISOString(),
+              })
+              .eq('user_id', userData.id)
+              .eq('email', fromAccount.email_address.toLowerCase())
+          }
+        )
+
+        // Prepare Microsoft Graph attachments
+        const msAttachments = attachments?.map((att: any) => ({
+          '@odata.type': '#microsoft.graph.fileAttachment',
+          name: att.filename,
+          contentType: att.content_type || 'application/octet-stream',
+          contentBytes: att.content, // base64 encoded
+        }))
+
+        // Send via Microsoft Graph
+        await sendMicrosoftEmail(accessToken, {
+          to: toRecipients.map(r => ({
+            emailAddress: { address: r.email, name: r.name || undefined }
+          })),
+          cc: ccRecipients.length > 0 ? ccRecipients.map(r => ({
+            emailAddress: { address: r.email, name: r.name || undefined }
+          })) : undefined,
+          bcc: bccRecipients.length > 0 ? bccRecipients.map(r => ({
+            emailAddress: { address: r.email, name: r.name || undefined }
+          })) : undefined,
+          subject: subject || '',
+          body: {
+            contentType: body_html ? 'html' : 'text',
+            content: body_html || body_text || '',
+          },
+          attachments: msAttachments,
         })
-        .eq('id', emailId)
+
+        // Update email status to sent
+        await supabaseAdmin
+          .from('emails')
+          .update({
+            status: 'sent',
+            sent_at: new Date().toISOString(),
+          })
+          .eq('id', emailId)
+      } else {
+        // Send via SendGrid
+        // Prepare SendGrid attachments
+        const sgAttachments = attachments?.map((att: any) => ({
+          content: att.content, // base64 encoded
+          filename: att.filename,
+          type: att.content_type,
+          disposition: att.is_inline ? 'inline' : 'attachment',
+          contentId: att.content_id,
+        }))
+
+        const result = await sendSendgridEmail({
+          to: toRecipients,
+          cc: ccRecipients.length > 0 ? ccRecipients : undefined,
+          bcc: bccRecipients.length > 0 ? bccRecipients : undefined,
+          from: {
+            email: fromAccount.email_address,
+            name: fromAccount.display_name || undefined,
+          },
+          subject: subject || '',
+          text: body_text,
+          html: body_html,
+          headers,
+          attachments: sgAttachments,
+          trackingSettings: {
+            clickTracking: { enable: true },
+            openTracking: { enable: true },
+          },
+        })
+
+        // Update email status to sent
+        await supabaseAdmin
+          .from('emails')
+          .update({
+            status: 'sent',
+            sent_at: new Date().toISOString(),
+            sendgrid_message_id: result.messageId,
+          })
+          .eq('id', emailId)
+      }
 
       // Update thread's last_message_at
       await supabaseAdmin
@@ -314,17 +394,15 @@ export async function POST(request: NextRequest) {
         success: true,
         email_id: emailId,
         thread_id: finalThreadId,
-        sendgrid_message_id: result.messageId,
       })
     } catch (sendError: any) {
-      console.error('SendGrid send error:', sendError)
+      console.error('Email send error:', sendError)
 
       // Update email status to failed
       await supabaseAdmin
         .from('emails')
         .update({
           status: 'failed',
-          error_message: sendError.message || 'Failed to send email',
         })
         .eq('id', emailId)
 

@@ -77,9 +77,14 @@ export default async function ComposePage({
     }
   }
 
-  // Filter to only accounts with verified domains
+  // Filter to accounts that can send emails:
+  // - Third-party providers (microsoft, gmail) - always allowed (they use their own infrastructure)
+  // - SendGrid accounts - require verified domain
   const verifiedAccounts = accounts.filter(
-    (a: any) => a.domain?.verification_status === 'verified'
+    (a: any) =>
+      a.provider === 'microsoft' ||
+      a.provider === 'gmail' ||
+      a.domain?.verification_status === 'verified'
   )
 
   if (verifiedAccounts.length === 0) {

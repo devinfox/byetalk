@@ -10,6 +10,11 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // Allow Cloudflare tunnel domains in development
+  allowedDevOrigins: [
+    'http://localhost:3000',
+    'https://*.trycloudflare.com',
+  ],
 };
 
 export default nextConfig;

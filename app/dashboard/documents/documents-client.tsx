@@ -136,8 +136,8 @@ export function DocumentsPageClient({ userId }: DocumentsPageClientProps) {
       // Create document record
       await supabase.from('documents').insert({
         file_name: file.name,
-        file_url: urlData.publicUrl,
-        file_size: file.size,
+        public_url: urlData.publicUrl,
+        file_size_bytes: file.size,
         file_type: file.type,
         entity_type: 'global',
         uploaded_by: userId,
@@ -199,7 +199,7 @@ export function DocumentsPageClient({ userId }: DocumentsPageClientProps) {
         comparison = new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         break
       case 'size':
-        comparison = (b.file_size || 0) - (a.file_size || 0)
+        comparison = (b.file_size_bytes || 0) - (a.file_size_bytes || 0)
         break
     }
     return sortOrder === 'asc' ? -comparison : comparison
@@ -207,7 +207,7 @@ export function DocumentsPageClient({ userId }: DocumentsPageClientProps) {
 
   const stats = {
     total: documents.length,
-    totalSize: documents.reduce((sum, d) => sum + (d.file_size || 0), 0),
+    totalSize: documents.reduce((sum, d) => sum + (d.file_size_bytes || 0), 0),
     favorites: documents.filter(d => d.is_favorite).length,
   }
 
@@ -367,13 +367,13 @@ export function DocumentsPageClient({ userId }: DocumentsPageClientProps) {
 
                 {/* Meta */}
                 <p className="text-xs text-gray-500 text-center">
-                  {formatFileSize(doc.file_size || 0)} · {formatDate(doc.created_at)}
+                  {formatFileSize(doc.file_size_bytes || 0)} · {formatDate(doc.created_at)}
                 </p>
 
                 {/* Actions (on hover) */}
                 <div className="absolute bottom-2 left-2 right-2 flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <a
-                    href={doc.file_url}
+                    href={doc.public_url || '#'}
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
@@ -383,7 +383,7 @@ export function DocumentsPageClient({ userId }: DocumentsPageClientProps) {
                     <Eye className="w-3.5 h-3.5" />
                   </a>
                   <a
-                    href={doc.file_url}
+                    href={doc.public_url || '#'}
                     download={doc.file_name}
                     onClick={(e) => e.stopPropagation()}
                     className="p-1.5 bg-white/10 hover:bg-white/20 rounded text-gray-300 hover:text-white transition-colors"
@@ -435,7 +435,7 @@ export function DocumentsPageClient({ userId }: DocumentsPageClientProps) {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-400">
-                      {formatFileSize(doc.file_size || 0)}
+                      {formatFileSize(doc.file_size_bytes || 0)}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-400">
                       {formatDate(doc.created_at)}
@@ -443,7 +443,7 @@ export function DocumentsPageClient({ userId }: DocumentsPageClientProps) {
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <a
-                          href={doc.file_url}
+                          href={doc.public_url || '#'}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="p-1.5 hover:bg-white/10 rounded text-gray-400 hover:text-white transition-colors"
@@ -452,7 +452,7 @@ export function DocumentsPageClient({ userId }: DocumentsPageClientProps) {
                           <Eye className="w-4 h-4" />
                         </a>
                         <a
-                          href={doc.file_url}
+                          href={doc.public_url || '#'}
                           download={doc.file_name}
                           className="p-1.5 hover:bg-white/10 rounded text-gray-400 hover:text-white transition-colors"
                           title="Download"

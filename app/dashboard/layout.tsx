@@ -11,6 +11,7 @@ import { EmailDraftAlertProvider } from '@/components/email-draft-alert-provider
 import { FunnelEnrollmentAlertProvider } from '@/components/funnel-enrollment-alert-provider'
 import { DocumentProvider } from '@/lib/document-context'
 import { RealtimeRefreshProvider } from '@/components/realtime-refresh-provider'
+import { TurboModeProvider } from '@/lib/turbo-mode-context'
 
 export default async function DashboardLayout({
   children,
@@ -34,15 +35,16 @@ export default async function DashboardLayout({
     .eq('is_inbound', true)
 
   return (
-    <DialerWrapper userId={profile?.id}>
-      <DocumentProvider>
-        <NimbusProvider>
-          <RealtimeRefreshProvider userId={profile?.id}>
-            <ChatWrapper userId={profile?.id}>
-              <ComplianceAlertProvider>
-                <EmailDraftAlertProvider userId={profile?.id}>
-                  <FunnelEnrollmentAlertProvider userId={profile?.id}>
-                    <div
+    <TurboModeProvider>
+      <DialerWrapper userId={profile?.id}>
+        <DocumentProvider>
+          <NimbusProvider>
+            <RealtimeRefreshProvider userId={profile?.id}>
+              <ChatWrapper userId={profile?.id}>
+                <ComplianceAlertProvider>
+                  <EmailDraftAlertProvider userId={profile?.id}>
+                    <FunnelEnrollmentAlertProvider userId={profile?.id}>
+                      <div
                       className="min-h-screen flex"
                       style={{
                         backgroundImage: 'url(/background.png)',
@@ -65,13 +67,14 @@ export default async function DashboardLayout({
                         </div>
                       </div>
                     </div>
-                  </FunnelEnrollmentAlertProvider>
-                </EmailDraftAlertProvider>
-              </ComplianceAlertProvider>
-            </ChatWrapper>
-          </RealtimeRefreshProvider>
-        </NimbusProvider>
-      </DocumentProvider>
-    </DialerWrapper>
+                    </FunnelEnrollmentAlertProvider>
+                  </EmailDraftAlertProvider>
+                </ComplianceAlertProvider>
+              </ChatWrapper>
+            </RealtimeRefreshProvider>
+          </NimbusProvider>
+        </DocumentProvider>
+      </DialerWrapper>
+    </TurboModeProvider>
   )
 }

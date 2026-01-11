@@ -66,7 +66,7 @@ export default async function LeadsPage() {
           </h1>
           <p className="text-gray-400 mt-1">Track and convert your prospects</p>
         </div>
-        <CreateLeadButton users={users || []} campaigns={campaigns || []} />
+        <CreateLeadButton users={users || []} campaigns={campaigns || []} currentUserId={user?.id} />
       </div>
 
       {/* Stats */}

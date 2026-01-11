@@ -17,6 +17,7 @@ import {
   ChevronRight,
   Mail,
   Sparkles,
+  RefreshCw,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import { EmailAccount, EmailFolder } from '@/types/email.types'
@@ -50,11 +51,34 @@ export function EmailSidebar({ userId }: EmailSidebarProps) {
   const [aiDraftsCount, setAiDraftsCount] = useState(0)
   const [accountsExpanded, setAccountsExpanded] = useState(true)
   const [loading, setLoading] = useState(true)
+  const [syncing, setSyncing] = useState(false)
+  const [hasMicrosoftAccount, setHasMicrosoftAccount] = useState(false)
 
   useEffect(() => {
     loadAccounts()
     loadAiDraftsCount()
+    triggerInitialMicrosoftSync()
   }, [userId])
+
+  // Trigger initial Microsoft email sync if needed (runs once on first login)
+  const triggerInitialMicrosoftSync = async () => {
+    try {
+      const response = await fetch('/api/email/microsoft/initial-sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
+      if (response.ok) {
+        const result = await response.json()
+        if (result.results?.some((r: any) => r.created > 0)) {
+          // Reload accounts to refresh counts after sync
+          loadAccounts()
+        }
+      }
+    } catch (error) {
+      // Silently fail - initial sync is best effort
+      console.log('[Email Sidebar] Initial sync check completed')
+    }
+  }
 
   const loadAiDraftsCount = async () => {
     const supabase = createClient()
@@ -87,8 +111,33 @@ export function EmailSidebar({ userId }: EmailSidebarProps) {
       // Select primary account or first one
       const primary = data.find(a => a.is_primary) || data[0]
       setSelectedAccount(primary)
+      // Check for Microsoft accounts
+      setHasMicrosoftAccount(data.some((a: any) => a.provider === 'microsoft'))
     }
     setLoading(false)
+  }
+
+  // Manual sync for Microsoft accounts
+  const handleManualSync = async () => {
+    if (syncing) return
+    setSyncing(true)
+    try {
+      const response = await fetch('/api/email/microsoft/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fullSync: true }),
+      })
+      if (response.ok) {
+        // Reload to show new emails
+        loadAccounts()
+        if (selectedAccount) {
+          loadFolderCounts(selectedAccount.id)
+        }
+      }
+    } catch (error) {
+      console.error('[Email Sidebar] Sync error:', error)
+    }
+    setSyncing(false)
   }
 
   const loadFolderCounts = async (accountId: string) => {
@@ -229,6 +278,16 @@ export function EmailSidebar({ userId }: EmailSidebarProps) {
 
       {/* Settings & Add Domain */}
       <div className="p-3 border-t border-white/10 space-y-1">
+        {hasMicrosoftAccount && (
+          <button
+            onClick={handleManualSync}
+            disabled={syncing}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400 hover:bg-white/5 hover:text-white transition-all disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+            {syncing ? 'Syncing...' : 'Sync Emails'}
+          </button>
+        )}
         <Link
           href="/dashboard/email/settings/domains"
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-400 hover:bg-white/5 hover:text-white transition-all"

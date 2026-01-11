@@ -3,6 +3,8 @@
 // Enums
 export type EmailFolder = 'inbox' | 'sent' | 'drafts' | 'trash' | 'spam' | 'archive'
 
+export type EmailProviderType = 'sendgrid' | 'microsoft' | 'gmail'
+
 export type EmailStatus =
   | 'draft'
   | 'queued'
@@ -60,6 +62,8 @@ export interface EmailAccount {
   user_id: string
   is_primary: boolean
   is_active: boolean
+  provider: EmailProviderType
+  microsoft_token_id: string | null
   signature_html: string | null
   signature_text: string | null
   auto_reply_enabled: boolean
@@ -138,6 +142,11 @@ export interface Email {
   lead_id: string | null
   deal_id: string | null
   email_template_id: string | null
+  // Provider tracking
+  email_provider: EmailProviderType
+  graph_message_id: string | null
+  graph_conversation_id: string | null
+  graph_internet_message_id: string | null
   is_deleted: boolean
   deleted_at: string | null
   created_at: string

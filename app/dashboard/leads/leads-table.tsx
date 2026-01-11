@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { CallButton } from '@/components/call-button'
@@ -14,8 +14,10 @@ import {
   Trash2,
   Search,
   Filter,
+  Zap,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
+import { Switch } from '@/components/ui/switch'
 import { EditLeadModal } from './edit-lead-modal'
 import { ConvertLeadModal } from './convert-lead-modal'
 import type { Lead, User, Campaign } from '@/types/database.types'
@@ -46,6 +48,69 @@ export function LeadsTable({ leads, users, campaigns, currentUser }: LeadsTableP
   const [editingLead, setEditingLead] = useState<typeof leads[0] | null>(null)
   const [convertingLead, setConvertingLead] = useState<typeof leads[0] | null>(null)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+
+  // Turbo mode queue state
+  const [turboQueueLeadIds, setTurboQueueLeadIds] = useState<Set<string>>(new Set())
+  const [turboLoading, setTurboLoading] = useState<Set<string>>(new Set())
+
+  // Fetch turbo queue status
+  const fetchTurboQueue = useCallback(async () => {
+    try {
+      const response = await fetch('/api/turbo/queue')
+      if (response.ok) {
+        const data = await response.json()
+        const queuedLeadIds = new Set<string>(
+          (data.queue?.items || []).map((item: { lead_id: string }) => item.lead_id)
+        )
+        setTurboQueueLeadIds(queuedLeadIds)
+      }
+    } catch (error) {
+      console.error('Error fetching turbo queue:', error)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchTurboQueue()
+  }, [fetchTurboQueue])
+
+  // Toggle turbo mode for a lead
+  const toggleTurboMode = async (leadId: string, isCurrentlyEnlisted: boolean) => {
+    setTurboLoading(prev => new Set(prev).add(leadId))
+
+    try {
+      if (isCurrentlyEnlisted) {
+        // Remove from queue
+        const response = await fetch(`/api/turbo/queue?lead_id=${leadId}`, {
+          method: 'DELETE',
+        })
+        if (response.ok) {
+          setTurboQueueLeadIds(prev => {
+            const next = new Set(prev)
+            next.delete(leadId)
+            return next
+          })
+        }
+      } else {
+        // Add to queue
+        const response = await fetch('/api/turbo/queue/add', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ lead_ids: [leadId] }),
+        })
+        if (response.ok) {
+          setTurboQueueLeadIds(prev => new Set(prev).add(leadId))
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling turbo mode:', error)
+    } finally {
+      setTurboLoading(prev => {
+        const next = new Set(prev)
+        next.delete(leadId)
+        return next
+      })
+    }
+  }
 
   // Filter leads
   const filteredLeads = leads.filter(lead => {
@@ -163,6 +228,12 @@ export function LeadsTable({ leads, users, campaigns, currentUser }: LeadsTableP
                 <th className="px-5 py-4 font-medium">Source</th>
                 <th className="px-5 py-4 font-medium">Owner</th>
                 <th className="px-5 py-4 font-medium">Created</th>
+                <th className="px-5 py-4 font-medium">
+                  <span className="flex items-center gap-1">
+                    <Zap className="w-3 h-3 text-yellow-400" />
+                    Turbo
+                  </span>
+                </th>
                 <th className="px-5 py-4 font-medium w-10"></th>
               </tr>
             </thead>
@@ -253,6 +324,23 @@ export function LeadsTable({ leads, users, campaigns, currentUser }: LeadsTableP
                     {formatDate(lead.created_at)}
                   </td>
                   <td className="px-5 py-4">
+                    {lead.phone ? (
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={turboQueueLeadIds.has(lead.id)}
+                          onCheckedChange={() => toggleTurboMode(lead.id, turboQueueLeadIds.has(lead.id))}
+                          disabled={turboLoading.has(lead.id)}
+                          aria-label="Enlist in turbo mode"
+                        />
+                        <span className={`text-xs ${turboQueueLeadIds.has(lead.id) ? 'text-yellow-400' : 'text-gray-500'}`}>
+                          {turboLoading.has(lead.id) ? '...' : turboQueueLeadIds.has(lead.id) ? 'Enlisted' : 'Off'}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-gray-500 text-xs">No phone</span>
+                    )}
+                  </td>
+                  <td className="px-5 py-4">
                     <div className="relative">
                       <button
                         onClick={() => setOpenMenuId(openMenuId === lead.id ? null : lead.id)}
@@ -330,7 +418,7 @@ export function LeadsTable({ leads, users, campaigns, currentUser }: LeadsTableP
               ))}
               {filteredLeads.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-5 py-8 text-center text-gray-500">
+                  <td colSpan={8} className="px-5 py-8 text-center text-gray-500">
                     {searchQuery || statusFilter !== 'all'
                       ? 'No leads match your filters'
                       : 'No leads yet. Create your first lead to get started.'}

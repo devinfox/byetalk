@@ -1,26 +1,119 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase'
 
+// Known Microsoft email domains
+const MICROSOFT_DOMAINS = [
+  'outlook.com',
+  'hotmail.com',
+  'live.com',
+  'msn.com',
+  'outlook.co.uk',
+  'hotmail.co.uk',
+  'live.co.uk',
+  'citadelgold.com', // Custom domain using Microsoft 365
+]
+
+function isMicrosoftDomain(domain: string): boolean {
+  return MICROSOFT_DOMAINS.includes(domain.toLowerCase())
+}
+
 function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirect = searchParams.get('redirect') || '/dashboard'
+  const errorParam = searchParams.get('error')
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(errorParam)
   const [loading, setLoading] = useState(false)
+  const [isMicrosoftEmail, setIsMicrosoftEmail] = useState(false)
+
+  // Check if email domain is Microsoft when email changes
+  useEffect(() => {
+    const domain = email.split('@')[1]?.toLowerCase()
+    if (domain) {
+      // Check known Microsoft domains
+      if (isMicrosoftDomain(domain)) {
+        setIsMicrosoftEmail(true)
+        return
+      }
+
+      // Check if organization has Microsoft OAuth enabled
+      const checkOrganization = async () => {
+        const supabase = createClient()
+        const { data } = await supabase
+          .from('organizations')
+          .select('allow_microsoft_login')
+          .eq('domain', domain)
+          .single()
+
+        setIsMicrosoftEmail(data?.allow_microsoft_login === true)
+      }
+
+      checkOrganization()
+    } else {
+      setIsMicrosoftEmail(false)
+    }
+  }, [email])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
     setLoading(true)
 
+    const domain = email.split('@')[1]?.toLowerCase()
+
+    // Check if this is a Microsoft domain or organization with Microsoft OAuth
+    let shouldUseMicrosoft = false
+
+    if (domain) {
+      if (isMicrosoftDomain(domain)) {
+        shouldUseMicrosoft = true
+      } else {
+        // Check organization
+        const supabase = createClient()
+        const { data } = await supabase
+          .from('organizations')
+          .select('allow_microsoft_login')
+          .eq('domain', domain)
+          .single()
+
+        shouldUseMicrosoft = data?.allow_microsoft_login === true
+      }
+    }
+
+    if (shouldUseMicrosoft) {
+      // Redirect to Microsoft OAuth
+      try {
+        const response = await fetch('/api/auth/microsoft', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, redirect }),
+        })
+
+        const data = await response.json()
+
+        if (data.authUrl) {
+          window.location.href = data.authUrl
+          return
+        } else {
+          setError(data.error || 'Failed to initiate Microsoft login')
+          setLoading(false)
+        }
+      } catch {
+        setError('Failed to connect to Microsoft')
+        setLoading(false)
+      }
+      return
+    }
+
+    // Standard password authentication
     const supabase = createClient()
 
     const { error } = await supabase.auth.signInWithPassword({
@@ -91,9 +184,23 @@ function LoginForm() {
           boxShadow: '0 8px 32px rgba(218, 165, 32, 0.4), inset 0 1px 0 rgba(255,255,255,0.4)',
         }}
       >
-        <span className="relative z-10 font-bold">{loading ? 'Signing in...' : 'Sign in'}</span>
+        <span className="relative z-10 font-bold">
+          {loading
+            ? isMicrosoftEmail
+              ? 'Connecting to Microsoft...'
+              : 'Signing in...'
+            : isMicrosoftEmail
+            ? 'Continue with Microsoft'
+            : 'Sign in'}
+        </span>
         <div className="absolute inset-0 bg-gradient-to-r from-yellow-200/30 to-amber-300/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       </button>
+
+      {isMicrosoftEmail && (
+        <p className="text-center text-xs text-white/40">
+          You&apos;ll be redirected to Microsoft to sign in
+        </p>
+      )}
 
       <p className="text-center text-sm text-white/60">
         Don&apos;t have an account?{' '}

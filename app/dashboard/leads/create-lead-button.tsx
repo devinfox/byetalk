@@ -9,9 +9,10 @@ import type { User, Campaign } from '@/types/database.types'
 interface CreateLeadButtonProps {
   users: Pick<User, 'id' | 'first_name' | 'last_name' | 'role'>[]
   campaigns: Pick<Campaign, 'id' | 'name' | 'code'>[]
+  currentUserId?: string
 }
 
-export function CreateLeadButton({ users, campaigns }: CreateLeadButtonProps) {
+export function CreateLeadButton({ users, campaigns, currentUserId }: CreateLeadButtonProps) {
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -26,7 +27,6 @@ export function CreateLeadButton({ users, campaigns }: CreateLeadButtonProps) {
     state: '',
     source_type: '',
     campaign_id: '',
-    owner_id: '',
     notes: '',
   })
 
@@ -46,7 +46,8 @@ export function CreateLeadButton({ users, campaigns }: CreateLeadButtonProps) {
       state: formData.state || null,
       source_type: formData.source_type || null,
       campaign_id: formData.campaign_id || null,
-      owner_id: formData.owner_id || null,
+      owner_id: currentUserId || null, // Always assign to current user
+      assigned_at: currentUserId ? new Date().toISOString() : null,
       notes: formData.notes || null,
       status: 'new',
     })
@@ -68,7 +69,6 @@ export function CreateLeadButton({ users, campaigns }: CreateLeadButtonProps) {
       state: '',
       source_type: '',
       campaign_id: '',
-      owner_id: '',
       notes: '',
     })
     router.refresh()
@@ -226,24 +226,6 @@ export function CreateLeadButton({ users, campaigns }: CreateLeadButtonProps) {
                   {campaigns.map((campaign) => (
                     <option key={campaign.id} value={campaign.id}>
                       {campaign.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                  Assign To
-                </label>
-                <select
-                  value={formData.owner_id}
-                  onChange={(e) => setFormData({ ...formData, owner_id: e.target.value })}
-                  className="glass-select w-full"
-                >
-                  <option value="">Unassigned</option>
-                  {users.map((user) => (
-                    <option key={user.id} value={user.id}>
-                      {user.first_name} {user.last_name}
                     </option>
                   ))}
                 </select>

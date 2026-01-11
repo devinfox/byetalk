@@ -127,41 +127,18 @@ export async function POST(request: NextRequest) {
       // Log call asynchronously (don't wait)
       logInboundCallAsync(from, callSid, callerId)
 
-      // Get users from cache (fast)
-      const users = await getActiveUsers()
+      // Play IVR greeting and gather extension
+      const gather = twiml.gather({
+        numDigits: 3,
+        timeout: 3,
+        action: `${baseUrl}/api/twilio/voice/extension`,
+        method: 'POST',
+      })
+      gather.say({ voice: 'alice' }, 'Thank you for calling. If you know your party\'s extension, please dial it now.')
 
-      if (users && users.length > 0) {
-        // Create dial element to ring all users
-        const dial = twiml.dial({
-          callerId: from,
-          answerOnBridge: true,
-          record: 'record-from-answer-dual',
-          recordingStatusCallback: statusCallbackUrl,
-          recordingStatusCallbackEvent: ['completed'],
-          timeout: 30,
-          action: `${baseUrl}/api/twilio/voice/fallback`,
-        })
-
-        // Ring all connected clients
-        for (const user of users) {
-          const clientIdentity = `${user.first_name}_${user.last_name}_${user.id.slice(0, 8)}`
-          console.log('[Twilio Voice] Ringing client:', clientIdentity)
-          dial.client({
-            statusCallback: statusCallbackUrl,
-            statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
-            statusCallbackMethod: 'POST',
-          }, clientIdentity)
-        }
-      } else {
-        // No users available, go to voicemail
-        twiml.say({ voice: 'alice' }, 'Sorry, no one is available. Please leave a message after the beep.')
-        twiml.record({
-          maxLength: 120,
-          action: `${baseUrl}/api/twilio/voicemail`,
-          transcribe: true,
-          transcribeCallback: `${baseUrl}/api/twilio/voicemail/transcription`,
-        })
-      }
+      // If no input, fall through to ring all users
+      // Redirect to extension handler with empty digits (will ring all)
+      twiml.redirect({ method: 'POST' }, `${baseUrl}/api/twilio/voice/extension`)
     } else if (isOutboundFromBrowser || to) {
       // Outbound call from browser
       console.log('[Twilio Voice] Handling outbound call to:', to)

@@ -58,7 +58,13 @@ export function TaskSidebar({ userId }: { userId?: string }) {
       .limit(50)
 
     if (data) {
-      setTasks(data)
+      // Transform data - Supabase returns joined relations as arrays
+      const transformedData = data.map((task: any) => ({
+        ...task,
+        lead: Array.isArray(task.lead) ? task.lead[0] || null : task.lead,
+        contact: Array.isArray(task.contact) ? task.contact[0] || null : task.contact,
+      }))
+      setTasks(transformedData)
     }
     setLoading(false)
   }, [userId])

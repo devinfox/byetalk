@@ -12,10 +12,14 @@ import {
   PhoneIncoming,
   PhoneOutgoing,
   Search,
+  Zap,
 } from 'lucide-react'
 import { useTwilioDevice, CallStatus } from '@/lib/useTwilioDevice'
 import { createClient } from '@/lib/supabase'
 import type { Lead, User as UserType } from '@/types/database.types'
+import { TurboModeToggle } from '@/components/turbo-mode-toggle'
+import { TurboQueuePanel } from '@/components/turbo-queue-panel'
+import { TurboActiveCallsPanel } from '@/components/turbo-active-calls'
 
 interface RecentCall {
   id: string
@@ -175,14 +179,27 @@ export function CallsClient({ leads, recentCalls, currentUser, initialPhone }: C
   const statusInfo = getStatusInfo(status)
   const isInCall = ['connecting', 'ringing', 'connected'].includes(status)
 
+  // Function to add all filtered leads to turbo queue
+  const handleAddLeadsToQueue = async (addToQueue: (ids: string[]) => Promise<void>) => {
+    const leadIds = filteredLeads.map(l => l.id)
+    if (leadIds.length > 0) {
+      await addToQueue(leadIds)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-light text-white tracking-wide">
-          <span className="text-gold-gradient font-semibold">CALLS</span>
-        </h1>
-        <p className="text-gray-400 mt-1">Make calls and manage your call history</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-light text-white tracking-wide">
+            <span className="text-gold-gradient font-semibold">CALLS</span>
+          </h1>
+          <p className="text-gray-400 mt-1">Make calls and manage your call history</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <TurboModeToggle />
+        </div>
       </div>
 
       {/* Error display */}
@@ -191,6 +208,12 @@ export function CallsClient({ leads, recentCalls, currentUser, initialPhone }: C
           {error}
         </div>
       )}
+
+      {/* Turbo Mode Panel */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <TurboActiveCallsPanel />
+        <TurboQueuePanel />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Dialer */}
