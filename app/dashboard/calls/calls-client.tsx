@@ -200,11 +200,9 @@ export function CallsClient({ leads, recentCalls, currentUser, initialPhone }: C
           </h1>
           <p className="text-gray-400 mt-1">Make calls and manage your call history</p>
         </div>
-        {isAdmin && (
-          <div className="flex items-center gap-4">
-            <TurboModeToggle />
-          </div>
-        )}
+        <div className="flex items-center gap-4">
+          <TurboModeToggle />
+        </div>
       </div>
 
       {/* Error display */}
