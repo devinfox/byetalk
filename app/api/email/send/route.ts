@@ -9,8 +9,9 @@ import { EmailParticipant } from '@/types/email.types'
 import { v4 as uuidv4 } from 'uuid'
 import { processEmailForAI } from '@/lib/email-ai'
 
-// For Next.js App Router, the body size limit is configured differently
-// The default limit is 4MB. For larger attachments, we handle chunked uploads.
+// For App Router, body size is configured via route segment config
+// The default is 1MB for App Router, increase to 25MB for attachments
+export const maxDuration = 60 // Allow up to 60 seconds for large uploads
 
 // Max size for inline attachments in Microsoft Graph (3MB)
 const MS_GRAPH_INLINE_ATTACHMENT_LIMIT = 3 * 1024 * 1024
@@ -76,7 +77,13 @@ export async function POST(request: NextRequest) {
 
     // Ensure attachments is always an array
     const attachments = Array.isArray(rawAttachments) ? rawAttachments : []
+    console.log('[Email Send] Raw attachments type:', typeof rawAttachments, 'isArray:', Array.isArray(rawAttachments))
     console.log('[Email Send] Raw attachments from request:', rawAttachments?.length, 'Processed:', attachments.length)
+    if (attachments.length > 0) {
+      console.log('[Email Send] First attachment keys:', Object.keys(attachments[0]))
+      console.log('[Email Send] First attachment content exists:', !!attachments[0]?.content)
+      console.log('[Email Send] First attachment content length:', attachments[0]?.content?.length || 0)
+    }
 
     // Validate required fields
     if (!from_account_id) {
