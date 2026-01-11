@@ -5,17 +5,17 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin'
 const LEADS_PER_PAGE = 10
 
 /**
- * GET /api/leads/import/[jobId]/leads
+ * GET /api/leads/import/[id]/leads
  * Get paginated leads for a specific import job
  * - Admins/managers see all leads in the group
  * - Sales reps see only leads they own AND have connected with (have a call record)
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ jobId: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { jobId } = await params
+    const { id } = await params
     const supabase = await createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
 
@@ -48,7 +48,7 @@ export async function GET(
       const { data: connectedLeads } = await getSupabaseAdmin()
         .from('leads')
         .select('id')
-        .eq('import_job_id', jobId)
+        .eq('import_job_id', id)
         .eq('owner_id', userData.id)
         .eq('is_deleted', false)
         .in('status', ['contacted', 'qualified', 'converted', 'lost'])
@@ -80,7 +80,7 @@ export async function GET(
         created_at,
         owner:users!leads_owner_id_fkey(id, first_name, last_name)
       `, { count: 'exact' })
-      .eq('import_job_id', jobId)
+      .eq('import_job_id', id)
       .eq('is_deleted', false)
       .order('created_at', { ascending: false })
 
