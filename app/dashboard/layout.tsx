@@ -12,6 +12,7 @@ import { FunnelEnrollmentAlertProvider } from '@/components/funnel-enrollment-al
 import { DocumentProvider } from '@/lib/document-context'
 import { RealtimeRefreshProvider } from '@/components/realtime-refresh-provider'
 import { TurboModeProvider } from '@/lib/turbo-mode-context'
+import { ImportProgressBar } from '@/components/import-progress-bar'
 
 export default async function DashboardLayout({
   children,
@@ -82,6 +83,7 @@ export default async function DashboardLayout({
                           <TaskSidebar userId={profile?.id} />
                         </div>
                       </div>
+                      <ImportProgressBar />
                     </div>
                     </FunnelEnrollmentAlertProvider>
                   </EmailDraftAlertProvider>

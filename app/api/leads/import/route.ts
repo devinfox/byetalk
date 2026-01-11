@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { after } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
@@ -38,99 +39,28 @@ function parseCSVLine(line: string): string[] {
 }
 
 /**
- * POST /api/leads/import
- * Upload CSV and process import inline
+ * Process import job in background
  */
-export async function POST(request: NextRequest) {
+async function processImportJob(
+  jobId: string,
+  lines: string[],
+  headers: string[],
+  fieldMapping: Record<string, string>,
+  defaultStatus: string,
+  defaultOwnerId: string | null,
+  defaultCampaignId: string | null,
+  skipDuplicates: boolean,
+  duplicateCheckFields: string[]
+) {
+  const totalRows = lines.length - 1
+  let processedRows = 0
+  let successfulRows = 0
+  let failedRows = 0
+  let duplicateRows = 0
+
+  console.log(`[Import] Starting background job ${jobId}: ${totalRows} rows`)
+
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    // Get current user's profile
-    const { data: currentUser } = await getSupabaseAdmin()
-      .from('users')
-      .select('id, organization_id')
-      .eq('auth_id', user.id)
-      .single()
-
-    if (!currentUser) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
-    }
-
-    const formData = await request.formData()
-    const file = formData.get('file') as File | null
-    const fieldMappingStr = formData.get('fieldMapping') as string | null
-    const defaultStatus = formData.get('defaultStatus') as string || 'new'
-    const defaultOwnerId = formData.get('defaultOwnerId') as string || null
-    const defaultCampaignId = formData.get('defaultCampaignId') as string || null
-    const skipDuplicates = formData.get('skipDuplicates') !== 'false'
-    const duplicateCheckFieldsStr = formData.get('duplicateCheckFields') as string || 'phone,email'
-
-    if (!file) {
-      return NextResponse.json({ error: 'No file provided' }, { status: 400 })
-    }
-
-    if (!fieldMappingStr) {
-      return NextResponse.json({ error: 'No field mapping provided' }, { status: 400 })
-    }
-
-    let fieldMapping: Record<string, string>
-    try {
-      fieldMapping = JSON.parse(fieldMappingStr)
-    } catch {
-      return NextResponse.json({ error: 'Invalid field mapping' }, { status: 400 })
-    }
-
-    // Read CSV content
-    const content = await file.text()
-    const lines = content.split(/\r?\n/).filter(line => line.trim())
-
-    if (lines.length < 2) {
-      return NextResponse.json({ error: 'CSV file must have at least a header row and one data row' }, { status: 400 })
-    }
-
-    const totalRows = lines.length - 1 // Exclude header
-    const headers = parseCSVLine(lines[0])
-    const duplicateCheckFields = duplicateCheckFieldsStr.split(',').map(f => f.trim())
-
-    // Create import job
-    const { data: importJob, error: createError } = await getSupabaseAdmin()
-      .from('lead_import_jobs')
-      .insert({
-        file_name: file.name,
-        file_size: file.size,
-        total_rows: totalRows,
-        field_mapping: fieldMapping,
-        default_status: defaultStatus,
-        default_owner_id: defaultOwnerId || null,
-        default_campaign_id: defaultCampaignId || null,
-        skip_duplicates: skipDuplicates,
-        duplicate_check_fields: duplicateCheckFields,
-        created_by: currentUser.id,
-        organization_id: currentUser.organization_id,
-        status: 'processing',
-        started_at: new Date().toISOString(),
-      })
-      .select()
-      .single()
-
-    if (createError || !importJob) {
-      console.error('[Import] Error creating job:', createError)
-      return NextResponse.json({ error: 'Failed to create import job' }, { status: 500 })
-    }
-
-    const jobId = importJob.id
-    let processedRows = 0
-    let successfulRows = 0
-    let failedRows = 0
-    let duplicateRows = 0
-
-    console.log(`[Import] Starting job ${jobId}: ${totalRows} rows`)
-
     // Process in batches
     for (let i = 1; i <= totalRows; i += BATCH_SIZE) {
       const batchEnd = Math.min(i + BATCH_SIZE, totalRows + 1)
@@ -235,7 +165,7 @@ export async function POST(request: NextRequest) {
         processedRows += leadsToInsert.length
       }
 
-      // Update progress
+      // Update progress every batch
       await getSupabaseAdmin()
         .from('lead_import_jobs')
         .update({
@@ -262,17 +192,127 @@ export async function POST(request: NextRequest) {
       .eq('id', jobId)
 
     console.log(`[Import] Job ${jobId}: Completed - ${successfulRows} successful, ${failedRows} failed, ${duplicateRows} duplicates`)
+  } catch (error) {
+    console.error('[Import] Background processing error:', error)
+    await getSupabaseAdmin()
+      .from('lead_import_jobs')
+      .update({
+        status: 'failed',
+        error_message: (error as Error).message || 'Processing failed',
+        completed_at: new Date().toISOString(),
+      })
+      .eq('id', jobId)
+  }
+}
 
+/**
+ * POST /api/leads/import
+ * Upload CSV and start background import
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Get current user's profile
+    const { data: currentUser } = await getSupabaseAdmin()
+      .from('users')
+      .select('id, organization_id')
+      .eq('auth_id', user.id)
+      .single()
+
+    if (!currentUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    const formData = await request.formData()
+    const file = formData.get('file') as File | null
+    const fieldMappingStr = formData.get('fieldMapping') as string | null
+    const defaultStatus = formData.get('defaultStatus') as string || 'new'
+    const defaultOwnerId = formData.get('defaultOwnerId') as string || null
+    const defaultCampaignId = formData.get('defaultCampaignId') as string || null
+    const skipDuplicates = formData.get('skipDuplicates') !== 'false'
+    const duplicateCheckFieldsStr = formData.get('duplicateCheckFields') as string || 'phone,email'
+
+    if (!file) {
+      return NextResponse.json({ error: 'No file provided' }, { status: 400 })
+    }
+
+    if (!fieldMappingStr) {
+      return NextResponse.json({ error: 'No field mapping provided' }, { status: 400 })
+    }
+
+    let fieldMapping: Record<string, string>
+    try {
+      fieldMapping = JSON.parse(fieldMappingStr)
+    } catch {
+      return NextResponse.json({ error: 'Invalid field mapping' }, { status: 400 })
+    }
+
+    // Read CSV content
+    const content = await file.text()
+    const lines = content.split(/\r?\n/).filter(line => line.trim())
+
+    if (lines.length < 2) {
+      return NextResponse.json({ error: 'CSV file must have at least a header row and one data row' }, { status: 400 })
+    }
+
+    const totalRows = lines.length - 1 // Exclude header
+    const headers = parseCSVLine(lines[0])
+    const duplicateCheckFields = duplicateCheckFieldsStr.split(',').map(f => f.trim())
+
+    // Create import job with 'processing' status
+    const { data: importJob, error: createError } = await getSupabaseAdmin()
+      .from('lead_import_jobs')
+      .insert({
+        file_name: file.name,
+        file_size: file.size,
+        total_rows: totalRows,
+        field_mapping: fieldMapping,
+        default_status: defaultStatus,
+        default_owner_id: defaultOwnerId || null,
+        default_campaign_id: defaultCampaignId || null,
+        skip_duplicates: skipDuplicates,
+        duplicate_check_fields: duplicateCheckFields,
+        created_by: currentUser.id,
+        organization_id: currentUser.organization_id,
+        status: 'processing',
+        started_at: new Date().toISOString(),
+      })
+      .select()
+      .single()
+
+    if (createError || !importJob) {
+      console.error('[Import] Error creating job:', createError)
+      return NextResponse.json({ error: 'Failed to create import job' }, { status: 500 })
+    }
+
+    // Process in background using after()
+    after(async () => {
+      await processImportJob(
+        importJob.id,
+        lines,
+        headers,
+        fieldMapping,
+        defaultStatus,
+        defaultOwnerId,
+        defaultCampaignId,
+        skipDuplicates,
+        duplicateCheckFields
+      )
+    })
+
+    // Return immediately
     return NextResponse.json({
       success: true,
-      importJobId: jobId,
+      importJobId: importJob.id,
       totalRows,
-      processedRows,
-      successfulRows,
-      failedRows,
-      duplicateRows,
-      status: finalStatus,
-      message: `Import completed: ${successfulRows} leads imported${duplicateRows > 0 ? `, ${duplicateRows} duplicates skipped` : ''}${failedRows > 0 ? `, ${failedRows} failed` : ''}`,
+      status: 'processing',
+      message: 'Import started! We\'re updating your leads list in the background.',
     })
   } catch (error) {
     console.error('[Import] Error:', error)

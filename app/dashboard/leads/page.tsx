@@ -1,7 +1,7 @@
 import { createClient, getCurrentUser } from '@/lib/supabase-server'
 import { LeadsTable } from './leads-table'
 import { LeadsHeader } from './leads-header'
-import { TurboGroupsPanel } from './turbo-groups-panel'
+import { LeadImportGroups } from './lead-import-groups'
 import { Users, UserPlus, Phone, CheckCircle, ArrowRight } from 'lucide-react'
 
 const LEADS_PER_PAGE = 25
@@ -106,9 +106,9 @@ export default async function LeadsPage({
         <StatCard label="Converted" value={leadStats.converted} icon={ArrowRight} color="purple" />
       </div>
 
-      {/* Turbo Groups Panel - Admin/Manager only */}
+      {/* Lead Import Groups - Admin/Manager only */}
       {(user?.role === 'admin' || user?.role === 'manager') && (
-        <TurboGroupsPanel />
+        <LeadImportGroups />
       )}
 
       {/* Leads Table */}
