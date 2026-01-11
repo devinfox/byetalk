@@ -68,9 +68,13 @@ export function LeadImportGroups() {
         const data = await response.json()
         setGroups(data.groups || [])
         setIsAdmin(data.isAdmin || false)
+      } else {
+        console.error('Error fetching lead groups:', response.status)
+        setGroups([])
       }
     } catch (error) {
       console.error('Error fetching lead groups:', error)
+      setGroups([])
     } finally {
       setLoading(false)
     }
