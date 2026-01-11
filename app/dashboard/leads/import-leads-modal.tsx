@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   X,
@@ -12,6 +12,8 @@ import {
   AlertCircle,
   Loader2,
   ChevronDown,
+  Clock,
+  CheckCircle2,
 } from 'lucide-react'
 import { LEAD_FIELDS } from '@/types/import.types'
 import type { User, Campaign } from '@/types/database.types'
@@ -23,7 +25,7 @@ interface ImportLeadsModalProps {
   currentUserId?: string
 }
 
-type Step = 'upload' | 'mapping' | 'options' | 'importing' | 'complete'
+type Step = 'upload' | 'mapping' | 'options' | 'importing' | 'processing' | 'complete'
 
 interface PreviewData {
   headers: string[]
@@ -40,6 +42,15 @@ interface ImportResult {
   successfulRows: number
   failedRows: number
   duplicateRows: number
+}
+
+interface ImportProgress {
+  status: string
+  processedRows: number
+  successfulRows: number
+  failedRows: number
+  duplicateRows: number
+  totalRows: number
 }
 
 export function ImportLeadsModal({ onClose, users, campaigns, currentUserId }: ImportLeadsModalProps) {
@@ -61,6 +72,51 @@ export function ImportLeadsModal({ onClose, users, campaigns, currentUserId }: I
 
   // Result
   const [result, setResult] = useState<ImportResult | null>(null)
+
+  // Background processing
+  const [importJobId, setImportJobId] = useState<string | null>(null)
+  const [progress, setProgress] = useState<ImportProgress | null>(null)
+
+  // Poll for progress when processing in background
+  useEffect(() => {
+    if (!importJobId || step !== 'processing') return
+
+    const pollProgress = async () => {
+      try {
+        const response = await fetch(`/api/leads/import/${importJobId}`)
+        if (response.ok) {
+          const data = await response.json()
+          setProgress({
+            status: data.status,
+            processedRows: data.processed_rows || 0,
+            successfulRows: data.successful_rows || 0,
+            failedRows: data.failed_rows || 0,
+            duplicateRows: data.duplicate_rows || 0,
+            totalRows: data.total_rows || 0,
+          })
+
+          if (data.status === 'completed' || data.status === 'failed') {
+            setResult({
+              success: data.status === 'completed',
+              totalRows: data.total_rows,
+              successfulRows: data.successful_rows || 0,
+              failedRows: data.failed_rows || 0,
+              duplicateRows: data.duplicate_rows || 0,
+            })
+            setStep('complete')
+          }
+        }
+      } catch (err) {
+        console.error('Failed to poll progress:', err)
+      }
+    }
+
+    // Poll every 2 seconds
+    const interval = setInterval(pollProgress, 2000)
+    pollProgress() // Initial call
+
+    return () => clearInterval(interval)
+  }, [importJobId, step])
 
   const handleFileSelect = async (selectedFile: File) => {
     setFile(selectedFile)
@@ -129,14 +185,30 @@ export function ImportLeadsModal({ onClose, users, campaigns, currentUserId }: I
       }
 
       const data = await response.json()
-      setResult({
-        success: true,
-        totalRows: data.totalRows,
-        successfulRows: data.successfulRows,
-        failedRows: data.failedRows,
-        duplicateRows: data.duplicateRows,
-      })
-      setStep('complete')
+
+      // For large files, the import happens in background
+      if (data.status === 'pending' || data.status === 'processing') {
+        setImportJobId(data.importJobId)
+        setProgress({
+          status: 'processing',
+          processedRows: 0,
+          successfulRows: 0,
+          failedRows: 0,
+          duplicateRows: 0,
+          totalRows: data.totalRows,
+        })
+        setStep('processing')
+      } else {
+        // Small files may complete immediately
+        setResult({
+          success: true,
+          totalRows: data.totalRows,
+          successfulRows: data.successfulRows || 0,
+          failedRows: data.failedRows || 0,
+          duplicateRows: data.duplicateRows || 0,
+        })
+        setStep('complete')
+      }
     } catch (err) {
       setError((err as Error).message)
       setStep('options')
@@ -161,7 +233,8 @@ export function ImportLeadsModal({ onClose, users, campaigns, currentUserId }: I
               {step === 'upload' && 'Upload your CSV file'}
               {step === 'mapping' && 'Map CSV columns to lead fields'}
               {step === 'options' && 'Configure import options'}
-              {step === 'importing' && 'Importing leads...'}
+              {step === 'importing' && 'Starting import...'}
+              {step === 'processing' && 'Processing in background'}
               {step === 'complete' && 'Import complete'}
             </p>
           </div>
@@ -387,12 +460,76 @@ export function ImportLeadsModal({ onClose, users, campaigns, currentUserId }: I
             </div>
           )}
 
-          {/* Step 4: Importing */}
+          {/* Step 4: Importing (initial upload) */}
           {step === 'importing' && (
             <div className="flex flex-col items-center justify-center py-12">
               <Loader2 className="w-16 h-16 text-yellow-400 animate-spin mb-6" />
-              <p className="text-white text-lg mb-2">Importing leads...</p>
-              <p className="text-gray-400 text-sm">This may take a few minutes for large files</p>
+              <p className="text-white text-lg mb-2">Uploading file...</p>
+              <p className="text-gray-400 text-sm">Please wait while we prepare your import</p>
+            </div>
+          )}
+
+          {/* Step 4b: Processing in background */}
+          {step === 'processing' && progress && (
+            <div className="py-8">
+              <div className="flex flex-col items-center mb-8">
+                <div className="w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center mb-4">
+                  <Clock className="w-8 h-8 text-yellow-400 animate-pulse" />
+                </div>
+                <h3 className="text-xl font-semibold text-white mb-2">Processing Your Import</h3>
+                <p className="text-gray-400 text-center max-w-md">
+                  Your leads are being imported in the background. You can safely close this window - we'll keep working on it!
+                </p>
+              </div>
+
+              {/* Progress bar */}
+              <div className="max-w-md mx-auto mb-6">
+                <div className="flex items-center justify-between text-sm mb-2">
+                  <span className="text-gray-400">Progress</span>
+                  <span className="text-white font-medium">
+                    {progress.processedRows.toLocaleString()} / {progress.totalRows.toLocaleString()}
+                  </span>
+                </div>
+                <div className="h-3 bg-white/10 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-yellow-500 to-yellow-400 transition-all duration-500"
+                    style={{
+                      width: `${progress.totalRows > 0 ? (progress.processedRows / progress.totalRows) * 100 : 0}%`,
+                    }}
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-2 text-center">
+                  {Math.round((progress.processedRows / progress.totalRows) * 100) || 0}% complete
+                </p>
+              </div>
+
+              {/* Live stats */}
+              <div className="grid grid-cols-3 gap-4 max-w-md mx-auto mb-8">
+                <div className="p-3 bg-white/5 rounded-lg text-center">
+                  <p className="text-xl font-bold text-green-400">{progress.successfulRows.toLocaleString()}</p>
+                  <p className="text-xs text-gray-400">Imported</p>
+                </div>
+                <div className="p-3 bg-white/5 rounded-lg text-center">
+                  <p className="text-xl font-bold text-yellow-400">{progress.duplicateRows.toLocaleString()}</p>
+                  <p className="text-xs text-gray-400">Duplicates</p>
+                </div>
+                <div className="p-3 bg-white/5 rounded-lg text-center">
+                  <p className="text-xl font-bold text-red-400">{progress.failedRows.toLocaleString()}</p>
+                  <p className="text-xs text-gray-400">Failed</p>
+                </div>
+              </div>
+
+              <div className="text-center">
+                <button
+                  onClick={() => {
+                    router.refresh()
+                    onClose()
+                  }}
+                  className="glass-button px-6 py-2"
+                >
+                  Close & Continue in Background
+                </button>
+              </div>
             </div>
           )}
 
