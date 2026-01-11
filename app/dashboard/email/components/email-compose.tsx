@@ -347,41 +347,73 @@ export function EmailCompose({
       // Upload attachments if any
       let attachmentData: any[] = []
       if (attachments.length > 0) {
+        console.log('[Email Compose] Processing attachments:', attachments.length)
         for (const file of attachments) {
+          console.log('[Email Compose] Processing file:', file.name, 'type:', file.type, 'size:', file.size)
           const reader = new FileReader()
-          const base64 = await new Promise<string>((resolve) => {
+          const base64 = await new Promise<string>((resolve, reject) => {
             reader.onload = () => {
               const result = reader.result as string
+              console.log('[Email Compose] FileReader result length:', result?.length || 0)
               // Remove data URL prefix
-              resolve(result.split(',')[1])
+              const base64Content = result.split(',')[1]
+              console.log('[Email Compose] Base64 content length:', base64Content?.length || 0)
+              resolve(base64Content)
+            }
+            reader.onerror = () => {
+              console.error('[Email Compose] FileReader error:', reader.error)
+              reject(reader.error)
             }
             reader.readAsDataURL(file)
           })
 
-          attachmentData.push({
+          const attachmentItem = {
             content: base64,
             filename: file.name,
-            content_type: file.type,
+            content_type: file.type || 'application/octet-stream',
             size: file.size,
+          }
+          console.log('[Email Compose] Attachment item:', {
+            filename: attachmentItem.filename,
+            content_type: attachmentItem.content_type,
+            size: attachmentItem.size,
+            contentLength: attachmentItem.content?.length || 0,
           })
+          attachmentData.push(attachmentItem)
         }
+        console.log('[Email Compose] Total attachments prepared:', attachmentData.length)
+      }
+
+      const requestBody = {
+        from_account_id: fromAccountId,
+        to,
+        cc: cc.length > 0 ? cc : undefined,
+        bcc: bcc.length > 0 ? bcc : undefined,
+        subject,
+        body_text: bodyText,
+        body_html: bodyHtml,
+        reply_to_email_id: replyTo?.email_id,
+        thread_id: replyTo?.thread_id,
+        attachments: attachmentData.length > 0 ? attachmentData : undefined,
+      }
+
+      console.log('[Email Compose] Sending request with attachments:', requestBody.attachments?.length || 0)
+      if (requestBody.attachments && requestBody.attachments.length > 0) {
+        requestBody.attachments.forEach((att: any, idx: number) => {
+          console.log(`[Email Compose] Request attachment ${idx + 1}:`, {
+            filename: att.filename,
+            content_type: att.content_type,
+            size: att.size,
+            contentLength: att.content?.length || 0,
+            contentPreview: att.content?.substring(0, 50) + '...',
+          })
+        })
       }
 
       const response = await fetch('/api/email/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          from_account_id: fromAccountId,
-          to,
-          cc: cc.length > 0 ? cc : undefined,
-          bcc: bcc.length > 0 ? bcc : undefined,
-          subject,
-          body_text: bodyText,
-          body_html: bodyHtml,
-          reply_to_email_id: replyTo?.email_id,
-          thread_id: replyTo?.thread_id,
-          attachments: attachmentData.length > 0 ? attachmentData : undefined,
-        }),
+        body: JSON.stringify(requestBody),
       })
 
       const data = await response.json()

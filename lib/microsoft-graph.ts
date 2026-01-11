@@ -238,6 +238,29 @@ export async function sendEmail(
     saveToSentItems: message.saveToSentItems !== false,
   }
 
+  console.log('[Microsoft Graph] Sending email with attachments:', payload.message.attachments?.length || 0)
+  if (payload.message.attachments?.length > 0) {
+    payload.message.attachments.forEach((att: any, idx: number) => {
+      console.log(`[Microsoft Graph] Attachment ${idx + 1}:`, {
+        odataType: att['@odata.type'],
+        name: att.name,
+        contentType: att.contentType,
+        hasContentBytes: !!att.contentBytes,
+        contentBytesLength: att.contentBytes?.length || 0,
+        contentBytesPreview: att.contentBytes?.substring(0, 50) + '...',
+      })
+    })
+  }
+
+  // Log the full payload structure (without full content for brevity)
+  console.log('[Microsoft Graph] Full payload structure:', {
+    subject: payload.message.subject,
+    bodyContentType: payload.message.body?.contentType,
+    toRecipients: payload.message.toRecipients?.length,
+    attachmentsCount: payload.message.attachments?.length || 0,
+    saveToSentItems: payload.saveToSentItems,
+  })
+
   const response = await fetch(`${GRAPH_BASE_URL}/me/sendMail`, {
     method: 'POST',
     headers: {
@@ -249,8 +272,13 @@ export async function sendEmail(
 
   if (!response.ok) {
     const error = await response.json()
+    console.error('[Microsoft Graph] Send email error:', JSON.stringify(error, null, 2))
     throw new Error(error.error?.message || 'Failed to send email')
   }
+
+  // Log success with response details
+  const responseText = response.status === 202 ? 'Accepted' : await response.text().catch(() => 'No response body')
+  console.log('[Microsoft Graph] Email sent successfully, status:', response.status, 'response:', responseText)
 }
 
 /**

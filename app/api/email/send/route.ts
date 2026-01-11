@@ -70,9 +70,13 @@ export async function POST(request: NextRequest) {
       body_html,
       reply_to_email_id,
       thread_id,
-      attachments,
+      attachments: rawAttachments,
       schedule_at,
     } = body
+
+    // Ensure attachments is always an array
+    const attachments = Array.isArray(rawAttachments) ? rawAttachments : []
+    console.log('[Email Send] Raw attachments from request:', rawAttachments?.length, 'Processed:', attachments.length)
 
     // Validate required fields
     if (!from_account_id) {
@@ -284,6 +288,19 @@ export async function POST(request: NextRequest) {
           }
         )
 
+        // Log attachment info for debugging
+        console.log('[Email Send] Attachments received:', attachments?.length || 0)
+        if (attachments?.length > 0) {
+          attachments.forEach((att: any, idx: number) => {
+            console.log(`[Email Send] Attachment ${idx + 1}:`, {
+              filename: att.filename,
+              content_type: att.content_type,
+              size: att.size,
+              contentLength: att.content?.length || 0,
+            })
+          })
+        }
+
         // Check if any attachment exceeds the inline limit
         const hasLargeAttachments = attachments?.some((att: any) => {
           // Base64 encoded size is roughly 4/3 of original size
@@ -325,6 +342,11 @@ export async function POST(request: NextRequest) {
             contentType: att.content_type || 'application/octet-stream',
             contentBytes: att.content, // base64 encoded
           }))
+
+          console.log('[Email Send] Sending with inline attachments:', msAttachments?.length || 0)
+          if (msAttachments?.length > 0) {
+            console.log('[Email Send] First attachment contentBytes length:', msAttachments[0].contentBytes?.length || 0)
+          }
 
           // Send via Microsoft Graph
           await sendMicrosoftEmail(accessToken, {
