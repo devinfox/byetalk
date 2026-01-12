@@ -122,38 +122,48 @@ export function ImportLeadsModal({ onClose, users, campaigns, currentUserId }: I
 
       // For large files, upload directly to Supabase Storage first
       if (file.size > LARGE_FILE_THRESHOLD) {
-        console.log('Large file detected, uploading to storage first...')
+        console.log('=== LARGE FILE UPLOAD ===')
+        console.log('File size:', file.size, 'bytes')
 
-        // Get a signed upload URL from the server
+        // Step 1: Get a signed upload URL from the server
+        console.log('Step 1: Getting signed upload URL...')
         const urlResponse = await fetch('/api/leads/import/upload-url', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ fileName: file.name }),
         })
 
+        console.log('Upload URL response status:', urlResponse.status)
+
         if (!urlResponse.ok) {
-          const urlError = await urlResponse.json()
-          throw new Error(urlError.error || 'Failed to get upload URL')
+          const urlErrorText = await urlResponse.text()
+          console.error('Upload URL error:', urlErrorText)
+          throw new Error('Failed to get upload URL: ' + urlErrorText.slice(0, 100))
         }
 
-        const { signedUrl, storagePath } = await urlResponse.json()
-        console.log('Got signed URL for path:', storagePath)
+        const urlData = await urlResponse.json()
+        const { signedUrl, storagePath, token } = urlData
+        console.log('Step 1 complete. Storage path:', storagePath)
 
-        // Upload file directly to the signed URL
+        // Step 2: Upload file directly to the signed URL
+        console.log('Step 2: Uploading file to storage...')
         const uploadResponse = await fetch(signedUrl, {
           method: 'PUT',
-          headers: { 'Content-Type': 'text/csv' },
           body: file,
         })
 
+        console.log('Storage upload response status:', uploadResponse.status)
+
         if (!uploadResponse.ok) {
-          console.error('Storage upload failed:', uploadResponse.status)
-          throw new Error('Failed to upload file to storage')
+          const uploadErrorText = await uploadResponse.text()
+          console.error('Storage upload error:', uploadErrorText)
+          throw new Error('Failed to upload file: ' + uploadErrorText.slice(0, 100))
         }
 
-        console.log('File uploaded to storage:', storagePath)
+        console.log('Step 2 complete. File uploaded to storage.')
 
-        // Now call API with just the metadata
+        // Step 3: Call API with just the metadata
+        console.log('Step 3: Creating import job...')
         response = await fetch('/api/leads/import/large', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -172,6 +182,7 @@ export function ImportLeadsModal({ onClose, users, campaigns, currentUserId }: I
             duplicateCheckFields,
           }),
         })
+        console.log('Step 3 response status:', response.status)
       } else {
         // For smaller files, use the regular endpoint
         const formData = new FormData()
