@@ -408,19 +408,33 @@ export function LeadDetailView({
                     </div>
                   </div>
                 )}
-                {lead.owner && (
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center text-black font-bold text-[8px] flex-shrink-0">
-                      {lead.owner.first_name[0]}{lead.owner.last_name[0]}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-gray-500 text-[10px] uppercase">Owner</p>
-                      <p className="text-white text-sm truncate">
-                        {lead.owner.first_name} {lead.owner.last_name}
-                      </p>
-                    </div>
-                  </div>
-                )}
+                <div className="flex items-center gap-2">
+                  {lead.owner ? (
+                    <>
+                      <div className="w-5 h-5 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center text-black font-bold text-[8px] flex-shrink-0">
+                        {lead.owner.first_name[0]}{lead.owner.last_name[0]}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-gray-500 text-[10px] uppercase">Owner</p>
+                        <p className="text-white text-sm truncate">
+                          {lead.owner.first_name} {lead.owner.last_name}
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-5 h-5 rounded-full bg-gray-600 flex items-center justify-center text-gray-400 font-bold text-[8px] flex-shrink-0">
+                        ?
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-gray-500 text-[10px] uppercase">Owner</p>
+                        <p className="text-gray-400 text-sm truncate">
+                          Unassigned
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </div>
                 <div className="flex items-center gap-2">
                   <Target className="w-4 h-4 text-gray-400 flex-shrink-0" />
                   <div className="min-w-0">

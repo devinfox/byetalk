@@ -47,12 +47,14 @@ export function FloatingDialer({ userId }: FloatingDialerProps) {
     incomingCallInfo,
     currentCallNumber,
     currentCallName,
+    currentLeadId,
     makeCall,
     answerCall,
     rejectCall,
     hangUp,
     toggleMute,
     sendDigits,
+    setCallMetadata,
   } = useTwilioDeviceContext()
 
   // Play/stop ringtone for incoming calls using Web Audio API
@@ -186,11 +188,38 @@ export function FloatingDialer({ userId }: FloatingDialerProps) {
   }
 
   // Handle answering incoming call
-  const handleAnswer = () => {
+  const handleAnswer = async (callerInfo?: { name: string; type: 'lead' | 'contact' | 'unknown'; id?: string }) => {
     answerCall()
     // Open the dialer to show call controls
     openDialer()
     setPhoneNumber(incomingCallInfo?.from || '')
+
+    // Set call metadata if we have caller info
+    if (callerInfo && callerInfo.type !== 'unknown') {
+      setCallMetadata({
+        phoneNumber: incomingCallInfo?.from,
+        name: callerInfo.name,
+        leadId: callerInfo.type === 'lead' ? callerInfo.id : undefined,
+        contactId: callerInfo.type === 'contact' ? callerInfo.id : undefined,
+      })
+
+      // Auto-assign lead to the rep who answered if it's unassigned or new
+      if (callerInfo.type === 'lead' && callerInfo.id && userId) {
+        try {
+          await fetch('/api/leads/assign-on-answer', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              leadId: callerInfo.id,
+              userId: userId,
+            }),
+          })
+          console.log('[Dialer] Lead assigned to rep on answer:', callerInfo.id)
+        } catch (err) {
+          console.error('[Dialer] Failed to assign lead:', err)
+        }
+      }
+    }
   }
 
   // Handle rejecting incoming call

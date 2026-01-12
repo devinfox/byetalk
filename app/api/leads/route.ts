@@ -155,7 +155,8 @@ export async function POST(request: NextRequest) {
     const groupType = is_ai_generated ? SYSTEM_GROUPS.AI_GENERATED : SYSTEM_GROUPS.INDIVIDUALLY_ADDED
     const importJobId = await getSystemGroup(userData.organization_id, groupType as 'ai-generated' | 'individually-added')
 
-    // Create the lead
+    // Create the lead - owner_id is null unless explicitly provided
+    // Leads get assigned to reps when they connect (autodialer or inbound call)
     const { data: lead, error: insertError } = await getSupabaseAdmin()
       .from('leads')
       .insert({
@@ -167,8 +168,8 @@ export async function POST(request: NextRequest) {
         state: state || null,
         source_type: source_type || (is_ai_generated ? 'inbound_call' : null),
         campaign_id: campaign_id || null,
-        owner_id: owner_id || userData.id,
-        assigned_at: new Date().toISOString(),
+        owner_id: owner_id || null, // Unassigned by default - assigned when rep connects
+        assigned_at: owner_id ? new Date().toISOString() : null,
         notes: notes || null,
         status: 'new',
         import_job_id: importJobId,

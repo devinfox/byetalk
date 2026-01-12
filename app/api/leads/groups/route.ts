@@ -30,7 +30,44 @@ export async function GET(request: NextRequest) {
 
     const isAdmin = userData.role === 'admin' || userData.role === 'manager'
 
-    // Get all import jobs for this organization
+    // For non-admins, only show the "Individually Added" system group
+    if (!isAdmin) {
+      // Get or find the "individually-added" system group
+      const { data: individuallyAddedJob } = await getSupabaseAdmin()
+        .from('lead_import_jobs')
+        .select('id, file_name, display_name, is_system, created_at, status')
+        .eq('is_system', true)
+        .eq('file_name', 'individually-added')
+        .single()
+
+      if (!individuallyAddedJob) {
+        // No individually added group exists yet
+        return NextResponse.json({ groups: [], isAdmin })
+      }
+
+      // Count leads in this group that the user owns
+      const { count } = await getSupabaseAdmin()
+        .from('leads')
+        .select('id', { count: 'exact', head: true })
+        .eq('import_job_id', individuallyAddedJob.id)
+        .eq('owner_id', userData.id)
+        .eq('is_deleted', false)
+
+      const groups = [{
+        id: individuallyAddedJob.id,
+        name: individuallyAddedJob.display_name || 'Individually Added',
+        file_name: individuallyAddedJob.file_name || '',
+        is_system: true,
+        lead_count: count || 0,
+        queued_count: 0,
+        is_turbo_enabled: false,
+        created_at: individuallyAddedJob.created_at,
+      }]
+
+      return NextResponse.json({ groups, isAdmin })
+    }
+
+    // Admin logic - get all import jobs for this organization
     // Using a simpler query that works whether migration is run or not
     const { data: importJobs, error: jobsError } = await getSupabaseAdmin()
       .from('lead_import_jobs')
@@ -52,13 +89,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ groups: [], isAdmin })
     }
 
-    // Filter by organization if needed (admins see everything)
-    const orgJobs = isAdmin
-      ? importJobs
-      : importJobs.filter(job =>
-          // @ts-expect-error organization_id might not exist
-          !job.organization_id || job.organization_id === userData.organization_id
-        )
+    // For admins, show all jobs
+    const orgJobs = importJobs
 
     // Get lead counts for each group more efficiently
     const groupsWithCounts = await Promise.all(

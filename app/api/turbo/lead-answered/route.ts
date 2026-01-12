@@ -28,16 +28,47 @@ export async function POST(request: NextRequest) {
   console.log(`[Lead Answered] CallSid: ${callSid}, AnsweredBy: ${answeredBy}`)
 
   try {
-    // Check if answered by machine (voicemail)
-    if (answeredBy === 'machine_start' || answeredBy === 'machine_end_beep' || answeredBy === 'fax') {
-      console.log(`[Lead Answered] Machine detected for ${callSid}, hanging up`)
+    // Check if answered by machine/voicemail - ALL machine types should hang up
+    // Twilio AMD values: human, machine_start, machine_end_beep, machine_end_silence, machine_end_other, fax, unknown
+    const machineTypes = [
+      'machine_start',      // Machine detected at start
+      'machine_end_beep',   // Voicemail with beep detected
+      'machine_end_silence', // Voicemail with silence detected
+      'machine_end_other',  // Other machine pattern
+      'fax',                // Fax machine
+    ]
 
-      // Update call status
+    if (answeredBy && machineTypes.includes(answeredBy)) {
+      console.log(`[Lead Answered] Machine/Voicemail detected for ${callSid} (${answeredBy}), auto hanging up`)
+
+      // Update call status and mark disposition
       await getSupabaseAdmin()
         .from('turbo_active_calls')
-        .update({ status: 'machine', ended_at: new Date().toISOString() })
+        .update({
+          status: 'machine',
+          ended_at: new Date().toISOString(),
+        })
         .eq('call_sid', callSid)
 
+      // Update queue item disposition for retry later
+      const { data: activeCall } = await getSupabaseAdmin()
+        .from('turbo_active_calls')
+        .select('queue_item_id')
+        .eq('call_sid', callSid)
+        .single()
+
+      if (activeCall?.queue_item_id) {
+        await getSupabaseAdmin()
+          .from('turbo_call_queue')
+          .update({
+            status: 'queued', // Put back in queue for retry
+            last_disposition: 'voicemail',
+            last_attempt_at: new Date().toISOString(),
+          })
+          .eq('id', activeCall.queue_item_id)
+      }
+
+      // Silent hangup - no message to voicemail
       twiml.hangup()
       return new NextResponse(twiml.toString(), {
         headers: { 'Content-Type': 'text/xml' },

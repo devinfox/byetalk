@@ -3,15 +3,14 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, X } from 'lucide-react'
-import type { User, Campaign } from '@/types/database.types'
+import type { Campaign } from '@/types/database.types'
 
-interface CreateLeadButtonProps {
-  users: Pick<User, 'id' | 'first_name' | 'last_name' | 'role'>[]
+interface SalesRepLeadHeaderProps {
   campaigns: Pick<Campaign, 'id' | 'name' | 'code'>[]
   currentUserId?: string
 }
 
-export function CreateLeadButton({ users, campaigns, currentUserId }: CreateLeadButtonProps) {
+export function SalesRepLeadHeader({ campaigns, currentUserId }: SalesRepLeadHeaderProps) {
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -47,9 +46,9 @@ export function CreateLeadButton({ users, campaigns, currentUserId }: CreateLead
           state: formData.state || null,
           source_type: formData.source_type || null,
           campaign_id: formData.campaign_id || null,
-          owner_id: null, // Admin creates unassigned leads - assigned when rep connects
+          owner_id: currentUserId || null, // Assign to self
           notes: formData.notes || null,
-          is_ai_generated: false, // Manual lead
+          is_ai_generated: false,
         }),
       })
 
@@ -80,13 +79,23 @@ export function CreateLeadButton({ users, campaigns, currentUserId }: CreateLead
 
   return (
     <>
-      <button
-        onClick={() => setIsOpen(true)}
-        className="flex items-center gap-2 px-5 py-2.5 glass-button-gold rounded-xl text-sm font-medium transition-all hover:scale-105"
-      >
-        <Plus className="w-4 h-4" />
-        Add Lead
-      </button>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-light text-white tracking-wide">
+            <span className="text-gold-gradient font-semibold">MY LEADS</span>
+          </h1>
+          <p className="text-gray-400 mt-1">
+            Your individually added leads
+          </p>
+        </div>
+        <button
+          onClick={() => setIsOpen(true)}
+          className="flex items-center gap-2 px-5 py-2.5 glass-button-gold rounded-xl text-sm font-medium transition-all hover:scale-105"
+        >
+          <Plus className="w-4 h-4" />
+          Add Lead
+        </button>
+      </div>
 
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -97,7 +106,7 @@ export function CreateLeadButton({ users, campaigns, currentUserId }: CreateLead
           <div className="relative glass-card w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
             {/* Header */}
             <div className="flex items-center justify-between p-5 border-b border-white/10">
-              <h2 className="text-lg font-semibold text-white uppercase tracking-wide">Create New Lead</h2>
+              <h2 className="text-lg font-semibold text-white uppercase tracking-wide">Add New Lead</h2>
               <button
                 onClick={() => setIsOpen(false)}
                 className="p-1.5 text-gray-400 hover:text-yellow-400 rounded-lg hover:bg-white/10 transition-all"
@@ -217,23 +226,25 @@ export function CreateLeadButton({ users, campaigns, currentUserId }: CreateLead
                 </select>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
-                  Campaign
-                </label>
-                <select
-                  value={formData.campaign_id}
-                  onChange={(e) => setFormData({ ...formData, campaign_id: e.target.value })}
-                  className="glass-select w-full"
-                >
-                  <option value="">Select campaign...</option>
-                  {campaigns.map((campaign) => (
-                    <option key={campaign.id} value={campaign.id}>
-                      {campaign.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {campaigns.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
+                    Campaign
+                  </label>
+                  <select
+                    value={formData.campaign_id}
+                    onChange={(e) => setFormData({ ...formData, campaign_id: e.target.value })}
+                    className="glass-select w-full"
+                  >
+                    <option value="">Select campaign...</option>
+                    {campaigns.map((campaign) => (
+                      <option key={campaign.id} value={campaign.id}>
+                        {campaign.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-400 mb-1.5 uppercase tracking-wide">
@@ -262,7 +273,7 @@ export function CreateLeadButton({ users, campaigns, currentUserId }: CreateLead
                   disabled={loading}
                   className="px-6 py-2 glass-button-gold rounded-xl font-medium disabled:opacity-50 transition-all"
                 >
-                  {loading ? 'Creating...' : 'Create Lead'}
+                  {loading ? 'Creating...' : 'Add Lead'}
                 </button>
               </div>
             </form>

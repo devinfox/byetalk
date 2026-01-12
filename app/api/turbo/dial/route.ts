@@ -208,6 +208,7 @@ export async function POST(request: NextRequest) {
 
         // Create the outbound call via Twilio REST API
         // URL points to /api/turbo/lead-answered which handles atomic rep claiming
+        // AMD (Answering Machine Detection) is enabled to filter out voicemails
         const call = await twilioClient.calls.create({
           to: toNumber,
           from: callerId,
@@ -215,7 +216,9 @@ export async function POST(request: NextRequest) {
           statusCallback: `${baseUrl}/api/turbo/webhook`,
           statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
           statusCallbackMethod: 'POST',
-          machineDetection: 'Enable',
+          machineDetection: 'DetectMessageEnd', // Better detection - waits for beep
+          machineDetectionTimeout: 5, // 5 seconds max to detect
+          asyncAmd: 'false', // Synchronous - AnsweredBy comes with initial webhook
           timeout: 30,
         })
 

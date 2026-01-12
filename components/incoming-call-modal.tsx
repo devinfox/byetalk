@@ -7,7 +7,7 @@ import type { IncomingCallInfo } from '@/lib/useTwilioDevice'
 
 interface IncomingCallModalProps {
   callInfo: IncomingCallInfo
-  onAnswer: () => void
+  onAnswer: (callerInfo?: { name: string; type: 'lead' | 'contact' | 'unknown'; id?: string }) => void
   onReject: () => void
 }
 
@@ -138,7 +138,7 @@ export function IncomingCallModal({ callInfo, onAnswer, onReject }: IncomingCall
 
             {/* Answer */}
             <button
-              onClick={onAnswer}
+              onClick={() => onAnswer(callerInfo)}
               className="group flex flex-col items-center"
             >
               <div className="w-16 h-16 rounded-full bg-green-500 hover:bg-green-600 flex items-center justify-center transition-all transform hover:scale-110 shadow-lg shadow-green-500/30 animate-pulse-answer">

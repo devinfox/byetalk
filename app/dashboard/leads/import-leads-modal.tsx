@@ -58,7 +58,7 @@ export function ImportLeadsModal({ onClose, users, campaigns, currentUserId }: I
   // Options
   const [listName, setListName] = useState('')
   const [defaultStatus, setDefaultStatus] = useState('new')
-  const [defaultOwnerId, setDefaultOwnerId] = useState(currentUserId || '')
+  const [defaultOwnerId, setDefaultOwnerId] = useState('') // Default to unassigned
   const [defaultCampaignId, setDefaultCampaignId] = useState('')
   const [skipDuplicates, setSkipDuplicates] = useState(true)
   const [duplicateCheckFields, setDuplicateCheckFields] = useState(['phone', 'email'])

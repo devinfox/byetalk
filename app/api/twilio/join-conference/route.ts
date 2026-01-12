@@ -6,6 +6,7 @@ const VoiceResponse = twilio.twiml.VoiceResponse
 /**
  * POST /api/twilio/join-conference
  * TwiML endpoint for joining a conference call
+ * SILENT - No voice announcements
  *
  * Query: ?conference=<conference_name>
  */
@@ -16,18 +17,17 @@ export async function POST(request: NextRequest) {
   const twiml = new VoiceResponse()
 
   if (!conferenceName) {
-    twiml.say({ voice: 'alice' }, 'Unable to join the call. Conference not found.')
+    // Only speak if there's an error
+    twiml.say({ voice: 'alice' }, 'Unable to join the call.')
     twiml.hangup()
   } else {
-    twiml.say({ voice: 'alice' }, 'Joining the call now.')
-
+    // SILENT join - no announcement
     const dial = twiml.dial()
     dial.conference(
       {
-        beep: 'true',
+        beep: 'false', // No beep when joining
         startConferenceOnEnter: true,
         endConferenceOnExit: false,
-        waitUrl: 'http://twimlets.com/holdmusic?Bucket=com.twilio.music.classical',
       },
       conferenceName
     )

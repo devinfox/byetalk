@@ -1,6 +1,7 @@
 import { createClient, getCurrentUser } from '@/lib/supabase-server'
 import { LeadsHeader } from './leads-header'
 import { LeadImportGroups } from './lead-import-groups'
+import { SalesRepLeadHeader } from './sales-rep-lead-header'
 import { Users, UserPlus, Phone, CheckCircle, ArrowRight } from 'lucide-react'
 
 export default async function LeadsPage() {
@@ -20,15 +21,13 @@ export default async function LeadsPage() {
         .order('first_name')
     : { data: [] }
 
-  // Get campaigns for dropdown (admin only)
-  const { data: campaigns } = isAdmin
-    ? await supabase
-        .from('campaigns')
-        .select('id, name, code')
-        .eq('is_deleted', false)
-        .eq('is_active', true)
-        .order('name')
-    : { data: [] }
+  // Get campaigns for dropdown
+  const { data: campaigns } = await supabase
+    .from('campaigns')
+    .select('id, name, code')
+    .eq('is_deleted', false)
+    .eq('is_active', true)
+    .order('name')
 
   // Get lead stats based on role using COUNT queries (not limited to 1000)
   let leadStats = { total: 0, new: 0, contacted: 0, qualified: 0, converted: 0 }
@@ -84,16 +83,12 @@ export default async function LeadsPage() {
         />
       )}
 
-      {/* Page Title for non-admins */}
+      {/* Page Title and Add Lead for non-admins */}
       {!isAdmin && (
-        <div>
-          <h1 className="text-3xl font-light text-white tracking-wide">
-            <span className="text-gold-gradient font-semibold">MY LEADS</span>
-          </h1>
-          <p className="text-gray-400 mt-1">
-            Leads you've connected with through calls
-          </p>
-        </div>
+        <SalesRepLeadHeader
+          campaigns={campaigns || []}
+          currentUserId={user?.id}
+        />
       )}
 
       {/* Stats */}
