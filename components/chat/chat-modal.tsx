@@ -169,7 +169,7 @@ function ChatViewCompact({ currentUserId, partnerId }: { currentUserId: string; 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { markAsRead } = useChat()
 
-  const { messages, loading, sendMessage } = useMessages({
+  const { messages, loading, error, sendMessage } = useMessages({
     currentUserId,
     partnerId,
   })
@@ -194,6 +194,7 @@ function ChatViewCompact({ currentUserId, partnerId }: { currentUserId: string; 
     if (success) {
       setInput('')
     }
+    // Error will be shown from the hook's error state
     setSending(false)
   }
 
@@ -233,6 +234,13 @@ function ChatViewCompact({ currentUserId, partnerId }: { currentUserId: string; 
         )}
         <div ref={messagesEndRef} />
       </div>
+
+      {/* Error message */}
+      {error && (
+        <div className="px-3 py-2 bg-red-500/10 border-t border-red-500/30">
+          <p className="text-red-400 text-xs text-center">{error}</p>
+        </div>
+      )}
 
       {/* Input */}
       <div className="p-3 border-t border-gray-700 bg-gray-800">

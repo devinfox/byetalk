@@ -108,6 +108,14 @@ export function useMessages({ currentUserId, partnerId }: UseMessagesOptions): U
 
       const supabase = createClient()
 
+      // Verify auth session is valid before attempting to send
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
+      if (authError || !authUser) {
+        console.error('Auth session invalid:', authError)
+        setError('Session expired. Please refresh the page.')
+        return false
+      }
+
       // Optimistic update
       const tempId = `temp-${Date.now()}`
       const tempMessage: Message = {
@@ -139,7 +147,20 @@ export function useMessages({ currentUserId, partnerId }: UseMessagesOptions): U
         console.error('Failed to send message:', sendError)
         // Remove optimistic message on error
         setMessages((prev) => prev.filter((m) => m.id !== tempId))
-        setError('Failed to send message')
+        // Check for RLS policy violation (code 42501) or permission errors
+        if (sendError.code === '42501' || sendError.message?.includes('policy')) {
+          setError('Permission denied. Please refresh the page and try again.')
+        } else {
+          setError('Failed to send message. Please try again.')
+        }
+        return false
+      }
+
+      // Also check if data is null (can happen if RLS blocks the select after insert)
+      if (!data) {
+        console.error('Message insert returned no data - possible RLS issue')
+        setMessages((prev) => prev.filter((m) => m.id !== tempId))
+        setError('Failed to send message. Please refresh and try again.')
         return false
       }
 
