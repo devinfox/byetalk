@@ -15,6 +15,10 @@ import {
 } from 'lucide-react'
 import { LEAD_FIELDS } from '@/types/import.types'
 import type { User, Campaign } from '@/types/database.types'
+import { createClient } from '@/lib/supabase-client'
+
+// Files larger than 4MB should be uploaded directly to storage
+const LARGE_FILE_THRESHOLD = 4 * 1024 * 1024
 
 interface ImportLeadsModalProps {
   onClose: () => void
@@ -115,22 +119,69 @@ export function ImportLeadsModal({ onClose, users, campaigns, currentUserId }: I
     console.log('List name:', listName)
 
     try {
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('fieldMapping', JSON.stringify(fieldMapping))
-      formData.append('listName', listName)
-      formData.append('defaultStatus', defaultStatus)
-      formData.append('defaultOwnerId', defaultOwnerId)
-      formData.append('defaultCampaignId', defaultCampaignId)
-      formData.append('skipDuplicates', skipDuplicates.toString())
-      formData.append('duplicateCheckFields', duplicateCheckFields.join(','))
+      let response: Response
 
-      console.log('Sending request to /api/leads/import...')
+      // For large files, upload directly to Supabase Storage first
+      if (file.size > LARGE_FILE_THRESHOLD) {
+        console.log('Large file detected, uploading to storage first...')
 
-      const response = await fetch('/api/leads/import', {
-        method: 'POST',
-        body: formData,
-      })
+        const supabase = createClient()
+        const timestamp = Date.now()
+        const storagePath = `imports/pending/${timestamp}_${file.name}`
+
+        // Upload file to storage
+        const { error: uploadError } = await supabase.storage
+          .from('documents')
+          .upload(storagePath, file, {
+            contentType: 'text/csv',
+            upsert: true,
+          })
+
+        if (uploadError) {
+          console.error('Storage upload error:', uploadError)
+          throw new Error('Failed to upload file: ' + uploadError.message)
+        }
+
+        console.log('File uploaded to storage:', storagePath)
+
+        // Now call API with just the metadata
+        response = await fetch('/api/leads/import/large', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            storagePath,
+            fileName: file.name,
+            fileSize: file.size,
+            totalRows: preview.totalRows,
+            headers: preview.headers,
+            fieldMapping,
+            listName,
+            defaultStatus,
+            defaultOwnerId,
+            defaultCampaignId,
+            skipDuplicates,
+            duplicateCheckFields,
+          }),
+        })
+      } else {
+        // For smaller files, use the regular endpoint
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('fieldMapping', JSON.stringify(fieldMapping))
+        formData.append('listName', listName)
+        formData.append('defaultStatus', defaultStatus)
+        formData.append('defaultOwnerId', defaultOwnerId)
+        formData.append('defaultCampaignId', defaultCampaignId)
+        formData.append('skipDuplicates', skipDuplicates.toString())
+        formData.append('duplicateCheckFields', duplicateCheckFields.join(','))
+
+        console.log('Sending request to /api/leads/import...')
+
+        response = await fetch('/api/leads/import', {
+          method: 'POST',
+          body: formData,
+        })
+      }
 
       console.log('Response status:', response.status)
 
