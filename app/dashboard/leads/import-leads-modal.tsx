@@ -67,7 +67,7 @@ export function ImportLeadsModal({ onClose, users, campaigns, currentUserId }: I
   const [result, setResult] = useState<ImportResult | null>(null)
 
   // Parse CSV headers client-side (for large files)
-  const parseCSVHeadersClientSide = async (file: File): Promise<PreviewData> => {
+  const parseCSVHeadersClientSide = async (selectedFile: File): Promise<PreviewData> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
       reader.onload = (e) => {
@@ -135,17 +135,35 @@ export function ImportLeadsModal({ onClose, users, campaigns, currentUserId }: I
             sampleData.push(row)
           }
 
+          // Generate suggested mappings
+          const suggestedMappings: Record<string, string> = {}
+          headers.forEach((header) => {
+            const normalizedHeader = header.toLowerCase().replace(/[^a-z0-9]/g, '')
+            const matchedField = LEAD_FIELDS.find((field) => {
+              const normalizedField = field.label.toLowerCase().replace(/[^a-z0-9]/g, '')
+              const normalizedValue = field.value.toLowerCase().replace(/[^a-z0-9]/g, '')
+              return normalizedHeader === normalizedField || normalizedHeader === normalizedValue ||
+                normalizedHeader.includes(normalizedField) || normalizedField.includes(normalizedHeader)
+            })
+            if (matchedField) {
+              suggestedMappings[header] = matchedField.value
+            }
+          })
+
           resolve({
             headers,
             totalRows: lines.length - 1, // Exclude header
             sampleData,
+            suggestedMappings,
+            fileName: selectedFile.name,
+            fileSize: selectedFile.size,
           })
         } catch (err) {
           reject(err)
         }
       }
       reader.onerror = () => reject(new Error('Failed to read file'))
-      reader.readAsText(file)
+      reader.readAsText(selectedFile)
     })
   }
 
@@ -160,22 +178,7 @@ export function ImportLeadsModal({ onClose, users, campaigns, currentUserId }: I
         console.log('Large file - parsing preview client-side')
         const previewData = await parseCSVHeadersClientSide(selectedFile)
         setPreview(previewData)
-
-        // Auto-map fields
-        const autoMapping: Record<string, string> = {}
-        previewData.headers.forEach((header) => {
-          const normalizedHeader = header.toLowerCase().replace(/[^a-z0-9]/g, '')
-          const matchedField = LEAD_FIELDS.find((field) => {
-            const normalizedField = field.label.toLowerCase().replace(/[^a-z0-9]/g, '')
-            const normalizedValue = field.value.toLowerCase().replace(/[^a-z0-9]/g, '')
-            return normalizedHeader === normalizedField || normalizedHeader === normalizedValue ||
-              normalizedHeader.includes(normalizedField) || normalizedField.includes(normalizedHeader)
-          })
-          if (matchedField) {
-            autoMapping[header] = matchedField.value
-          }
-        })
-        setFieldMapping(autoMapping)
+        setFieldMapping(previewData.suggestedMappings)
         setStep('mapping')
         setLoading(false)
         return
