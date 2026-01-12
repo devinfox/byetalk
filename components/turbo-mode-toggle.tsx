@@ -41,33 +41,11 @@ export function TurboModeToggle() {
         const connected = await connectToUrl(result.twiml_url)
 
         if (connected) {
-          console.log('[TurboMode] Connected to conference, waiting for conference to be established...')
-          // Wait for conference to be established before dialing
-          // The conference needs time to start and update conference_sid in database
-          // Poll until conference_sid is set (max 10 seconds)
-          let attempts = 0
-          const maxAttempts = 10
-          const checkConference = async () => {
-            attempts++
-            await refreshStatus()
-
-            // Check if session has conference_sid set (conference exists in Twilio)
-            const response = await fetch('/api/turbo/queue')
-            const data = await response.json()
-            const mySession = data.sessions?.my_session
-
-            if (mySession?.conference_sid) {
-              console.log('[TurboMode] Conference established, starting auto-dial')
-              dialNextBatch()
-            } else if (attempts < maxAttempts) {
-              console.log(`[TurboMode] Waiting for conference... attempt ${attempts}/${maxAttempts}`)
-              setTimeout(checkConference, 1000)
-            } else {
-              console.log('[TurboMode] Conference not established, dialing anyway (will retry)')
-              dialNextBatch()
-            }
-          }
-          setTimeout(checkConference, 1000)
+          console.log('[TurboMode] Connected to conference, starting auto-dial')
+          // Give the conference a moment to start, then begin dialing
+          setTimeout(() => {
+            dialNextBatch()
+          }, 2000)
         } else {
           console.error('[TurboMode] Failed to connect to conference')
           // Stop turbo mode if we couldn't connect
