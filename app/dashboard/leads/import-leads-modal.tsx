@@ -66,12 +66,122 @@ export function ImportLeadsModal({ onClose, users, campaigns, currentUserId }: I
   // Result
   const [result, setResult] = useState<ImportResult | null>(null)
 
+  // Parse CSV headers client-side (for large files)
+  const parseCSVHeadersClientSide = async (file: File): Promise<PreviewData> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        try {
+          const text = e.target?.result as string
+          const lines = text.split(/\r?\n/).filter(line => line.trim())
+
+          if (lines.length < 1) {
+            reject(new Error('CSV file is empty'))
+            return
+          }
+
+          // Parse headers (first line)
+          const headerLine = lines[0]
+          const headers: string[] = []
+          let current = ''
+          let inQuotes = false
+
+          for (let i = 0; i < headerLine.length; i++) {
+            const char = headerLine[i]
+            if (char === '"') {
+              if (inQuotes && headerLine[i + 1] === '"') {
+                current += '"'
+                i++
+              } else {
+                inQuotes = !inQuotes
+              }
+            } else if (char === ',' && !inQuotes) {
+              headers.push(current.trim())
+              current = ''
+            } else {
+              current += char
+            }
+          }
+          headers.push(current.trim())
+
+          // Get sample data (first 5 data rows)
+          const sampleData: Record<string, string>[] = []
+          for (let i = 1; i < Math.min(6, lines.length); i++) {
+            const values: string[] = []
+            let val = ''
+            let inQ = false
+            for (let j = 0; j < lines[i].length; j++) {
+              const c = lines[i][j]
+              if (c === '"') {
+                if (inQ && lines[i][j + 1] === '"') {
+                  val += '"'
+                  j++
+                } else {
+                  inQ = !inQ
+                }
+              } else if (c === ',' && !inQ) {
+                values.push(val.trim())
+                val = ''
+              } else {
+                val += c
+              }
+            }
+            values.push(val.trim())
+
+            const row: Record<string, string> = {}
+            headers.forEach((h, idx) => {
+              row[h] = values[idx] || ''
+            })
+            sampleData.push(row)
+          }
+
+          resolve({
+            headers,
+            totalRows: lines.length - 1, // Exclude header
+            sampleData,
+          })
+        } catch (err) {
+          reject(err)
+        }
+      }
+      reader.onerror = () => reject(new Error('Failed to read file'))
+      reader.readAsText(file)
+    })
+  }
+
   const handleFileSelect = async (selectedFile: File) => {
     setFile(selectedFile)
     setError(null)
     setLoading(true)
 
     try {
+      // For large files, parse preview client-side to avoid 413 errors
+      if (selectedFile.size > LARGE_FILE_THRESHOLD) {
+        console.log('Large file - parsing preview client-side')
+        const previewData = await parseCSVHeadersClientSide(selectedFile)
+        setPreview(previewData)
+
+        // Auto-map fields
+        const autoMapping: Record<string, string> = {}
+        previewData.headers.forEach((header) => {
+          const normalizedHeader = header.toLowerCase().replace(/[^a-z0-9]/g, '')
+          const matchedField = LEAD_FIELDS.find((field) => {
+            const normalizedField = field.label.toLowerCase().replace(/[^a-z0-9]/g, '')
+            const normalizedValue = field.value.toLowerCase().replace(/[^a-z0-9]/g, '')
+            return normalizedHeader === normalizedField || normalizedHeader === normalizedValue ||
+              normalizedHeader.includes(normalizedField) || normalizedField.includes(normalizedHeader)
+          })
+          if (matchedField) {
+            autoMapping[header] = matchedField.value
+          }
+        })
+        setFieldMapping(autoMapping)
+        setStep('mapping')
+        setLoading(false)
+        return
+      }
+
+      // For smaller files, use the server endpoint
       const formData = new FormData()
       formData.append('file', selectedFile)
 
