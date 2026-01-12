@@ -22,6 +22,7 @@ import {
   FileText,
   Filter,
   Presentation,
+  MessageCircle,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
@@ -42,6 +43,7 @@ const navigation: NavItem[] = [
   { name: 'Calls', href: '/dashboard/calls', icon: Phone },
   { name: 'Meetings', href: '/dashboard/meetings', icon: Video },
   { name: 'Tasks', href: '/dashboard/tasks', icon: CheckSquare },
+  { name: 'ByeMessage', href: '/dashboard/messages', icon: MessageCircle },
   {
     name: 'Email',
     href: '/dashboard/email',
