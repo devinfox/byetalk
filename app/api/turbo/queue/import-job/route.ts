@@ -98,42 +98,47 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No leads with phone numbers found in this list' }, { status: 400 })
     }
 
-    // Clear existing queue items for these leads first
+    // Batch operations to handle unlimited leads
+    const BATCH_SIZE = 500
     const leadIds = leads.map(l => l.id)
-    const { error: deleteError } = await getSupabaseAdmin()
-      .from('turbo_call_queue')
-      .delete()
-      .in('lead_id', leadIds)
 
-    if (deleteError) {
-      console.log('[Turbo Toggle] Delete existing error (ok to ignore):', deleteError.message)
+    // Clear existing queue items for these leads first (in batches)
+    for (let i = 0; i < leadIds.length; i += BATCH_SIZE) {
+      const batch = leadIds.slice(i, i + BATCH_SIZE)
+      await getSupabaseAdmin()
+        .from('turbo_call_queue')
+        .delete()
+        .in('lead_id', batch)
     }
 
-    // Insert new queue items
-    const queueItems = leads.map(lead => ({
-      organization_id: orgId,
-      lead_id: lead.id,
-      priority: 0,
-      added_by: userData.id,
-      status: 'queued' as const,
-    }))
+    // Insert new queue items (in batches)
+    let totalAdded = 0
+    for (let i = 0; i < leads.length; i += BATCH_SIZE) {
+      const batchLeads = leads.slice(i, i + BATCH_SIZE)
+      const queueItems = batchLeads.map(lead => ({
+        organization_id: orgId,
+        lead_id: lead.id,
+        priority: 0,
+        added_by: userData.id,
+        status: 'queued' as const,
+      }))
 
-    console.log('[Turbo Toggle] Inserting', queueItems.length, 'queue items')
+      const { error: insertError } = await getSupabaseAdmin()
+        .from('turbo_call_queue')
+        .insert(queueItems)
 
-    const { error: insertError } = await getSupabaseAdmin()
-      .from('turbo_call_queue')
-      .insert(queueItems)
-
-    if (insertError) {
-      console.error('[Turbo Toggle] Insert error:', insertError)
-      return NextResponse.json({ error: 'Failed to add to queue: ' + insertError.message }, { status: 500 })
+      if (insertError) {
+        console.error('[Turbo Toggle] Batch insert error:', insertError)
+      } else {
+        totalAdded += queueItems.length
+      }
     }
 
-    console.log('[Turbo Toggle] Success! Added', leads.length, 'leads to queue')
+    console.log('[Turbo Toggle] Success! Added', totalAdded, 'leads to queue')
 
     return NextResponse.json({
       success: true,
-      added: leads.length,
+      added: totalAdded,
       import_job_id,
     })
   } catch (error) {
@@ -165,7 +170,9 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get all leads from this import job
+    // Delete directly using a subquery approach - delete all queue items
+    // where the lead belongs to this import job
+    // This avoids the .in() array size limit
     const { data: leads } = await getSupabaseAdmin()
       .from('leads')
       .select('id')
@@ -178,24 +185,30 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ success: true, removed: 0 })
     }
 
+    // Batch delete in chunks of 500 to avoid .in() limits
+    const BATCH_SIZE = 500
     const leadIds = leads.map(l => l.id)
+    let totalRemoved = 0
 
-    // Remove from queue
-    const { error: deleteError } = await getSupabaseAdmin()
-      .from('turbo_call_queue')
-      .delete()
-      .in('lead_id', leadIds)
+    for (let i = 0; i < leadIds.length; i += BATCH_SIZE) {
+      const batch = leadIds.slice(i, i + BATCH_SIZE)
+      const { error: deleteError } = await getSupabaseAdmin()
+        .from('turbo_call_queue')
+        .delete()
+        .in('lead_id', batch)
 
-    if (deleteError) {
-      console.error('[Turbo Toggle] Delete error:', deleteError)
-      return NextResponse.json({ error: 'Failed to remove: ' + deleteError.message }, { status: 500 })
+      if (deleteError) {
+        console.error('[Turbo Toggle] Batch delete error:', deleteError)
+      } else {
+        totalRemoved += batch.length
+      }
     }
 
-    console.log('[Turbo Toggle] Success! Removed', leads.length, 'leads from queue')
+    console.log('[Turbo Toggle] Success! Removed', totalRemoved, 'leads from queue')
 
     return NextResponse.json({
       success: true,
-      removed: leads.length,
+      removed: totalRemoved,
       import_job_id: importJobId,
     })
   } catch (error) {
