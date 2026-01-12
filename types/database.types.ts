@@ -220,6 +220,13 @@ export interface Lead {
   converted_deal_id: string | null;
   converted_contact_id: string | null;
   notes: string | null;
+  // Import-related fields
+  is_dnc: boolean;
+  is_dupe: boolean;
+  dupe_in_file: string | null;
+  rms_result: string | null;
+  rnd_result: string | null;
+  is_accepted: boolean;
   is_deleted: boolean;
   deleted_at: string | null;
   created_at: string;

@@ -57,6 +57,12 @@ export const LEAD_FIELDS = [
   { value: 'utm_source', label: 'UTM Source', required: false },
   { value: 'utm_medium', label: 'UTM Medium', required: false },
   { value: 'utm_campaign', label: 'UTM Campaign', required: false },
+  { value: 'is_dnc', label: 'DNC (Do Not Call)', required: false },
+  { value: 'is_dupe', label: 'Dupe', required: false },
+  { value: 'dupe_in_file', label: 'Dupe in File', required: false },
+  { value: 'rms_result', label: 'RMS Result', required: false },
+  { value: 'rnd_result', label: 'RND Result', required: false },
+  { value: 'is_accepted', label: 'Accepted', required: false },
 ] as const
 
 export type LeadFieldName = typeof LEAD_FIELDS[number]['value']

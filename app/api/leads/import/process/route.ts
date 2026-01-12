@@ -121,6 +121,15 @@ export async function POST(request: NextRequest) {
                 if (value.length === 10) {
                   lead[leadField] = value
                 }
+              } else if (leadField === 'is_dnc' || leadField === 'is_dupe' || leadField === 'is_accepted') {
+                // Convert Yes/No/Y/N/True/False to boolean
+                const lowerValue = value.toLowerCase()
+                if (['yes', 'y', 'true', '1'].includes(lowerValue)) {
+                  lead[leadField] = true
+                } else if (['no', 'n', 'false', '0'].includes(lowerValue)) {
+                  lead[leadField] = false
+                }
+                // If value doesn't match, leave as default (false for is_dnc/is_dupe, true for is_accepted)
               } else if (value) {
                 lead[leadField] = value
               }
