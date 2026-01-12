@@ -2,6 +2,7 @@
 
 import { ReactNode } from 'react'
 import { DialerProvider } from '@/lib/dialer-context'
+import { TwilioDeviceProvider } from '@/lib/twilio-device-context'
 import { FloatingDialer } from './floating-dialer'
 
 interface DialerWrapperProps {
@@ -11,9 +12,11 @@ interface DialerWrapperProps {
 
 export function DialerWrapper({ children, userId }: DialerWrapperProps) {
   return (
-    <DialerProvider>
-      {children}
-      <FloatingDialer userId={userId} />
-    </DialerProvider>
+    <TwilioDeviceProvider>
+      <DialerProvider>
+        {children}
+        <FloatingDialer userId={userId} />
+      </DialerProvider>
+    </TwilioDeviceProvider>
   )
 }

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useTurboMode } from '@/lib/turbo-mode-context'
-import { useTwilioDevice } from '@/lib/useTwilioDevice'
+import { useTwilioDeviceContext } from '@/lib/twilio-device-context'
 import { Button } from '@/components/ui/button'
 import { Zap, ZapOff, Loader2, Phone, PhoneOff } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -18,7 +18,7 @@ export function TurboModeToggle() {
     dialNextBatch,
   } = useTurboMode()
 
-  const { isReady, status, connectToUrl, hangUp } = useTwilioDevice()
+  const { isReady, status, connectToUrl, hangUp } = useTwilioDeviceContext()
   const [isConnecting, setIsConnecting] = useState(false)
 
   const isInConference = status === 'connected' && isInTurboMode

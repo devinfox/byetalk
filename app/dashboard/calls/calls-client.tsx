@@ -13,13 +13,16 @@ import {
   PhoneOutgoing,
   Search,
   Zap,
+  UserPlus,
+  Loader2,
 } from 'lucide-react'
-import { useTwilioDevice, CallStatus } from '@/lib/useTwilioDevice'
+import { useTwilioDeviceContext, CallStatus } from '@/lib/twilio-device-context'
 import { createClient } from '@/lib/supabase'
 import type { Lead, User as UserType } from '@/types/database.types'
 import { TurboModeToggle } from '@/components/turbo-mode-toggle'
 import { TurboQueuePanel } from '@/components/turbo-queue-panel'
 import { TurboActiveCallsPanel } from '@/components/turbo-active-calls'
+import { AddToCallModal } from '@/components/add-to-call-modal'
 
 interface RecentCall {
   id: string
@@ -52,6 +55,8 @@ export function CallsClient({ leads, recentCalls, currentUser, initialPhone }: C
   const [leadSearch, setLeadSearch] = useState('')
   const [callStartTime, setCallStartTime] = useState<Date | null>(null)
   const [callDuration, setCallDuration] = useState(0)
+  const [showAddToCall, setShowAddToCall] = useState(false)
+  const [addingParticipant, setAddingParticipant] = useState(false)
 
   // Check if user is admin/manager
   const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'manager'
@@ -61,11 +66,13 @@ export function CallsClient({ leads, recentCalls, currentUser, initialPhone }: C
     error,
     isMuted,
     isReady,
+    callSid,
     makeCall,
     hangUp,
     toggleMute,
     sendDigits,
-  } = useTwilioDevice()
+    setCallMetadata,
+  } = useTwilioDeviceContext()
 
   // Filter leads based on search
   const filteredLeads = leads.filter((lead) => {
@@ -143,10 +150,41 @@ export function CallsClient({ leads, recentCalls, currentUser, initialPhone }: C
     hangUp()
     setCallStartTime(null)
     setCallDuration(0)
+    setShowAddToCall(false)
     if ((window as unknown as { callTimer: NodeJS.Timeout }).callTimer) {
       clearInterval((window as unknown as { callTimer: NodeJS.Timeout }).callTimer)
     }
     router.refresh()
+  }
+
+  // Handle adding a participant to the call
+  const handleAddParticipant = async (colleague: { id: string; first_name: string; last_name: string }) => {
+    if (!callSid) {
+      throw new Error('No active call')
+    }
+
+    setAddingParticipant(true)
+    try {
+      const response = await fetch('/api/twilio/add-participant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          callSid,
+          colleagueId: colleague.id,
+        }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to add participant')
+      }
+
+      const result = await response.json()
+      console.log('[Calls] Added participant to call:', result)
+      setShowAddToCall(false)
+    } finally {
+      setAddingParticipant(false)
+    }
   }
 
   // Quick dial from contact
@@ -287,6 +325,7 @@ export function CallsClient({ leads, recentCalls, currentUser, initialPhone }: C
                         ? 'bg-red-500/20 border border-red-500/30 hover:bg-red-500/30'
                         : 'glass-card-subtle hover:bg-white/10'
                     }`}
+                    title={isMuted ? 'Unmute' : 'Mute'}
                   >
                     {isMuted ? (
                       <MicOff className="w-6 h-6 text-red-400" />
@@ -295,8 +334,21 @@ export function CallsClient({ leads, recentCalls, currentUser, initialPhone }: C
                     )}
                   </button>
                   <button
+                    onClick={() => setShowAddToCall(true)}
+                    disabled={status !== 'connected' || addingParticipant}
+                    className="p-4 bg-yellow-500 hover:bg-yellow-600 rounded-full transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
+                    title="Add colleague to call"
+                  >
+                    {addingParticipant ? (
+                      <Loader2 className="w-6 h-6 text-black animate-spin" />
+                    ) : (
+                      <UserPlus className="w-6 h-6 text-black" />
+                    )}
+                  </button>
+                  <button
                     onClick={handleHangUp}
                     className="p-4 bg-red-500 hover:bg-red-600 rounded-full transition-all hover:scale-105"
+                    title="End call"
                   >
                     <PhoneOff className="w-6 h-6 text-white" />
                   </button>
@@ -438,6 +490,14 @@ export function CallsClient({ leads, recentCalls, currentUser, initialPhone }: C
           </div>
         </div>
       </div>
+
+      {/* Add to Call Modal */}
+      <AddToCallModal
+        isOpen={showAddToCall}
+        onClose={() => setShowAddToCall(false)}
+        callSid={callSid}
+        onAddParticipant={handleAddParticipant}
+      />
     </div>
   )
 }

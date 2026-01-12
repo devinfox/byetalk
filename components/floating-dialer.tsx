@@ -12,7 +12,7 @@ import {
   Maximize2,
   UserPlus,
 } from 'lucide-react'
-import { useTwilioDevice, CallStatus } from '@/lib/useTwilioDevice'
+import { useTwilioDeviceContext, CallStatus } from '@/lib/twilio-device-context'
 import { createClient } from '@/lib/supabase'
 import { useDialer } from '@/lib/dialer-context'
 import { IncomingCallModal } from './incoming-call-modal'
@@ -45,13 +45,15 @@ export function FloatingDialer({ userId }: FloatingDialerProps) {
     isReady,
     callSid,
     incomingCallInfo,
+    currentCallNumber,
+    currentCallName,
     makeCall,
     answerCall,
     rejectCall,
     hangUp,
     toggleMute,
     sendDigits,
-  } = useTwilioDevice()
+  } = useTwilioDeviceContext()
 
   // Play/stop ringtone for incoming calls using Web Audio API
   useEffect(() => {
@@ -262,6 +264,9 @@ export function FloatingDialer({ userId }: FloatingDialerProps) {
   const statusInfo = getStatusInfo(status)
   const isInCall = ['connecting', 'ringing', 'connected'].includes(status)
 
+  // Display name: prefer entity info, then current call name, then phone number
+  const displayName = entityInfo?.entityName || currentCallName || (isInCall ? currentCallNumber || phoneNumber : null)
+
   // Show incoming call modal
   if (status === 'incoming' && incomingCallInfo) {
     return (
@@ -273,7 +278,8 @@ export function FloatingDialer({ userId }: FloatingDialerProps) {
     )
   }
 
-  if (!isOpen) return null
+  // Show dialer if explicitly opened OR if there's an active call
+  if (!isOpen && !isInCall) return null
 
   return (
     <div className="fixed bottom-4 right-4 z-50">
@@ -285,10 +291,10 @@ export function FloatingDialer({ userId }: FloatingDialerProps) {
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700">
           <div className="flex items-center gap-2 min-w-0">
-            <Phone className="w-4 h-4 text-green-400 flex-shrink-0" />
+            <Phone className={`w-4 h-4 flex-shrink-0 ${isInCall ? 'text-green-400' : 'text-gray-400'}`} />
             <div className="min-w-0">
-              <span className="text-white font-medium text-sm">
-                {entityInfo?.entityName ? `Call ${entityInfo.entityName}` : 'Dialer'}
+              <span className="text-white font-medium text-sm truncate">
+                {isInCall && displayName ? displayName : entityInfo?.entityName ? `Call ${entityInfo.entityName}` : 'Dialer'}
               </span>
             </div>
             {isInCall && (
