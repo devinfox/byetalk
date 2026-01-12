@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useTurboMode } from '@/lib/turbo-mode-context'
 import { useTwilioDeviceContext } from '@/lib/twilio-device-context'
 import { Button } from '@/components/ui/button'
-import { Zap, ZapOff, Loader2, Phone, PhoneOff } from 'lucide-react'
+import { Zap, ZapOff, Loader2, Phone, PhoneOff, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export function TurboModeToggle() {
@@ -13,6 +13,7 @@ export function TurboModeToggle() {
     isLoading,
     session,
     activeSessions,
+    activeCalls,
     startTurboMode,
     stopTurboMode,
     dialNextBatch,
@@ -23,6 +24,11 @@ export function TurboModeToggle() {
   const [isConnecting, setIsConnecting] = useState(false)
 
   const isInConference = status === 'connected' && isInTurboMode
+
+  // Find the connected call assigned to this user
+  const myConnectedCall = activeCalls.find(
+    call => call.status === 'connected' && call.assigned_to === session?.user_id
+  )
 
   const handleToggle = async () => {
     if (isInTurboMode) {
@@ -65,6 +71,22 @@ export function TurboModeToggle() {
 
   return (
     <div className="flex flex-col gap-2">
+      {/* Connected Lead Banner - Shows prominently when talking to a lead */}
+      {myConnectedCall && (
+        <div className="p-4 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 text-white animate-pulse">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+              <User className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-sm font-medium uppercase tracking-wide opacity-90">You are connected with</p>
+              <p className="text-2xl font-bold">{myConnectedCall.lead_name || 'Unknown Lead'}</p>
+              <p className="text-sm opacity-90">{myConnectedCall.lead_phone}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Button
         onClick={handleToggle}
         disabled={isLoading || isConnecting || (!isReady && !isInTurboMode)}
