@@ -99,14 +99,12 @@ export async function POST(request: NextRequest) {
 
     if (!isTurboMode) {
       // Regular call - need to move BOTH call legs to a conference
-      // For outbound: browser is parent, lead is child
-      // For inbound: lead is parent, browser is child
+      // Strategy: First try to find child calls (outbound), if none found try inbound approach
 
       console.log('[Add Participant] Analyzing call structure for:', callSid)
 
-      // First, get info about the current call to determine if it's parent or child
+      // Get info about the current call
       const currentCall = await twilioClient.calls(callSid).fetch()
-      const isInboundCall = !!currentCall.parentCallSid
 
       console.log('[Add Participant] Call info:', {
         callSid,
@@ -115,7 +113,6 @@ export async function POST(request: NextRequest) {
         status: currentCall.status,
         from: currentCall.from,
         to: currentCall.to,
-        isInboundCall,
       })
 
       // TwiML for rep (browser) to join conference
@@ -131,14 +128,57 @@ export async function POST(request: NextRequest) {
   </Dial>
 </Response>`
 
-      if (isInboundCall) {
-        // INBOUND call - browser is child, lead (parent) is the inbound caller
-        // For inbound calls, we can't redirect the parent (it's in a <Dial>)
-        // Instead, we'll:
-        // 1. Update browser to join conference (this ends the current dial)
-        // 2. Add the lead as a new conference participant (calls them back)
+      // TwiML to join conference (for lead)
+      const leadConferenceTwiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Say voice="alice">Please hold while we add another person to the call.</Say>
+  <Dial>
+    <Conference
+      beep="false"
+      startConferenceOnEnter="true"
+      endConferenceOnExit="false"
+      waitUrl="http://twimlets.com/holdmusic?Bucket=com.twilio.music.classical"
+    >${conferenceName}</Conference>
+  </Dial>
+</Response>`
 
-        const parentCall = await twilioClient.calls(currentCall.parentCallSid!).fetch()
+      // First, try to find child calls (this works for OUTBOUND calls)
+      const childCalls = await twilioClient.calls.list({
+        parentCallSid: callSid,
+        status: 'in-progress',
+      })
+
+      console.log('[Add Participant] Child calls found:', childCalls.length)
+
+      if (childCalls.length > 0) {
+        // OUTBOUND call scenario - we have child calls
+        const leadCallSid = childCalls[0].sid
+        console.log('[Add Participant] Outbound call - redirecting both legs. Lead:', leadCallSid)
+
+        // Update the lead's call to join conference FIRST
+        try {
+          console.log('[Add Participant] Updating lead call to conference:', leadCallSid)
+          await twilioClient.calls(leadCallSid).update({
+            twiml: leadConferenceTwiml,
+          })
+        } catch (err) {
+          console.error('[Add Participant] Error updating lead call:', err)
+        }
+
+        // Small delay to ensure lead call update processes
+        await new Promise(resolve => setTimeout(resolve, 500))
+
+        // Then update the browser call to join the conference
+        console.log('[Add Participant] Updating browser call to conference:', callSid)
+        await twilioClient.calls(callSid).update({
+          twiml: repConferenceTwiml,
+        })
+      } else if (currentCall.parentCallSid) {
+        // INBOUND call scenario - browser is child, parent is the lead
+        // For inbound calls, we can't redirect the parent (it's in a <Dial>)
+        // We need to: 1) redirect browser to conference, 2) call lead into conference
+
+        const parentCall = await twilioClient.calls(currentCall.parentCallSid).fetch()
         const leadPhoneNumber = parentCall.from // The caller's number
 
         console.log('[Add Participant] Inbound call - lead phone:', leadPhoneNumber)
@@ -152,8 +192,7 @@ export async function POST(request: NextRequest) {
         // Small delay
         await new Promise(resolve => setTimeout(resolve, 500))
 
-        // Add lead to conference by calling them
-        // This will call the lead's phone and put them in the conference
+        // Add lead to conference by calling them back
         console.log('[Add Participant] Adding lead to conference via new call:', leadPhoneNumber)
         try {
           await twilioClient.conferences(conferenceName)
@@ -168,7 +207,7 @@ export async function POST(request: NextRequest) {
         } catch (err) {
           // Conference might not exist yet, create it with the participant
           console.log('[Add Participant] Creating conference with lead participant')
-          const participantCall = await twilioClient.calls.create({
+          await twilioClient.calls.create({
             to: leadPhoneNumber,
             from: process.env.TWILIO_PHONE_NUMBER!,
             twiml: `<?xml version="1.0" encoding="UTF-8"?>
@@ -184,52 +223,11 @@ export async function POST(request: NextRequest) {
   </Dial>
 </Response>`,
           })
-          console.log('[Add Participant] Called lead into conference:', participantCall.sid)
         }
       } else {
-        // OUTBOUND call - browser is parent, need to find child (lead)
-        const childCalls = await twilioClient.calls.list({
-          parentCallSid: callSid,
-          status: 'in-progress',
-        })
-
-        let leadCallSid: string | null = null
-        if (childCalls.length > 0) {
-          leadCallSid = childCalls[0].sid
-        }
-        console.log('[Add Participant] Outbound call detected - browser:', callSid, 'lead:', leadCallSid)
-
-        // TwiML to join conference (for lead)
-        const leadConferenceTwiml = `<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  <Say voice="alice">Please hold while we add another person to the call.</Say>
-  <Dial>
-    <Conference
-      beep="false"
-      startConferenceOnEnter="true"
-      endConferenceOnExit="false"
-      waitUrl="http://twimlets.com/holdmusic?Bucket=com.twilio.music.classical"
-    >${conferenceName}</Conference>
-  </Dial>
-</Response>`
-
-        // Update the lead's call to join conference FIRST
-        if (leadCallSid) {
-          try {
-            console.log('[Add Participant] Updating lead call to conference:', leadCallSid)
-            await twilioClient.calls(leadCallSid).update({
-              twiml: leadConferenceTwiml,
-            })
-          } catch (err) {
-            console.error('[Add Participant] Error updating lead call:', err)
-          }
-        }
-
-        // Small delay to ensure lead call update processes
-        await new Promise(resolve => setTimeout(resolve, 500))
-
-        // Then update the browser call to join the conference
-        console.log('[Add Participant] Updating browser call to conference:', callSid)
+        // Edge case - no child calls and no parent call
+        // Just redirect the browser call to conference and add colleague
+        console.log('[Add Participant] No child or parent calls found, just adding browser to conference')
         await twilioClient.calls(callSid).update({
           twiml: repConferenceTwiml,
         })
