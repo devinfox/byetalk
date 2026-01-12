@@ -3,10 +3,11 @@ import { after } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
-// Allow up to 5 minutes for large file uploads
+// Allow up to 5 minutes for processing
 export const maxDuration = 300
 
-const BATCH_SIZE = 500 // Insert 500 rows at a time
+const BATCH_SIZE = 200 // Insert 200 rows at a time for reliability
+const LARGE_FILE_THRESHOLD = 5000 // Use background processor for files with more than 5k rows
 
 /**
  * Parse a CSV line, handling quoted values
@@ -67,6 +68,9 @@ async function processImportJob(
       const batchLines = lines.slice(i, batchEnd)
       const leadsToInsert: Record<string, unknown>[] = []
 
+      // First pass: parse all rows in this batch
+      const parsedLeads: Record<string, unknown>[] = []
+
       for (const line of batchLines) {
         if (!line.trim()) {
           processedRows++
@@ -116,38 +120,58 @@ async function processImportJob(
             continue
           }
 
-          // Check for duplicates
-          if (skipDuplicates && duplicateCheckFields.length > 0) {
-            const duplicateConditions: string[] = []
-
-            for (const field of duplicateCheckFields) {
-              if (lead[field]) {
-                duplicateConditions.push(`${field}.eq.${lead[field]}`)
-              }
-            }
-
-            if (duplicateConditions.length > 0) {
-              const { data: existing } = await getSupabaseAdmin()
-                .from('leads')
-                .select('id')
-                .or(duplicateConditions.join(','))
-                .eq('is_deleted', false)
-                .limit(1)
-
-              if (existing && existing.length > 0) {
-                duplicateRows++
-                processedRows++
-                continue
-              }
-            }
-          }
-
-          leadsToInsert.push(lead)
+          parsedLeads.push(lead)
         } catch (err) {
           console.error('[Import] Row parse error:', err)
           failedRows++
           processedRows++
         }
+      }
+
+      // Second pass: batch duplicate checking (much faster than per-row)
+      if (skipDuplicates && duplicateCheckFields.length > 0 && parsedLeads.length > 0) {
+        const phonesToCheck = parsedLeads.map(l => l.phone as string).filter(Boolean)
+        const emailsToCheck = parsedLeads.map(l => l.email as string).filter(Boolean)
+
+        let existingPhones: Set<string> = new Set()
+        let existingEmails: Set<string> = new Set()
+
+        if (duplicateCheckFields.includes('phone') && phonesToCheck.length > 0) {
+          const { data: existingByPhone } = await getSupabaseAdmin()
+            .from('leads')
+            .select('phone')
+            .in('phone', phonesToCheck)
+            .eq('is_deleted', false)
+          existingPhones = new Set((existingByPhone || []).map(l => l.phone))
+        }
+
+        if (duplicateCheckFields.includes('email') && emailsToCheck.length > 0) {
+          const { data: existingByEmail } = await getSupabaseAdmin()
+            .from('leads')
+            .select('email')
+            .in('email', emailsToCheck)
+            .eq('is_deleted', false)
+          existingEmails = new Set((existingByEmail || []).map(l => l.email?.toLowerCase()))
+        }
+
+        // Filter out duplicates
+        for (const lead of parsedLeads) {
+          const isDupeByPhone = duplicateCheckFields.includes('phone') && lead.phone && existingPhones.has(lead.phone as string)
+          const isDupeByEmail = duplicateCheckFields.includes('email') && lead.email && existingEmails.has((lead.email as string).toLowerCase())
+
+          if (isDupeByPhone || isDupeByEmail) {
+            duplicateRows++
+            processedRows++
+          } else {
+            leadsToInsert.push(lead)
+            // Track within-batch duplicates
+            if (lead.phone) existingPhones.add(lead.phone as string)
+            if (lead.email) existingEmails.add((lead.email as string).toLowerCase())
+          }
+        }
+      } else {
+        // No duplicate checking
+        leadsToInsert.push(...parsedLeads)
       }
 
       // Bulk insert this batch
@@ -266,9 +290,9 @@ export async function POST(request: NextRequest) {
     const headers = parseCSVLine(lines[0])
     const duplicateCheckFields = duplicateCheckFieldsStr.split(',').map(f => f.trim())
 
-    // For large files (>1000 rows), use storage-based background processing
-    // This avoids serverless function timeout issues
-    const useLargeFileProcessing = totalRows > 1000
+    // For very large files, use storage-based background processing
+    // This allows processing to continue even if the initial request times out
+    const useLargeFileProcessing = totalRows > LARGE_FILE_THRESHOLD
 
     // Create import job
     const { data: importJob, error: createError } = await getSupabaseAdmin()

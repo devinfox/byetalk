@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
-// Allow up to 5 minutes for processing
+// Allow up to 5 minutes for processing (Vercel Pro limit)
 export const maxDuration = 300
 
-const BATCH_SIZE = 1000 // Process 1000 rows at a time
-const CHUNK_SIZE = 10000 // Process 10k rows per API call, then re-trigger
+// Smaller batches = more reliable, less memory usage
+const BATCH_SIZE = 200 // Process 200 rows at a time for reliability
+const PROGRESS_UPDATE_INTERVAL = 500 // Update progress every 500 rows
 
 /**
  * POST /api/leads/import/process
@@ -76,9 +77,9 @@ export async function POST(request: NextRequest) {
     let duplicateRows = importJob.duplicate_rows || 0
     const errors: { row_number: number; row_data: Record<string, string>; error_message: string }[] = []
 
-    // Calculate end row for this chunk
+    // Process ALL remaining rows (no chunking - rely on 5 min timeout)
     const dataStartRow = startRow + 1 // +1 for header
-    const endRow = Math.min(startRow + CHUNK_SIZE, importJob.total_rows)
+    const endRow = importJob.total_rows // Process everything
 
     console.log(`[Import Process] Job ${jobId}: Processing rows ${startRow + 1} to ${endRow} of ${importJob.total_rows}`)
 
@@ -238,16 +239,20 @@ export async function POST(request: NextRequest) {
         processedRows += leadsToInsert.length
       }
 
-      // Update progress every batch
-      await getSupabaseAdmin()
-        .from('lead_import_jobs')
-        .update({
-          processed_rows: processedRows,
-          successful_rows: successfulRows,
-          failed_rows: failedRows,
-          duplicate_rows: duplicateRows,
-        })
-        .eq('id', jobId)
+      // Update progress periodically (not every batch to reduce DB load)
+      if (processedRows % PROGRESS_UPDATE_INTERVAL === 0 || i + BATCH_SIZE >= endRow) {
+        await getSupabaseAdmin()
+          .from('lead_import_jobs')
+          .update({
+            processed_rows: processedRows,
+            successful_rows: successfulRows,
+            failed_rows: failedRows,
+            duplicate_rows: duplicateRows,
+          })
+          .eq('id', jobId)
+
+        console.log(`[Import Process] Job ${jobId}: Progress - ${processedRows}/${importJob.total_rows} rows`)
+      }
     }
 
     // Save errors
@@ -260,30 +265,6 @@ export async function POST(request: NextRequest) {
             ...e,
           }))
         )
-    }
-
-    // Check if we need to process more rows
-    if (endRow < importJob.total_rows) {
-      // Trigger next chunk
-      console.log(`[Import Process] Job ${jobId}: Triggering next chunk starting at row ${endRow}`)
-
-      const baseUrl = request.nextUrl.origin
-      fetch(`${baseUrl}/api/leads/import/process`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jobId, startRow: endRow }),
-      }).catch(err => {
-        console.error('[Import Process] Failed to trigger next chunk:', err)
-      })
-
-      return NextResponse.json({
-        success: true,
-        message: `Processed rows ${startRow + 1} to ${endRow}, continuing...`,
-        processedRows,
-        successfulRows,
-        failedRows,
-        duplicateRows,
-      })
     }
 
     // All done - mark job as completed
