@@ -234,20 +234,26 @@ async function processImportJob(
  * Upload CSV and start background import
  */
 export async function POST(request: NextRequest) {
+  console.log('[Import] POST request received')
+
   try {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    if (!user) {
+    console.log('[Import] Auth check - user:', user?.id, 'error:', authError?.message)
+
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Get current user's profile
-    const { data: currentUser } = await getSupabaseAdmin()
+    const { data: currentUser, error: userError } = await getSupabaseAdmin()
       .from('users')
       .select('id, organization_id')
       .eq('auth_id', user.id)
       .single()
+
+    console.log('[Import] User lookup - found:', !!currentUser, 'error:', userError?.message)
 
     if (!currentUser) {
       console.log('[Import] User not found for auth id:', user.id)
@@ -317,9 +323,11 @@ export async function POST(request: NextRequest) {
       .select()
       .single()
 
+    console.log('[Import] Job creation result - job:', importJob?.id, 'error:', createError?.message)
+
     if (createError || !importJob) {
       console.error('[Import] Error creating job:', createError)
-      return NextResponse.json({ error: 'Failed to create import job' }, { status: 500 })
+      return NextResponse.json({ error: 'Failed to create import job: ' + (createError?.message || 'Unknown error') }, { status: 500 })
     }
 
     if (useLargeFileProcessing) {
@@ -391,9 +399,12 @@ export async function POST(request: NextRequest) {
       message: 'Import started! We\'re updating your leads list in the background.',
     })
   } catch (error) {
-    console.error('[Import] Error:', error)
+    console.error('[Import] Unexpected error:', error)
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    console.error('[Import] Error message:', errorMessage)
+    console.error('[Import] Error stack:', error instanceof Error ? error.stack : 'No stack')
     return NextResponse.json(
-      { error: (error as Error).message || 'Import failed' },
+      { error: errorMessage || 'Import failed' },
       { status: 500 }
     )
   }
