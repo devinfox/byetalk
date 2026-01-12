@@ -135,9 +135,24 @@ export function ImportLeadsModal({ onClose, users, campaigns, currentUserId }: I
       console.log('Response status:', response.status)
 
       if (!response.ok) {
-        const data = await response.json()
-        console.log('Error response:', data)
-        throw new Error(data.error || 'Import failed')
+        // Try to parse as JSON, but handle non-JSON responses (like "Request Entity Too Large")
+        const text = await response.text()
+        console.log('Error response text:', text)
+        let errorMessage = 'Import failed'
+        try {
+          const data = JSON.parse(text)
+          errorMessage = data.error || 'Import failed'
+        } catch {
+          // Response is not JSON - use the text directly
+          if (response.status === 413) {
+            errorMessage = 'File too large. Please try a smaller file or contact support.'
+          } else if (text.includes('timeout') || text.includes('FUNCTION_INVOCATION_TIMEOUT')) {
+            errorMessage = 'Request timed out. Please try again.'
+          } else {
+            errorMessage = text.slice(0, 100) || `Server error (${response.status})`
+          }
+        }
+        throw new Error(errorMessage)
       }
 
       const data = await response.json()
