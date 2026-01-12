@@ -74,7 +74,6 @@ export async function GET(request: NextRequest) {
           const { count } = await getSupabaseAdmin()
             .from('turbo_call_queue')
             .select('*', { count: 'exact', head: true })
-            .eq('organization_id', userData.organization_id)
             .eq('status', 'queued')
             .in('lead_id', leadIds)
 
@@ -147,6 +146,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Only admins and managers can manage turbo groups' }, { status: 403 })
     }
 
+    // Get organization_id - required for turbo queue
+    let organizationId = userData.organization_id
+    if (!organizationId) {
+      // Try to get from the first organization in the system
+      const { data: org } = await getSupabaseAdmin()
+        .from('organizations')
+        .select('id')
+        .limit(1)
+        .single()
+
+      if (org) {
+        organizationId = org.id
+        // Update user's organization_id
+        await getSupabaseAdmin()
+          .from('users')
+          .update({ organization_id: org.id })
+          .eq('id', userData.id)
+      } else {
+        return NextResponse.json({ error: 'No organization found. Please set up an organization first.' }, { status: 400 })
+      }
+    }
+
     // Get all leads from this import job with phone numbers
     const { data: leads, error: leadsError } = await getSupabaseAdmin()
       .from('leads')
@@ -164,9 +185,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No leads with phone numbers in this import' }, { status: 400 })
     }
 
+    // First, remove any existing queue items for these leads (clean slate)
+    const leadIds = leads.map(l => l.id)
+    await getSupabaseAdmin()
+      .from('turbo_call_queue')
+      .delete()
+      .in('lead_id', leadIds)
+
     // Add all leads to turbo queue
     const queueItems = leads.map(lead => ({
-      organization_id: userData.organization_id,
+      organization_id: organizationId,
       lead_id: lead.id,
       priority: 0,
       added_by: userData.id,
@@ -176,14 +204,11 @@ export async function POST(request: NextRequest) {
 
     const { error: insertError } = await getSupabaseAdmin()
       .from('turbo_call_queue')
-      .upsert(queueItems, {
-        onConflict: 'organization_id,lead_id',
-        ignoreDuplicates: false,
-      })
+      .insert(queueItems)
 
     if (insertError) {
       console.error('[Turbo Import Jobs] Error adding to queue:', insertError)
-      return NextResponse.json({ error: 'Failed to add leads to queue' }, { status: 500 })
+      return NextResponse.json({ error: 'Failed to add leads to queue: ' + insertError.message }, { status: 500 })
     }
 
     console.log(`[Turbo Import Jobs] Added ${leads.length} leads from import ${import_job_id} to turbo queue`)
@@ -259,16 +284,15 @@ export async function DELETE(request: NextRequest) {
 
     const leadIds = leads.map(l => l.id)
 
-    // Remove all these leads from turbo queue
+    // Remove all these leads from turbo queue (regardless of organization)
     const { error: deleteError } = await getSupabaseAdmin()
       .from('turbo_call_queue')
       .delete()
-      .eq('organization_id', userData.organization_id)
       .in('lead_id', leadIds)
 
     if (deleteError) {
       console.error('[Turbo Import Jobs] Error removing from queue:', deleteError)
-      return NextResponse.json({ error: 'Failed to remove leads from queue' }, { status: 500 })
+      return NextResponse.json({ error: 'Failed to remove leads from queue: ' + deleteError.message }, { status: 500 })
     }
 
     console.log(`[Turbo Import Jobs] Removed ${leads.length} leads from import ${importJobId} from turbo queue`)

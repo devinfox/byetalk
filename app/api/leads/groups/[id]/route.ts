@@ -82,92 +82,54 @@ export async function DELETE(
 
     if (leadIds.length > 0) {
       // Clear references in related tables for all leads in this group
+      // Use try/catch for each to handle missing tables/columns gracefully
 
-      // Turbo queue items
-      const { data: queueItems } = await getSupabaseAdmin()
-        .from('turbo_call_queue')
-        .select('id')
-        .in('lead_id', leadIds)
+      try {
+        // Turbo queue items - delete directly
+        await getSupabaseAdmin()
+          .from('turbo_call_queue')
+          .delete()
+          .in('lead_id', leadIds)
+      } catch (e) {
+        console.log('[Delete Group] turbo_call_queue cleanup skipped:', e)
+      }
 
-      if (queueItems && queueItems.length > 0) {
-        const queueIds = queueItems.map(q => q.id)
+      try {
         await getSupabaseAdmin()
           .from('turbo_active_calls')
           .delete()
-          .in('queue_item_id', queueIds)
+          .in('lead_id', leadIds)
+      } catch (e) {
+        console.log('[Delete Group] turbo_active_calls cleanup skipped:', e)
       }
 
-      await getSupabaseAdmin()
-        .from('turbo_call_queue')
-        .delete()
-        .in('lead_id', leadIds)
+      // Clear foreign key references in other tables
+      const tablesToUpdate = [
+        'calls', 'tasks', 'deals', 'emails', 'email_drafts',
+        'form_submissions', 'activity_log', 'notes', 'system_events',
+        'documents', 'contacts'
+      ]
 
-      await getSupabaseAdmin()
-        .from('turbo_active_calls')
-        .delete()
-        .in('lead_id', leadIds)
-
-      // Clear other references
-      await getSupabaseAdmin()
-        .from('calls')
-        .update({ lead_id: null })
-        .in('lead_id', leadIds)
-
-      await getSupabaseAdmin()
-        .from('tasks')
-        .update({ lead_id: null })
-        .in('lead_id', leadIds)
-
-      await getSupabaseAdmin()
-        .from('deals')
-        .update({ lead_id: null })
-        .in('lead_id', leadIds)
-
-      await getSupabaseAdmin()
-        .from('emails')
-        .update({ lead_id: null })
-        .in('lead_id', leadIds)
-
-      await getSupabaseAdmin()
-        .from('email_drafts')
-        .update({ lead_id: null })
-        .in('lead_id', leadIds)
-
-      await getSupabaseAdmin()
-        .from('form_submissions')
-        .update({ lead_id: null })
-        .in('lead_id', leadIds)
-
-      await getSupabaseAdmin()
-        .from('activity_log')
-        .update({ lead_id: null })
-        .in('lead_id', leadIds)
-
-      await getSupabaseAdmin()
-        .from('notes')
-        .update({ lead_id: null })
-        .in('lead_id', leadIds)
-
-      await getSupabaseAdmin()
-        .from('system_events')
-        .update({ lead_id: null })
-        .in('lead_id', leadIds)
-
-      await getSupabaseAdmin()
-        .from('documents')
-        .update({ lead_id: null })
-        .in('lead_id', leadIds)
-
-      await getSupabaseAdmin()
-        .from('contacts')
-        .update({ lead_id: null })
-        .in('lead_id', leadIds)
+      for (const table of tablesToUpdate) {
+        try {
+          await getSupabaseAdmin()
+            .from(table)
+            .update({ lead_id: null })
+            .in('lead_id', leadIds)
+        } catch (e) {
+          console.log(`[Delete Group] ${table} cleanup skipped:`, e)
+        }
+      }
 
       // Clear duplicate references
-      await getSupabaseAdmin()
-        .from('leads')
-        .update({ duplicate_of_lead_id: null })
-        .in('duplicate_of_lead_id', leadIds)
+      try {
+        await getSupabaseAdmin()
+          .from('leads')
+          .update({ duplicate_of_lead_id: null })
+          .in('duplicate_of_lead_id', leadIds)
+      } catch (e) {
+        console.log('[Delete Group] duplicate references cleanup skipped:', e)
+      }
 
       // Delete all leads in this group
       const { error: leadsDeleteError } = await getSupabaseAdmin()
