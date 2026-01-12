@@ -98,13 +98,26 @@ export async function POST(request: NextRequest) {
     const clientIdentity = `${colleague.first_name}_${colleague.last_name}_${colleague.id.slice(0, 8)}`
 
     if (!isTurboMode) {
-      // Regular call - need to move current call to a conference first
-      const currentCallTwiml = `<?xml version="1.0" encoding="UTF-8"?>
+      // Regular call - need to move BOTH call legs to a conference
+      // The callSid is the parent (browser) call, we need to find the child (lead) call
+
+      console.log('[Add Participant] Finding child calls for parent:', callSid)
+
+      // Get all child calls (the outbound leg to the lead)
+      const childCalls = await twilioClient.calls.list({
+        parentCallSid: callSid,
+        status: 'in-progress',
+      })
+
+      console.log('[Add Participant] Found child calls:', childCalls.map(c => ({ sid: c.sid, to: c.to, status: c.status })))
+
+      // TwiML to join conference (for lead)
+      const leadConferenceTwiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Say voice="alice">Adding a colleague to the call. Please hold.</Say>
+  <Say voice="alice">Please hold while we add another person to the call.</Say>
   <Dial>
     <Conference
-      beep="true"
+      beep="false"
       startConferenceOnEnter="true"
       endConferenceOnExit="false"
       waitUrl="http://twimlets.com/holdmusic?Bucket=com.twilio.music.classical"
@@ -112,9 +125,39 @@ export async function POST(request: NextRequest) {
   </Dial>
 </Response>`
 
-      // Update the existing call to join the conference
+      // TwiML for rep (browser) to join conference
+      const repConferenceTwiml = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Say voice="alice">Adding a colleague to the call.</Say>
+  <Dial>
+    <Conference
+      beep="false"
+      startConferenceOnEnter="true"
+      endConferenceOnExit="false"
+    >${conferenceName}</Conference>
+  </Dial>
+</Response>`
+
+      // First, update the child call (lead) to join the conference
+      // This must happen BEFORE we update the parent, otherwise the child gets disconnected
+      for (const childCall of childCalls) {
+        try {
+          console.log('[Add Participant] Updating child call to conference:', childCall.sid)
+          await twilioClient.calls(childCall.sid).update({
+            twiml: leadConferenceTwiml,
+          })
+        } catch (err) {
+          console.error('[Add Participant] Error updating child call:', err)
+        }
+      }
+
+      // Small delay to ensure child call update processes
+      await new Promise(resolve => setTimeout(resolve, 500))
+
+      // Then update the parent call (rep's browser) to join the conference
+      console.log('[Add Participant] Updating parent call to conference:', callSid)
       await twilioClient.calls(callSid).update({
-        twiml: currentCallTwiml,
+        twiml: repConferenceTwiml,
       })
     }
     // For turbo mode, we're already in a conference - just add the colleague
