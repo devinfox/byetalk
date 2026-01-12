@@ -116,6 +116,13 @@ export async function GET(request: NextRequest) {
     const mySession = activeSessions?.find(s => s.user_id === userData.id)
 
     console.log('[Turbo Queue GET] User:', userData.id, 'Org:', orgId, 'Queue items:', queueItems?.length, 'Queue count:', queueCount)
+    console.log('[Turbo Queue GET] Active sessions:', activeSessions?.map(s => ({
+      id: s.id?.slice(0, 8),
+      user_id: s.user_id?.slice(0, 8),
+      status: s.status,
+      hasConference: !!s.conference_name
+    })))
+    console.log('[Turbo Queue GET] My session found:', mySession ? `${mySession.id?.slice(0, 8)} (status: ${mySession.status})` : 'NONE')
 
     return NextResponse.json({
       queue: {

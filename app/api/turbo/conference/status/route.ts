@@ -22,7 +22,9 @@ export async function POST(request: NextRequest) {
     formData.forEach((value, key) => {
       allParams[key] = value.toString()
     })
-    console.log(`[Turbo Conference] CALLBACK RECEIVED - Event: ${statusCallbackEvent}, Conference: ${friendlyName}, Session: ${sessionId}`)
+    console.log(`[Turbo Conference] ========================================`)
+    console.log(`[Turbo Conference] CALLBACK RECEIVED at ${new Date().toISOString()}`)
+    console.log(`[Turbo Conference] Event: ${statusCallbackEvent}, Conference: ${friendlyName}, Session: ${sessionId}`)
     console.log(`[Turbo Conference] Full params:`, JSON.stringify(allParams))
 
     if (!sessionId) {

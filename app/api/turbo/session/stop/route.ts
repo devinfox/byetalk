@@ -7,6 +7,8 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin'
  * End the current user's turbo mode session
  */
 export async function POST(request: NextRequest) {
+  console.log(`[Turbo Stop] ========================================`)
+  console.log(`[Turbo Stop] Stop request received at ${new Date().toISOString()}`)
   try {
     const supabase = await createClient()
 

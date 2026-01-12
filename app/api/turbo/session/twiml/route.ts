@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error || !session) {
-      console.error('[Turbo TwiML] Session not found:', sessionId)
+      console.error('[Turbo TwiML] Session not found:', sessionId, 'Error:', error?.message)
       twiml.say({ voice: 'alice' }, 'Session not found. Please start turbo mode again.')
       twiml.hangup()
       return new NextResponse(twiml.toString(), {
@@ -44,7 +44,10 @@ export async function POST(request: NextRequest) {
       })
     }
 
+    console.log(`[Turbo TwiML] Session found: id=${session.id}, status=${session.status}, conference=${session.conference_name}`)
+
     if (session.status !== 'active') {
+      console.log(`[Turbo TwiML] REJECTING - Session status is '${session.status}', not 'active'. Returning hangup TwiML.`)
       twiml.say({ voice: 'alice' }, 'Your turbo session has ended.')
       twiml.hangup()
       return new NextResponse(twiml.toString(), {
