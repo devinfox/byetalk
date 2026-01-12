@@ -10,12 +10,16 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  console.log('[Delete Group] Starting delete request')
+
   try {
     const { id: groupId } = await params
 
     if (!groupId) {
       return NextResponse.json({ error: 'Group ID required' }, { status: 400 })
     }
+
+    console.log('[Delete Group] Group ID:', groupId)
 
     const supabase = await createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -24,32 +28,19 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get user info - try auth_user_id first, then fall back to auth_id
-    let userData = null
-    const { data: userByAuthUserId } = await getSupabaseAdmin()
+    // Get user info
+    const { data: userData } = await getSupabaseAdmin()
       .from('users')
-      .select('id, role, organization_id')
-      .eq('auth_user_id', user.id)
+      .select('id, role')
+      .or(`auth_id.eq.${user.id},auth_user_id.eq.${user.id}`)
       .single()
-
-    if (userByAuthUserId) {
-      userData = userByAuthUserId
-    } else {
-      const { data: userByAuthId } = await getSupabaseAdmin()
-        .from('users')
-        .select('id, role, organization_id')
-        .eq('auth_id', user.id)
-        .single()
-      userData = userByAuthId
-    }
 
     if (!userData) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
     // Only admins/managers can delete groups
-    const isAdmin = userData.role === 'admin' || userData.role === 'manager'
-    if (!isAdmin) {
+    if (userData.role !== 'admin' && userData.role !== 'manager') {
       return NextResponse.json({ error: 'Only admins can delete lead groups' }, { status: 403 })
     }
 
@@ -61,6 +52,7 @@ export async function DELETE(
       .single()
 
     if (groupError || !group) {
+      console.log('[Delete Group] Group not found:', groupError)
       return NextResponse.json({ error: 'Group not found' }, { status: 404 })
     }
 
@@ -68,8 +60,6 @@ export async function DELETE(
     if (group.is_system) {
       return NextResponse.json({ error: 'Cannot delete system groups' }, { status: 400 })
     }
-
-    console.log('[Delete Group] Starting deletion for group:', groupId)
 
     // Get all leads in this group
     const { data: leads } = await getSupabaseAdmin()
@@ -81,57 +71,62 @@ export async function DELETE(
     console.log('[Delete Group] Found', leadIds.length, 'leads to delete')
 
     if (leadIds.length > 0) {
-      // Clear references in related tables for all leads in this group
-      // Use try/catch for each to handle missing tables/columns gracefully
+      // Delete in order of dependencies
+      // 1. First delete from tables with NOT NULL foreign keys (must delete, can't set null)
 
-      try {
-        // Turbo queue items - delete directly
-        await getSupabaseAdmin()
-          .from('turbo_call_queue')
-          .delete()
-          .in('lead_id', leadIds)
-      } catch (e) {
-        console.log('[Delete Group] turbo_call_queue cleanup skipped:', e)
-      }
+      console.log('[Delete Group] Removing turbo queue items...')
+      await getSupabaseAdmin()
+        .from('turbo_call_queue')
+        .delete()
+        .in('lead_id', leadIds)
 
-      try {
-        await getSupabaseAdmin()
-          .from('turbo_active_calls')
-          .delete()
-          .in('lead_id', leadIds)
-      } catch (e) {
-        console.log('[Delete Group] turbo_active_calls cleanup skipped:', e)
-      }
+      console.log('[Delete Group] Removing turbo active calls...')
+      await getSupabaseAdmin()
+        .from('turbo_active_calls')
+        .delete()
+        .in('lead_id', leadIds)
 
-      // Clear foreign key references in other tables
-      const tablesToUpdate = [
-        'calls', 'tasks', 'deals', 'emails', 'email_drafts',
-        'form_submissions', 'activity_log', 'notes', 'system_events',
-        'documents', 'contacts'
+      // 2. Set NULL on tables that allow it
+      console.log('[Delete Group] Clearing references in related tables...')
+
+      const tablesToClear = [
+        'calls',
+        'tasks',
+        'deals',
+        'emails',
+        'email_drafts',
+        'email_threads',
+        'form_submissions',
+        'activity_log',
+        'notes',
+        'system_events',
+        'documents',
+        'contacts',
+        'presentations',
+        'video_meetings'
       ]
 
-      for (const table of tablesToUpdate) {
+      for (const table of tablesToClear) {
         try {
           await getSupabaseAdmin()
             .from(table)
             .update({ lead_id: null })
             .in('lead_id', leadIds)
         } catch (e) {
-          console.log(`[Delete Group] ${table} cleanup skipped:`, e)
+          // Table might not exist or not have lead_id column - that's ok
+          console.log(`[Delete Group] Skipped ${table}`)
         }
       }
 
-      // Clear duplicate references
-      try {
-        await getSupabaseAdmin()
-          .from('leads')
-          .update({ duplicate_of_lead_id: null })
-          .in('duplicate_of_lead_id', leadIds)
-      } catch (e) {
-        console.log('[Delete Group] duplicate references cleanup skipped:', e)
-      }
+      // 3. Clear self-references in leads table
+      console.log('[Delete Group] Clearing duplicate references...')
+      await getSupabaseAdmin()
+        .from('leads')
+        .update({ duplicate_of_lead_id: null })
+        .in('duplicate_of_lead_id', leadIds)
 
-      // Delete all leads in this group
+      // 4. Now delete the leads
+      console.log('[Delete Group] Deleting leads...')
       const { error: leadsDeleteError } = await getSupabaseAdmin()
         .from('leads')
         .delete()
@@ -147,12 +142,14 @@ export async function DELETE(
     }
 
     // Delete import errors for this job
+    console.log('[Delete Group] Deleting import errors...')
     await getSupabaseAdmin()
       .from('lead_import_errors')
       .delete()
       .eq('import_job_id', groupId)
 
     // Delete the import job itself
+    console.log('[Delete Group] Deleting import job...')
     const { error: groupDeleteError } = await getSupabaseAdmin()
       .from('lead_import_jobs')
       .delete()
@@ -166,7 +163,7 @@ export async function DELETE(
       )
     }
 
-    console.log('[Delete Group] Successfully deleted group and', leadIds.length, 'leads')
+    console.log('[Delete Group] Success! Deleted group and', leadIds.length, 'leads')
 
     return NextResponse.json({
       success: true,
@@ -176,7 +173,7 @@ export async function DELETE(
   } catch (error) {
     console.error('[Delete Group] Unexpected error:', error)
     return NextResponse.json(
-      { error: 'An unexpected error occurred' },
+      { error: 'An unexpected error occurred: ' + (error as Error).message },
       { status: 500 }
     )
   }
