@@ -95,25 +95,20 @@ export async function GET(request: NextRequest) {
           let queuedCount = 0
           let isTurboEnabled = false
           if (isAdmin) {
-            // Get lead IDs for this job
-            const { data: jobLeads } = await getSupabaseAdmin()
-              .from('leads')
-              .select('id')
-              .eq('import_job_id', job.id)
-              .eq('is_deleted', false)
-              .not('phone', 'is', null)
+            // Use inner join to count queue items for leads in this import job
+            // This avoids the .in() array size limit issue with large lead sets
+            const { count: turboCount, error: queueError } = await getSupabaseAdmin()
+              .from('turbo_call_queue')
+              .select('*, leads!inner(id)', { count: 'exact', head: true })
+              .eq('status', 'queued')
+              .eq('leads.import_job_id', job.id)
+              .eq('leads.is_deleted', false)
 
-            const leadIds = jobLeads?.map(l => l.id) || []
-
-            if (leadIds.length > 0) {
-              const { count: turboCount } = await getSupabaseAdmin()
-                .from('turbo_call_queue')
-                .select('*', { count: 'exact', head: true })
-                .eq('status', 'queued')
-                .in('lead_id', leadIds)
-
+            if (!queueError) {
               queuedCount = turboCount || 0
               isTurboEnabled = queuedCount > 0
+            } else {
+              console.log('[Lead Groups] Queue count error for job', job.id, ':', queueError.message)
             }
           }
 
