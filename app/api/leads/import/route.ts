@@ -266,12 +266,16 @@ export async function POST(request: NextRequest) {
     const headers = parseCSVLine(lines[0])
     const duplicateCheckFields = duplicateCheckFieldsStr.split(',').map(f => f.trim())
 
-    // Create import job with 'processing' status
+    // For large files (>1000 rows), use storage-based background processing
+    // This avoids serverless function timeout issues
+    const useLargeFileProcessing = totalRows > 1000
+
+    // Create import job
     const { data: importJob, error: createError } = await getSupabaseAdmin()
       .from('lead_import_jobs')
       .insert({
         file_name: file.name,
-        display_name: listName || null, // Use custom name if provided
+        display_name: listName || file.name.replace(/\.csv$/i, ''), // Use custom name or file name
         file_size: file.size,
         total_rows: totalRows,
         field_mapping: fieldMapping,
@@ -282,8 +286,8 @@ export async function POST(request: NextRequest) {
         duplicate_check_fields: duplicateCheckFields,
         created_by: currentUser.id,
         organization_id: currentUser.organization_id,
-        status: 'processing',
-        started_at: new Date().toISOString(),
+        status: useLargeFileProcessing ? 'pending' : 'processing',
+        started_at: useLargeFileProcessing ? null : new Date().toISOString(),
       })
       .select()
       .single()
@@ -293,7 +297,52 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create import job' }, { status: 500 })
     }
 
-    // Process in background using after()
+    if (useLargeFileProcessing) {
+      // Upload CSV to storage for background processing
+      const storagePath = `imports/${importJob.id}/${file.name}`
+      const { error: uploadError } = await getSupabaseAdmin()
+        .storage
+        .from('documents')
+        .upload(storagePath, new Blob([content], { type: 'text/csv' }), {
+          contentType: 'text/csv',
+          upsert: true,
+        })
+
+      if (uploadError) {
+        console.error('[Import] Failed to upload CSV:', uploadError)
+        await getSupabaseAdmin()
+          .from('lead_import_jobs')
+          .update({ status: 'failed', error_message: 'Failed to upload CSV file' })
+          .eq('id', importJob.id)
+        return NextResponse.json({ error: 'Failed to upload CSV' }, { status: 500 })
+      }
+
+      // Update job with storage path
+      await getSupabaseAdmin()
+        .from('lead_import_jobs')
+        .update({ storage_path: storagePath })
+        .eq('id', importJob.id)
+
+      // Trigger background processor
+      const baseUrl = request.nextUrl.origin
+      fetch(`${baseUrl}/api/leads/import/process`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jobId: importJob.id, startRow: 0 }),
+      }).catch(err => {
+        console.error('[Import] Failed to trigger processor:', err)
+      })
+
+      return NextResponse.json({
+        success: true,
+        importJobId: importJob.id,
+        totalRows,
+        status: 'pending',
+        message: `Large import started! Processing ${totalRows.toLocaleString()} rows in the background.`,
+      })
+    }
+
+    // For smaller files, process in background using after()
     after(async () => {
       await processImportJob(
         importJob.id,

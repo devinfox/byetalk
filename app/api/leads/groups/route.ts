@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     const { data: importJobs, error: jobsError } = await getSupabaseAdmin()
       .from('lead_import_jobs')
       .select('id, file_name, display_name, is_system, successful_rows, created_at, status')
-      .eq('status', 'completed')
+      .in('status', ['completed', 'processing', 'pending']) // Show completed, in-progress, and pending imports
       .order('created_at', { ascending: false })
       .limit(50)
 

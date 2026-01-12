@@ -30,27 +30,47 @@ export default async function LeadsPage() {
         .order('name')
     : { data: [] }
 
-  // Get lead stats based on role
-  let statsQuery = supabase
-    .from('leads')
-    .select('status')
-    .eq('is_deleted', false)
+  // Get lead stats based on role using COUNT queries (not limited to 1000)
+  let leadStats = { total: 0, new: 0, contacted: 0, qualified: 0, converted: 0 }
 
-  // Non-admin users only see stats for leads they've connected with
-  if (!isAdmin) {
-    statsQuery = statsQuery
-      .eq('owner_id', user?.id)
-      .in('status', ['contacted', 'qualified', 'converted', 'lost'])
-  }
+  if (isAdmin) {
+    // Admin sees all leads - use count queries
+    const [totalResult, newResult, contactedResult, qualifiedResult, convertedResult] = await Promise.all([
+      supabase.from('leads').select('*', { count: 'exact', head: true }).eq('is_deleted', false),
+      supabase.from('leads').select('*', { count: 'exact', head: true }).eq('is_deleted', false).eq('status', 'new'),
+      supabase.from('leads').select('*', { count: 'exact', head: true }).eq('is_deleted', false).eq('status', 'contacted'),
+      supabase.from('leads').select('*', { count: 'exact', head: true }).eq('is_deleted', false).eq('status', 'qualified'),
+      supabase.from('leads').select('*', { count: 'exact', head: true }).eq('is_deleted', false).eq('status', 'converted'),
+    ])
 
-  const { data: stats } = await statsQuery
+    leadStats = {
+      total: totalResult.count || 0,
+      new: newResult.count || 0,
+      contacted: contactedResult.count || 0,
+      qualified: qualifiedResult.count || 0,
+      converted: convertedResult.count || 0,
+    }
+  } else {
+    // Non-admin users only see stats for leads they've connected with
+    const [totalResult, contactedResult, qualifiedResult, convertedResult] = await Promise.all([
+      supabase.from('leads').select('*', { count: 'exact', head: true })
+        .eq('is_deleted', false).eq('owner_id', user?.id)
+        .in('status', ['contacted', 'qualified', 'converted', 'lost']),
+      supabase.from('leads').select('*', { count: 'exact', head: true })
+        .eq('is_deleted', false).eq('owner_id', user?.id).eq('status', 'contacted'),
+      supabase.from('leads').select('*', { count: 'exact', head: true })
+        .eq('is_deleted', false).eq('owner_id', user?.id).eq('status', 'qualified'),
+      supabase.from('leads').select('*', { count: 'exact', head: true })
+        .eq('is_deleted', false).eq('owner_id', user?.id).eq('status', 'converted'),
+    ])
 
-  const leadStats = {
-    total: stats?.length || 0,
-    new: stats?.filter(l => l.status === 'new').length || 0,
-    contacted: stats?.filter(l => l.status === 'contacted').length || 0,
-    qualified: stats?.filter(l => l.status === 'qualified').length || 0,
-    converted: stats?.filter(l => l.status === 'converted').length || 0,
+    leadStats = {
+      total: totalResult.count || 0,
+      new: 0, // Non-admins don't see new leads
+      contacted: contactedResult.count || 0,
+      qualified: qualifiedResult.count || 0,
+      converted: convertedResult.count || 0,
+    }
   }
 
   return (

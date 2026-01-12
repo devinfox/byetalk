@@ -86,8 +86,9 @@ export async function POST(request: NextRequest) {
     for (let i = dataStartRow; i <= endRow; i += BATCH_SIZE) {
       const batchEnd = Math.min(i + BATCH_SIZE, endRow + 1)
       const batchLines = lines.slice(i, batchEnd)
-      const leadsToInsert: Record<string, unknown>[] = []
+      const leadsToCheck: { lead: Record<string, unknown>; rowNumber: number }[] = []
 
+      // First pass: parse all rows and collect valid leads
       for (let j = 0; j < batchLines.length; j++) {
         const rowNumber = i + j
         const line = batchLines[j]
@@ -129,7 +130,6 @@ export async function POST(request: NextRequest) {
                 } else if (['no', 'n', 'false', '0'].includes(lowerValue)) {
                   lead[leadField] = false
                 }
-                // If value doesn't match, leave as default (false for is_dnc/is_dupe, true for is_accepted)
               } else if (value) {
                 lead[leadField] = value
               }
@@ -153,33 +153,7 @@ export async function POST(request: NextRequest) {
             continue
           }
 
-          // Check for duplicates (batch check for efficiency)
-          if (skipDuplicates && duplicateCheckFields.length > 0) {
-            const duplicateConditions: string[] = []
-
-            for (const field of duplicateCheckFields) {
-              if (lead[field]) {
-                duplicateConditions.push(`${field}.eq.${lead[field]}`)
-              }
-            }
-
-            if (duplicateConditions.length > 0) {
-              const { data: existing } = await getSupabaseAdmin()
-                .from('leads')
-                .select('id')
-                .or(duplicateConditions.join(','))
-                .eq('is_deleted', false)
-                .limit(1)
-
-              if (existing && existing.length > 0) {
-                duplicateRows++
-                processedRows++
-                continue
-              }
-            }
-          }
-
-          leadsToInsert.push(lead)
+          leadsToCheck.push({ lead, rowNumber })
         } catch (err) {
           if (errors.length < 100) {
             errors.push({
@@ -191,6 +165,62 @@ export async function POST(request: NextRequest) {
           failedRows++
           processedRows++
         }
+      }
+
+      // Second pass: batch duplicate check (much faster than individual queries)
+      let leadsToInsert: Record<string, unknown>[] = []
+
+      if (skipDuplicates && duplicateCheckFields.length > 0 && leadsToCheck.length > 0) {
+        // Collect all phones and emails from this batch for duplicate checking
+        const phonesToCheck = leadsToCheck
+          .map(l => l.lead.phone as string)
+          .filter(Boolean)
+        const emailsToCheck = leadsToCheck
+          .map(l => l.lead.email as string)
+          .filter(Boolean)
+
+        // Single query to find all existing duplicates
+        let existingPhones: Set<string> = new Set()
+        let existingEmails: Set<string> = new Set()
+
+        if (duplicateCheckFields.includes('phone') && phonesToCheck.length > 0) {
+          const { data: existingByPhone } = await getSupabaseAdmin()
+            .from('leads')
+            .select('phone')
+            .in('phone', phonesToCheck)
+            .eq('is_deleted', false)
+
+          existingPhones = new Set((existingByPhone || []).map(l => l.phone))
+        }
+
+        if (duplicateCheckFields.includes('email') && emailsToCheck.length > 0) {
+          const { data: existingByEmail } = await getSupabaseAdmin()
+            .from('leads')
+            .select('email')
+            .in('email', emailsToCheck)
+            .eq('is_deleted', false)
+
+          existingEmails = new Set((existingByEmail || []).map(l => l.email?.toLowerCase()))
+        }
+
+        // Filter out duplicates
+        for (const { lead } of leadsToCheck) {
+          const isDupeByPhone = duplicateCheckFields.includes('phone') && lead.phone && existingPhones.has(lead.phone as string)
+          const isDupeByEmail = duplicateCheckFields.includes('email') && lead.email && existingEmails.has((lead.email as string).toLowerCase())
+
+          if (isDupeByPhone || isDupeByEmail) {
+            duplicateRows++
+            processedRows++
+          } else {
+            leadsToInsert.push(lead)
+            // Add to existing sets to catch duplicates within the same batch
+            if (lead.phone) existingPhones.add(lead.phone as string)
+            if (lead.email) existingEmails.add((lead.email as string).toLowerCase())
+          }
+        }
+      } else {
+        // No duplicate checking - insert all valid leads
+        leadsToInsert = leadsToCheck.map(l => l.lead)
       }
 
       // Bulk insert this batch
