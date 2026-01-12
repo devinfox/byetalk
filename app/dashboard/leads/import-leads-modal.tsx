@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 import { LEAD_FIELDS } from '@/types/import.types'
 import type { User, Campaign } from '@/types/database.types'
-import { createClient } from '@/lib/supabase-client'
+import { createClient } from '@/lib/supabase'
 
 // Files larger than 4MB should be uploaded directly to storage
 const LARGE_FILE_THRESHOLD = 4 * 1024 * 1024
