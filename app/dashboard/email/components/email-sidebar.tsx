@@ -60,14 +60,28 @@ export function EmailSidebar({ userId }: EmailSidebarProps) {
     triggerInitialMicrosoftSync()
 
     // Set up automatic email polling every 60 seconds for Microsoft accounts
+    // Only poll when the tab is visible to reduce server load
     const pollInterval = setInterval(() => {
-      if (hasMicrosoftAccount && !syncing) {
+      if (hasMicrosoftAccount && !syncing && document.visibilityState === 'visible') {
         console.log('[Email Sidebar] Auto-polling for new emails...')
         handleAutoSync()
       }
     }, 60000) // 60 seconds
 
-    return () => clearInterval(pollInterval)
+    // Sync when tab becomes visible after being hidden
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && hasMicrosoftAccount && !syncing) {
+        console.log('[Email Sidebar] Tab visible, checking for new emails...')
+        handleAutoSync()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      clearInterval(pollInterval)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
   }, [userId, hasMicrosoftAccount, syncing])
 
   // Trigger initial Microsoft email sync if needed (runs once on first login)
