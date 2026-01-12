@@ -30,7 +30,8 @@ export async function POST(request: NextRequest) {
     }
 
     switch (statusCallbackEvent) {
-      case 'conference-start':
+      case 'start':
+      case 'conference-start':  // Support both formats for compatibility
         // Conference started - update session with conference SID
         await getSupabaseAdmin()
           .from('turbo_mode_sessions')
@@ -41,7 +42,8 @@ export async function POST(request: NextRequest) {
         console.log(`[Turbo Conference] Conference started: ${conferenceSid}`)
         break
 
-      case 'conference-end':
+      case 'end':
+      case 'conference-end':  // Support both formats for compatibility
         // Conference ended - rep disconnected, end session
         await getSupabaseAdmin()
           .from('turbo_mode_sessions')
@@ -55,11 +57,13 @@ export async function POST(request: NextRequest) {
         console.log(`[Turbo Conference] Conference ended, session ended: ${sessionId}`)
         break
 
-      case 'participant-join':
+      case 'join':
+      case 'participant-join':  // Support both formats for compatibility
         console.log(`[Turbo Conference] Participant joined: ${callSid}`)
         break
 
-      case 'participant-leave':
+      case 'leave':
+      case 'participant-leave':  // Support both formats for compatibility
         // A participant left - check if it was the lead
         const { data: session } = await getSupabaseAdmin()
           .from('turbo_mode_sessions')
