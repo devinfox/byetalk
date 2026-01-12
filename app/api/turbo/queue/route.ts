@@ -75,6 +75,8 @@ export async function GET(request: NextRequest) {
         started_at,
         calls_made,
         calls_connected,
+        conference_name,
+        conference_sid,
         users:user_id (
           id,
           first_name,
