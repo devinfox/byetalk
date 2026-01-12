@@ -21,6 +21,7 @@ interface UseTwilioDeviceReturn {
   isReady: boolean
   incomingCallInfo: IncomingCallInfo | null
   makeCall: (phoneNumber: string) => Promise<string | null>
+  connectToUrl: (twimlUrl: string) => Promise<boolean>
   answerCall: () => void
   rejectCall: () => void
   hangUp: () => void
@@ -286,6 +287,70 @@ export function useTwilioDevice(): UseTwilioDeviceReturn {
     }
   }, [])
 
+  // Connect to a TwiML URL (used for turbo mode conference connection)
+  const connectToUrl = useCallback(async (twimlUrl: string): Promise<boolean> => {
+    if (!deviceRef.current) {
+      setError('Device not ready')
+      return false
+    }
+
+    try {
+      setStatus('connecting')
+      setError(null)
+
+      console.log('[Twilio] Connecting to TwiML URL:', twimlUrl)
+
+      // Connect with the TwiML URL as a parameter
+      // The API endpoint will use this URL to generate TwiML
+      const params = {
+        TwimlUrl: twimlUrl,
+      }
+
+      const outgoingCall = await deviceRef.current.connect({ params })
+
+      // Set up call event listeners
+      outgoingCall.on('accept', () => {
+        console.log('[Twilio] Conference connection accepted')
+        setStatus('connected')
+      })
+
+      outgoingCall.on('disconnect', () => {
+        console.log('[Twilio] Conference disconnected')
+        setStatus('disconnected')
+        setCall(null)
+        setCallSid(null)
+        setIsMuted(false)
+        setTimeout(() => setStatus('idle'), 500)
+      })
+
+      outgoingCall.on('cancel', () => {
+        console.log('[Twilio] Conference connection cancelled')
+        setStatus('idle')
+        setCall(null)
+        setCallSid(null)
+        setIsMuted(false)
+      })
+
+      outgoingCall.on('error', (callError) => {
+        console.error('[Twilio] Conference error:', callError)
+        setError(callError.message)
+        setStatus('error')
+        setCall(null)
+        setCallSid(null)
+      })
+
+      setCall(outgoingCall)
+      setCallSid(outgoingCall.parameters?.CallSid || null)
+      return true
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to connect to conference'
+      console.error('[Twilio] connectToUrl error:', err)
+      setError(errorMessage)
+      setStatus('error')
+      return false
+    }
+  }, [])
+
   const hangUp = useCallback(() => {
     if (call) {
       call.disconnect()
@@ -329,6 +394,7 @@ export function useTwilioDevice(): UseTwilioDeviceReturn {
     isReady,
     incomingCallInfo,
     makeCall,
+    connectToUrl,
     answerCall,
     rejectCall,
     hangUp,

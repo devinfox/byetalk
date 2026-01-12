@@ -46,7 +46,7 @@ async function getTwilioNumbers(): Promise<{ phoneNumber: string; areaCode: stri
 
     twilioNumbersCache = numbers.map(n => ({
       phoneNumber: n.phoneNumber,
-      areaCode: n.phoneNumber.replace(/\D/g, '').slice(1, 4), // +1XXX -> XXX
+      areaCode: n.phoneNumber.replace(/\D/g, '').slice(1, 4),
     }))
     cacheTime = now
 
@@ -64,7 +64,6 @@ async function getTwilioNumbers(): Promise<{ phoneNumber: string; areaCode: stri
     return twilioNumbersCache
   } catch (err) {
     console.error('[Turbo Dial] Error fetching Twilio numbers:', err)
-    // Return main number as fallback
     return [{
       phoneNumber: process.env.TWILIO_PHONE_NUMBER || '+18186007521',
       areaCode: '818',
@@ -78,35 +77,32 @@ async function getTwilioNumbers(): Promise<{ phoneNumber: string; areaCode: stri
 function getMatchingCallerId(leadPhone: string, numbers: { phoneNumber: string; areaCode: string }[]): string {
   const cleanPhone = leadPhone.replace(/\D/g, '')
 
-  // Extract area code from the last 10 digits (handles +1, 1, or raw 10-digit numbers)
   let leadAreaCode: string
   if (cleanPhone.length >= 10) {
-    // Get the area code (first 3 of the last 10 digits)
     const last10 = cleanPhone.slice(-10)
     leadAreaCode = last10.slice(0, 3)
   } else {
     leadAreaCode = cleanPhone.slice(0, 3)
   }
 
-  // Try exact area code match
   const exactMatch = numbers.find(n => n.areaCode === leadAreaCode)
   if (exactMatch) {
     return exactMatch.phoneNumber
   }
 
-  // Fallback to main number
   return process.env.TWILIO_PHONE_NUMBER || '+18186007521'
 }
 
 /**
  * POST /api/turbo/dial
- * Initiate a batch of calls (3 leads simultaneously)
+ * Pool-based predictive dialer
+ * Dials 3 leads per available rep in turbo mode
  */
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
     const body = await request.json().catch(() => ({}))
-    const batchSize = body.batch_size || 3
+    const leadsPerRep = body.leads_per_rep || 3
 
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -114,7 +110,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get user's info and verify turbo session (check both auth_user_id and auth_id) - use admin to bypass RLS
+    // Get user's info
     let userData = null
     const { data: userByAuthUserId } = await getSupabaseAdmin()
       .from('users')
@@ -137,24 +133,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    // Verify user has active turbo session
-    const { data: session, error: sessionError } = await getSupabaseAdmin()
-      .from('turbo_mode_sessions')
-      .select('id, calls_made')
-      .eq('user_id', userData.id)
-      .eq('status', 'active')
-      .single()
+    // Count available reps (those in turbo mode and not on a call)
+    const { data: availableCount } = await getSupabaseAdmin()
+      .rpc('count_available_turbo_reps', {
+        p_organization_id: userData.organization_id,
+      })
 
-    if (sessionError || !session) {
-      return NextResponse.json({ error: 'Not in turbo mode' }, { status: 400 })
+    if (!availableCount || availableCount === 0) {
+      return NextResponse.json({
+        success: true,
+        calls_initiated: 0,
+        message: 'No reps available in turbo mode',
+      })
     }
+
+    // Calculate how many leads to dial
+    const batchSize = availableCount * leadsPerRep
+
+    console.log(`[Turbo Dial] ${availableCount} reps available, dialing ${batchSize} leads`)
 
     // Get base URL for webhooks
     const host = request.headers.get('host') || ''
     const protocol = host.includes('localhost') ? 'http' : 'https'
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || `${protocol}://${host}`
 
-    // Get next batch of leads using the helper function
+    // Get next batch of leads
     const { data: batch, error: batchError } = await getSupabaseAdmin()
       .rpc('get_turbo_dial_batch', {
         p_organization_id: userData.organization_id,
@@ -173,6 +176,9 @@ export async function POST(request: NextRequest) {
         message: 'No leads in queue',
       })
     }
+
+    // Generate batch ID to group these calls
+    const batchId = crypto.randomUUID()
 
     // Get Twilio numbers for area code matching
     const twilioNumbers = await getTwilioNumbers()
@@ -201,10 +207,11 @@ export async function POST(request: NextRequest) {
         }
 
         // Create the outbound call via Twilio REST API
+        // URL points to /api/turbo/lead-answered which handles atomic rep claiming
         const call = await twilioClient.calls.create({
           to: toNumber,
           from: callerId,
-          url: `${baseUrl}/api/turbo/connect`,
+          url: `${baseUrl}/api/turbo/lead-answered`,
           statusCallback: `${baseUrl}/api/turbo/webhook`,
           statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
           statusCallbackMethod: 'POST',
@@ -214,7 +221,7 @@ export async function POST(request: NextRequest) {
 
         console.log(`[Turbo Dial] Initiated call to ${lead.lead_name} (${toNumber}) - SID: ${call.sid}`)
 
-        // Create turbo_active_calls record
+        // Create turbo_active_calls record with batch ID
         await getSupabaseAdmin()
           .from('turbo_active_calls')
           .insert({
@@ -227,10 +234,10 @@ export async function POST(request: NextRequest) {
             lead_name: lead.lead_name,
             status: 'dialing',
             initiated_by: userData.id,
-            session_id: session.id,
+            batch_id: batchId,
           })
 
-        // Update queue item status - increment attempts using raw SQL
+        // Update queue item - increment attempts
         await getSupabaseAdmin().rpc('increment_turbo_queue_attempts', {
           p_queue_id: lead.queue_id,
         })
@@ -245,11 +252,11 @@ export async function POST(request: NextRequest) {
       } catch (callError) {
         console.error(`[Turbo Dial] Failed to call ${lead.lead_name}:`, callError)
 
-        // Mark as failed in queue
+        // Return to queue for retry
         await getSupabaseAdmin()
           .from('turbo_call_queue')
           .update({
-            status: 'queued', // Return to queue for retry
+            status: 'queued',
             last_attempt_at: new Date().toISOString(),
             last_disposition: 'failed',
           })
@@ -257,17 +264,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Update session stats
-    await getSupabaseAdmin()
-      .from('turbo_mode_sessions')
-      .update({
-        calls_made: session.calls_made + initiatedCalls.length,
-      })
-      .eq('id', session.id)
-
     return NextResponse.json({
       success: true,
+      available_reps: availableCount,
       calls_initiated: initiatedCalls.length,
+      batch_id: batchId,
       calls: initiatedCalls,
     })
   } catch (error) {

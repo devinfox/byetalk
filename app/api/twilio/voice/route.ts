@@ -113,6 +113,16 @@ export async function POST(request: NextRequest) {
 
     const twiml = new VoiceResponse()
 
+    // Check for TwimlUrl parameter (used for turbo mode conference connection)
+    const twimlUrl = formData.get('TwimlUrl') as string | null
+    if (twimlUrl) {
+      console.log('[Twilio Voice] Redirecting to TwiML URL for conference:', twimlUrl)
+      twiml.redirect(twimlUrl)
+      return new NextResponse(twiml.toString(), {
+        headers: { 'Content-Type': 'text/xml' },
+      })
+    }
+
     // Determine call type:
     // - Outbound from browser: from starts with "client:", to is a phone number
     // - Inbound to Twilio number: to matches our Twilio number

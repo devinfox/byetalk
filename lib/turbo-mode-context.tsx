@@ -10,10 +10,20 @@ interface TurboSession {
   started_at: string
   calls_made: number
   calls_connected: number
+  conference_name?: string
+  twiml_url?: string
   users?: {
     first_name: string
     last_name: string
   }
+}
+
+interface TurboStartResult {
+  success: boolean
+  session_id?: string
+  conference_name?: string
+  twiml_url?: string
+  error?: string
 }
 
 interface TurboQueueItem {
@@ -52,9 +62,10 @@ interface TurboModeContextType {
   activeSessions: TurboSession[]
   isLoading: boolean
   error: string | null
+  twimlUrl: string | null
 
   // Actions
-  startTurboMode: () => Promise<void>
+  startTurboMode: () => Promise<TurboStartResult>
   stopTurboMode: () => Promise<void>
   addToQueue: (leadIds: string[]) => Promise<void>
   removeFromQueue: (leadId: string) => Promise<void>
@@ -74,6 +85,7 @@ export function TurboModeProvider({ children }: { children: React.ReactNode }) {
   const [activeSessions, setActiveSessions] = useState<TurboSession[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [twimlUrl, setTwimlUrl] = useState<string | null>(null)
 
   const supabase = createClient()
   const dialIntervalRef = useRef<NodeJS.Timeout | null>(null)
@@ -105,7 +117,7 @@ export function TurboModeProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   // Start turbo mode
-  const startTurboMode = useCallback(async () => {
+  const startTurboMode = useCallback(async (): Promise<TurboStartResult> => {
     setIsLoading(true)
     setError(null)
 
@@ -118,13 +130,23 @@ export function TurboModeProvider({ children }: { children: React.ReactNode }) {
       }
 
       setIsInTurboMode(true)
+      setTwimlUrl(data.twiml_url || null)
       await refreshStatus()
 
-      // Start auto-dialing
-      dialNextBatch()
+      // Note: Auto-dialing now starts after rep connects to conference
+      // The caller should connect to the twiml_url, then dialing will begin
+
+      return {
+        success: true,
+        session_id: data.session_id,
+        conference_name: data.conference_name,
+        twiml_url: data.twiml_url,
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to start')
+      const errorMsg = err instanceof Error ? err.message : 'Failed to start'
+      setError(errorMsg)
       console.error('[TurboMode] Error starting:', err)
+      return { success: false, error: errorMsg }
     } finally {
       setIsLoading(false)
     }
@@ -145,6 +167,7 @@ export function TurboModeProvider({ children }: { children: React.ReactNode }) {
 
       setIsInTurboMode(false)
       setSession(null)
+      setTwimlUrl(null)
 
       // Clear dial interval
       if (dialIntervalRef.current) {
@@ -311,6 +334,7 @@ export function TurboModeProvider({ children }: { children: React.ReactNode }) {
     activeSessions,
     isLoading,
     error,
+    twimlUrl,
     startTurboMode,
     stopTurboMode,
     addToQueue,
