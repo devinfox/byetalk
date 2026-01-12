@@ -15,7 +15,6 @@ import {
 } from 'lucide-react'
 import { LEAD_FIELDS } from '@/types/import.types'
 import type { User, Campaign } from '@/types/database.types'
-import { createClient } from '@/lib/supabase'
 
 // Files larger than 4MB should be uploaded directly to storage
 const LARGE_FILE_THRESHOLD = 4 * 1024 * 1024
@@ -125,21 +124,31 @@ export function ImportLeadsModal({ onClose, users, campaigns, currentUserId }: I
       if (file.size > LARGE_FILE_THRESHOLD) {
         console.log('Large file detected, uploading to storage first...')
 
-        const supabase = createClient()
-        const timestamp = Date.now()
-        const storagePath = `imports/pending/${timestamp}_${file.name}`
+        // Get a signed upload URL from the server
+        const urlResponse = await fetch('/api/leads/import/upload-url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fileName: file.name }),
+        })
 
-        // Upload file to storage
-        const { error: uploadError } = await supabase.storage
-          .from('documents')
-          .upload(storagePath, file, {
-            contentType: 'text/csv',
-            upsert: true,
-          })
+        if (!urlResponse.ok) {
+          const urlError = await urlResponse.json()
+          throw new Error(urlError.error || 'Failed to get upload URL')
+        }
 
-        if (uploadError) {
-          console.error('Storage upload error:', uploadError)
-          throw new Error('Failed to upload file: ' + uploadError.message)
+        const { signedUrl, storagePath } = await urlResponse.json()
+        console.log('Got signed URL for path:', storagePath)
+
+        // Upload file directly to the signed URL
+        const uploadResponse = await fetch(signedUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'text/csv' },
+          body: file,
+        })
+
+        if (!uploadResponse.ok) {
+          console.error('Storage upload failed:', uploadResponse.status)
+          throw new Error('Failed to upload file to storage')
         }
 
         console.log('File uploaded to storage:', storagePath)
