@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   ChevronLeft,
   ChevronRight,
@@ -10,7 +11,13 @@ import {
   FileText,
   Mail,
   Calendar as CalendarIcon,
+  Plus,
+  X,
+  Video,
+  CheckSquare,
+  Loader2,
 } from 'lucide-react'
+import { createClient } from '@/lib/supabase'
 import {
   format,
   startOfMonth,
@@ -56,9 +63,75 @@ function getRelated<T>(data: T[] | T | null): T | null {
 }
 
 export function CalendarView({ tasks, currentUser, userTimezone }: CalendarViewProps) {
+  const router = useRouter()
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date())
   const [view, setView] = useState<'month' | 'week'>('month')
+
+  // Modal state for adding events
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [modalDate, setModalDate] = useState<Date | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [newEvent, setNewEvent] = useState({
+    type: 'task' as 'task' | 'call' | 'meeting',
+    title: '',
+    description: '',
+    time: '09:00',
+    priority: 3,
+  })
+
+  // Handle double-click to open add modal
+  const handleDoubleClick = (day: Date) => {
+    setModalDate(day)
+    setNewEvent({
+      type: 'task',
+      title: '',
+      description: '',
+      time: '09:00',
+      priority: 3,
+    })
+    setShowAddModal(true)
+  }
+
+  // Handle adding a new event
+  const handleAddEvent = async () => {
+    if (!modalDate || !newEvent.title.trim() || !currentUser) return
+
+    setIsSubmitting(true)
+    const supabase = createClient()
+
+    try {
+      // Combine date and time
+      const [hours, minutes] = newEvent.time.split(':')
+      const dueAt = new Date(modalDate)
+      dueAt.setHours(parseInt(hours), parseInt(minutes), 0, 0)
+
+      // Map event type to task_type
+      const taskTypeMap = {
+        task: 'other',
+        call: 'call_back',
+        meeting: 'meeting',
+      }
+
+      await supabase.from('tasks').insert({
+        title: newEvent.title,
+        description: newEvent.description || null,
+        task_type: taskTypeMap[newEvent.type],
+        due_at: dueAt.toISOString(),
+        priority: newEvent.priority,
+        status: 'pending',
+        assigned_to: currentUser.id,
+        assigned_by: currentUser.id,
+      })
+
+      setShowAddModal(false)
+      router.refresh()
+    } catch (error) {
+      console.error('Error adding event:', error)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   // Group tasks by date - only include pending tasks (exclude completed)
   const tasksByDate = useMemo(() => {
@@ -255,6 +328,7 @@ export function CalendarView({ tasks, currentUser, userTimezone }: CalendarViewP
                   <button
                     key={index}
                     onClick={() => setSelectedDate(day)}
+                    onDoubleClick={() => handleDoubleClick(day)}
                     className={`min-h-[80px] p-1.5 rounded-xl text-left transition-all ${
                       isSelected
                         ? 'bg-yellow-500/20 border border-yellow-500/50'
@@ -301,6 +375,7 @@ export function CalendarView({ tasks, currentUser, userTimezone }: CalendarViewP
                   <button
                     key={index}
                     onClick={() => setSelectedDate(day)}
+                    onDoubleClick={() => handleDoubleClick(day)}
                     className={`min-h-[300px] p-2 rounded-xl text-left transition-all ${
                       isSelected
                         ? 'bg-yellow-500/20 border border-yellow-500/50'
@@ -430,6 +505,153 @@ export function CalendarView({ tasks, currentUser, userTimezone }: CalendarViewP
           )}
         </div>
       </div>
+
+      {/* Add Event Modal */}
+      {showAddModal && modalDate && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="glass-card p-6 w-full max-w-md mx-4">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-semibold text-white">
+                Add Event - {format(modalDate, 'MMMM d, yyyy')}
+              </h3>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="p-2 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Event Type Selection */}
+            <div className="mb-4">
+              <label className="block text-sm text-gray-400 mb-2">Event Type</label>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  onClick={() => setNewEvent({ ...newEvent, type: 'task' })}
+                  className={`p-3 rounded-xl flex flex-col items-center gap-2 transition-all ${
+                    newEvent.type === 'task'
+                      ? 'bg-yellow-500/20 border border-yellow-500/50 text-yellow-400'
+                      : 'glass-card-subtle text-gray-400 hover:text-white'
+                  }`}
+                >
+                  <CheckSquare className="w-5 h-5" />
+                  <span className="text-xs">Task</span>
+                </button>
+                <button
+                  onClick={() => setNewEvent({ ...newEvent, type: 'call' })}
+                  className={`p-3 rounded-xl flex flex-col items-center gap-2 transition-all ${
+                    newEvent.type === 'call'
+                      ? 'bg-green-500/20 border border-green-500/50 text-green-400'
+                      : 'glass-card-subtle text-gray-400 hover:text-white'
+                  }`}
+                >
+                  <Phone className="w-5 h-5" />
+                  <span className="text-xs">Call</span>
+                </button>
+                <button
+                  onClick={() => setNewEvent({ ...newEvent, type: 'meeting' })}
+                  className={`p-3 rounded-xl flex flex-col items-center gap-2 transition-all ${
+                    newEvent.type === 'meeting'
+                      ? 'bg-blue-500/20 border border-blue-500/50 text-blue-400'
+                      : 'glass-card-subtle text-gray-400 hover:text-white'
+                  }`}
+                >
+                  <Video className="w-5 h-5" />
+                  <span className="text-xs">Meeting</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Title */}
+            <div className="mb-4">
+              <label className="block text-sm text-gray-400 mb-2">Title</label>
+              <input
+                type="text"
+                value={newEvent.title}
+                onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
+                placeholder="Enter event title..."
+                className="glass-input w-full px-4 py-2.5"
+                autoFocus
+              />
+            </div>
+
+            {/* Time */}
+            <div className="mb-4">
+              <label className="block text-sm text-gray-400 mb-2">Time</label>
+              <input
+                type="time"
+                value={newEvent.time}
+                onChange={(e) => setNewEvent({ ...newEvent, time: e.target.value })}
+                className="glass-input w-full px-4 py-2.5"
+              />
+            </div>
+
+            {/* Priority */}
+            <div className="mb-4">
+              <label className="block text-sm text-gray-400 mb-2">Priority</label>
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  { value: 1, label: 'Urgent', color: 'red' },
+                  { value: 2, label: 'High', color: 'orange' },
+                  { value: 3, label: 'Normal', color: 'yellow' },
+                  { value: 4, label: 'Low', color: 'blue' },
+                ].map((p) => (
+                  <button
+                    key={p.value}
+                    onClick={() => setNewEvent({ ...newEvent, priority: p.value })}
+                    className={`p-2 rounded-lg text-xs transition-all ${
+                      newEvent.priority === p.value
+                        ? `bg-${p.color}-500/20 border border-${p.color}-500/50 text-${p.color}-400`
+                        : 'glass-card-subtle text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Description */}
+            <div className="mb-6">
+              <label className="block text-sm text-gray-400 mb-2">Description (optional)</label>
+              <textarea
+                value={newEvent.description}
+                onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
+                placeholder="Add details..."
+                rows={3}
+                className="glass-input w-full px-4 py-2.5 resize-none"
+              />
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="flex-1 px-4 py-2.5 glass-button rounded-xl text-gray-300 hover:text-white transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddEvent}
+                disabled={!newEvent.title.trim() || isSubmitting}
+                className="flex-1 px-4 py-2.5 glass-button-gold rounded-xl text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Adding...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4" />
+                    Add Event
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
