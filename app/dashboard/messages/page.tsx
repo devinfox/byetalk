@@ -234,9 +234,10 @@ export default function ByeMessagePage() {
           },
           (payload) => {
             const newMsg = payload.new as Message
-            const isRelevant =
-              (newMsg.sender_id === user.id && newMsg.recipient_id === convo.id) ||
-              (newMsg.sender_id === convo.id && newMsg.recipient_id === user.id)
+            // Skip messages from current user (already added via optimistic update)
+            if (newMsg.sender_id === user.id) return
+
+            const isRelevant = newMsg.sender_id === convo.id && newMsg.recipient_id === user.id
 
             if (isRelevant) {
               setMessages(prev => {
@@ -260,6 +261,9 @@ export default function ByeMessagePage() {
           },
           (payload) => {
             const newMsg = payload.new as GroupMessage
+            // Skip messages from current user (already added via optimistic update)
+            if (newMsg.sender_id === user.id) return
+
             setMessages(prev => {
               if (prev.some(m => m.id === newMsg.id)) return prev
               return [...prev, newMsg]
