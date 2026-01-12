@@ -208,11 +208,29 @@ export async function POST(request: NextRequest) {
           try {
             await twilioClient.calls(sibling.call_sid).update({ status: 'canceled' })
 
+            // Get the queue_item_id for this call before updating
+            const { data: siblingCall } = await getSupabaseAdmin()
+              .from('turbo_active_calls')
+              .select('queue_item_id')
+              .eq('call_sid', sibling.call_sid)
+              .single()
+
             // Update the call record
             await getSupabaseAdmin()
               .from('turbo_active_calls')
               .update({ status: 'canceled', ended_at: new Date().toISOString() })
               .eq('call_sid', sibling.call_sid)
+
+            // Reset the queue item back to 'queued' so it can be dialed again
+            if (siblingCall?.queue_item_id) {
+              await getSupabaseAdmin()
+                .from('turbo_call_queue')
+                .update({
+                  status: 'queued',
+                  last_disposition: 'canceled_batch',
+                })
+                .eq('id', siblingCall.queue_item_id)
+            }
           } catch (cancelError) {
             // Call might have already ended or been answered
             console.log(`[Lead Answered] Could not cancel ${sibling.call_sid}:`, cancelError)

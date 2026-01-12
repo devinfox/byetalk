@@ -134,16 +134,36 @@ export async function POST(request: NextRequest) {
     }
 
     // Count available reps (those in turbo mode and not on a call)
-    const { data: availableCount } = await getSupabaseAdmin()
+    const { data: availableCount, error: countError } = await getSupabaseAdmin()
       .rpc('count_available_turbo_reps', {
         p_organization_id: userData.organization_id,
       })
 
+    console.log(`[Turbo Dial] count_available_turbo_reps result: ${availableCount}, error: ${countError?.message || 'none'}`)
+
     if (!availableCount || availableCount === 0) {
+      // Log why no reps are available for debugging
+      const { data: sessions } = await getSupabaseAdmin()
+        .from('turbo_mode_sessions')
+        .select('id, user_id, status, conference_name, current_call_sid')
+        .eq('organization_id', userData.organization_id)
+        .eq('status', 'active')
+
+      console.log(`[Turbo Dial] No available reps. Active sessions:`, sessions?.map(s => ({
+        id: s.id,
+        hasConference: !!s.conference_name,
+        onCall: !!s.current_call_sid,
+      })))
+
       return NextResponse.json({
         success: true,
         calls_initiated: 0,
         message: 'No reps available in turbo mode',
+        debug: {
+          activeSessions: sessions?.length || 0,
+          sessionsWithConference: sessions?.filter(s => s.conference_name).length || 0,
+          sessionsOnCall: sessions?.filter(s => s.current_call_sid).length || 0,
+        },
       })
     }
 
@@ -170,12 +190,30 @@ export async function POST(request: NextRequest) {
     }
 
     if (!batch || batch.length === 0) {
+      // Log why no leads were returned for debugging
+      const { data: queueStats } = await getSupabaseAdmin()
+        .from('turbo_call_queue')
+        .select('status')
+        .eq('organization_id', userData.organization_id)
+
+      const statusCounts = queueStats?.reduce((acc, q) => {
+        acc[q.status] = (acc[q.status] || 0) + 1
+        return acc
+      }, {} as Record<string, number>) || {}
+
+      console.log(`[Turbo Dial] No leads returned. Queue status breakdown:`, statusCounts)
+
       return NextResponse.json({
         success: true,
         calls_initiated: 0,
         message: 'No leads in queue',
+        debug: {
+          queueStatusCounts: statusCounts,
+        },
       })
     }
+
+    console.log(`[Turbo Dial] Got ${batch.length} leads from batch`)
 
     // Generate batch ID to group these calls
     const batchId = crypto.randomUUID()

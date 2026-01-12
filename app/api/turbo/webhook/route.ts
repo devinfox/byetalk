@@ -96,11 +96,17 @@ export async function POST(request: NextRequest) {
 
     // Update queue item status
     if (['completed', 'busy', 'no_answer', 'failed'].includes(newStatus)) {
+      // For completed calls, mark as completed
+      // For no_answer/busy/failed, reset to queued for retry (up to 3 attempts)
+      const retryableStatuses = ['busy', 'no_answer', 'failed']
+      const queueStatus = retryableStatuses.includes(newStatus) ? 'queued' : newStatus
+
       await getSupabaseAdmin()
         .from('turbo_call_queue')
         .update({
-          status: newStatus,
+          status: queueStatus,
           last_disposition: callStatus,
+          last_attempt_at: new Date().toISOString(),
         })
         .eq('id', activeCall.queue_item_id)
 
