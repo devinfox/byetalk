@@ -250,11 +250,13 @@ export function CallsClient({ leads, recentCalls, currentUser, initialPhone }: C
         </div>
       )}
 
-      {/* Turbo Mode Panel - Active calls for all, queue only for admins */}
-      <div className={`grid grid-cols-1 ${isAdmin ? 'lg:grid-cols-2' : ''} gap-6`}>
-        <TurboActiveCallsPanel />
-        {isAdmin && <TurboQueuePanel />}
-      </div>
+      {/* Turbo Mode Panel - Admin only (sales reps just see connected lead banner in toggle) */}
+      {isAdmin && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <TurboActiveCallsPanel />
+          <TurboQueuePanel />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Dialer */}
