@@ -28,24 +28,12 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get user info - try auth_user_id first, then fall back to auth_id
-    let userData = null
-    const { data: userByAuthUserId } = await getSupabaseAdmin()
+    // Get user info
+    const { data: userData } = await getSupabaseAdmin()
       .from('users')
       .select('id, role, organization_id')
-      .eq('auth_user_id', user.id)
+      .eq('auth_id', user.id)
       .single()
-
-    if (userByAuthUserId) {
-      userData = userByAuthUserId
-    } else {
-      const { data: userByAuthId } = await getSupabaseAdmin()
-        .from('users')
-        .select('id, role, organization_id')
-        .eq('auth_id', user.id)
-        .single()
-      userData = userByAuthId
-    }
 
     if (!userData) {
       console.log('[Delete Group] User not found for auth id:', user.id)

@@ -242,24 +242,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get current user's profile - try auth_user_id first, then fall back to auth_id
-    let currentUser = null
-    const { data: userByAuthUserId } = await getSupabaseAdmin()
+    // Get current user's profile
+    const { data: currentUser } = await getSupabaseAdmin()
       .from('users')
       .select('id, organization_id')
-      .eq('auth_user_id', user.id)
+      .eq('auth_id', user.id)
       .single()
-
-    if (userByAuthUserId) {
-      currentUser = userByAuthUserId
-    } else {
-      const { data: userByAuthId } = await getSupabaseAdmin()
-        .from('users')
-        .select('id, organization_id')
-        .eq('auth_id', user.id)
-        .single()
-      currentUser = userByAuthId
-    }
 
     if (!currentUser) {
       console.log('[Import] User not found for auth id:', user.id)
@@ -424,24 +412,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get current user - try auth_user_id first, then fall back to auth_id
-    let currentUser = null
-    const { data: userByAuthUserId } = await getSupabaseAdmin()
+    // Get current user
+    const { data: currentUser } = await getSupabaseAdmin()
       .from('users')
       .select('id, role')
-      .eq('auth_user_id', user.id)
+      .eq('auth_id', user.id)
       .single()
-
-    if (userByAuthUserId) {
-      currentUser = userByAuthUserId
-    } else {
-      const { data: userByAuthId } = await getSupabaseAdmin()
-        .from('users')
-        .select('id, role')
-        .eq('auth_id', user.id)
-        .single()
-      currentUser = userByAuthId
-    }
 
     if (!currentUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
