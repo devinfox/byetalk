@@ -177,12 +177,11 @@ export async function DELETE(request: NextRequest) {
     }
 
     if (clearAll) {
-      // Clear entire queue for org
+      // Clear entire queue for org (all statuses)
       const { error } = await getSupabaseAdmin()
         .from('turbo_call_queue')
         .delete()
         .eq('organization_id', userData.organization_id)
-        .eq('status', 'queued')
 
       if (error) {
         return NextResponse.json({ error: 'Failed to clear queue' }, { status: 500 })
