@@ -99,17 +99,42 @@ export async function POST(request: NextRequest) {
 
     if (!isTurboMode) {
       // Regular call - need to move BOTH call legs to a conference
-      // The callSid is the parent (browser) call, we need to find the child (lead) call
+      // For outbound: browser is parent, lead is child
+      // For inbound: lead is parent, browser is child
 
-      console.log('[Add Participant] Finding child calls for parent:', callSid)
+      console.log('[Add Participant] Analyzing call structure for:', callSid)
 
-      // Get all child calls (the outbound leg to the lead)
-      const childCalls = await twilioClient.calls.list({
-        parentCallSid: callSid,
-        status: 'in-progress',
+      // First, get info about the current call to determine if it's parent or child
+      const currentCall = await twilioClient.calls(callSid).fetch()
+      const isChildCall = !!currentCall.parentCallSid
+
+      console.log('[Add Participant] Call info:', {
+        callSid,
+        parentCallSid: currentCall.parentCallSid,
+        direction: currentCall.direction,
+        isChildCall,
       })
 
-      console.log('[Add Participant] Found child calls:', childCalls.map(c => ({ sid: c.sid, to: c.to, status: c.status })))
+      let browserCallSid: string
+      let leadCallSid: string | null = null
+
+      if (isChildCall) {
+        // INBOUND call - browser is child, lead (parent) is the inbound caller
+        browserCallSid = callSid
+        leadCallSid = currentCall.parentCallSid!
+        console.log('[Add Participant] Inbound call detected - browser:', browserCallSid, 'lead:', leadCallSid)
+      } else {
+        // OUTBOUND call - browser is parent, need to find child (lead)
+        browserCallSid = callSid
+        const childCalls = await twilioClient.calls.list({
+          parentCallSid: callSid,
+          status: 'in-progress',
+        })
+        if (childCalls.length > 0) {
+          leadCallSid = childCalls[0].sid
+        }
+        console.log('[Add Participant] Outbound call detected - browser:', browserCallSid, 'lead:', leadCallSid)
+      }
 
       // TwiML to join conference (for lead)
       const leadConferenceTwiml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -138,25 +163,24 @@ export async function POST(request: NextRequest) {
   </Dial>
 </Response>`
 
-      // First, update the child call (lead) to join the conference
-      // This must happen BEFORE we update the parent, otherwise the child gets disconnected
-      for (const childCall of childCalls) {
+      // Update the lead's call to join conference FIRST
+      if (leadCallSid) {
         try {
-          console.log('[Add Participant] Updating child call to conference:', childCall.sid)
-          await twilioClient.calls(childCall.sid).update({
+          console.log('[Add Participant] Updating lead call to conference:', leadCallSid)
+          await twilioClient.calls(leadCallSid).update({
             twiml: leadConferenceTwiml,
           })
         } catch (err) {
-          console.error('[Add Participant] Error updating child call:', err)
+          console.error('[Add Participant] Error updating lead call:', err)
         }
       }
 
-      // Small delay to ensure child call update processes
+      // Small delay to ensure lead call update processes
       await new Promise(resolve => setTimeout(resolve, 500))
 
-      // Then update the parent call (rep's browser) to join the conference
-      console.log('[Add Participant] Updating parent call to conference:', callSid)
-      await twilioClient.calls(callSid).update({
+      // Then update the browser call to join the conference
+      console.log('[Add Participant] Updating browser call to conference:', browserCallSid)
+      await twilioClient.calls(browserCallSid).update({
         twiml: repConferenceTwiml,
       })
     }
