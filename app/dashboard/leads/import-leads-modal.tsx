@@ -109,6 +109,11 @@ export function ImportLeadsModal({ onClose, users, campaigns, currentUserId }: I
     setStep('importing')
     setError(null)
 
+    console.log('=== IMPORT STARTING ===')
+    console.log('File:', file.name, 'Size:', file.size)
+    console.log('Field mapping:', fieldMapping)
+    console.log('List name:', listName)
+
     try {
       const formData = new FormData()
       formData.append('file', file)
@@ -120,17 +125,23 @@ export function ImportLeadsModal({ onClose, users, campaigns, currentUserId }: I
       formData.append('skipDuplicates', skipDuplicates.toString())
       formData.append('duplicateCheckFields', duplicateCheckFields.join(','))
 
+      console.log('Sending request to /api/leads/import...')
+
       const response = await fetch('/api/leads/import', {
         method: 'POST',
         body: formData,
       })
 
+      console.log('Response status:', response.status)
+
       if (!response.ok) {
         const data = await response.json()
+        console.log('Error response:', data)
         throw new Error(data.error || 'Import failed')
       }
 
       const data = await response.json()
+      console.log('Success response:', data)
 
       // Import is processing in background - close modal and let progress bar show status
       if (data.status === 'pending' || data.status === 'processing') {
@@ -149,6 +160,8 @@ export function ImportLeadsModal({ onClose, users, campaigns, currentUserId }: I
         setStep('complete')
       }
     } catch (err) {
+      console.log('=== IMPORT ERROR ===')
+      console.log('Error:', err)
       setError((err as Error).message)
       setStep('options')
     }
