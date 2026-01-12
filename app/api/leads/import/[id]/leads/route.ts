@@ -64,8 +64,10 @@ export async function GET(
         .eq('is_deleted', false)
         .in('status', ['contacted', 'qualified', 'converted', 'lost'])
 
-      // Handle special 'uncategorized' group
-      if (id === 'uncategorized') {
+      // Handle special groups
+      if (id === 'all') {
+        // No additional filter - show all their connected leads
+      } else if (id === 'uncategorized') {
         connectedLeadsQuery = connectedLeadsQuery.is('import_job_id', null)
       } else {
         connectedLeadsQuery = connectedLeadsQuery.eq('import_job_id', id)
@@ -103,8 +105,11 @@ export async function GET(
       .eq('is_deleted', false)
       .order('created_at', { ascending: false })
 
-    // Handle special 'uncategorized' group (leads without import_job_id)
-    if (id === 'uncategorized') {
+    // Handle special groups
+    if (id === 'all') {
+      // Show ALL leads for admins - no import_job_id filter
+      // (query already has is_deleted = false)
+    } else if (id === 'uncategorized') {
       query = query.is('import_job_id', null)
     } else {
       query = query.eq('import_job_id', id)

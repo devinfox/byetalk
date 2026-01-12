@@ -64,11 +64,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ groups: [], isAdmin })
     }
 
-    // Filter by organization if needed
-    const orgJobs = importJobs.filter(job =>
-      // @ts-expect-error organization_id might not exist
-      !job.organization_id || job.organization_id === userData.organization_id
-    )
+    // Filter by organization if needed (admins see everything)
+    const orgJobs = isAdmin
+      ? importJobs
+      : importJobs.filter(job =>
+          // @ts-expect-error organization_id might not exist
+          !job.organization_id || job.organization_id === userData.organization_id
+        )
 
     // Get lead counts for each group more efficiently
     const groupsWithCounts = await Promise.all(
@@ -138,8 +140,28 @@ export async function GET(request: NextRequest) {
       ? validGroups
       : validGroups.filter(g => g.lead_count > 0)
 
-    // For admins, also check for leads without an import_job_id (uncategorized)
+    // For admins, add special groups
     if (isAdmin) {
+      // Add "All Leads" group at the top
+      const { count: allLeadsCount } = await getSupabaseAdmin()
+        .from('leads')
+        .select('id', { count: 'exact', head: true })
+        .eq('is_deleted', false)
+
+      if (allLeadsCount && allLeadsCount > 0) {
+        filteredGroups.unshift({
+          id: 'all',
+          name: 'All Leads',
+          file_name: 'all-leads',
+          is_system: true,
+          lead_count: allLeadsCount,
+          queued_count: 0,
+          is_turbo_enabled: false,
+          created_at: new Date().toISOString(),
+        })
+      }
+
+      // Check for leads without an import_job_id (uncategorized)
       const { count: uncategorizedCount } = await getSupabaseAdmin()
         .from('leads')
         .select('id', { count: 'exact', head: true })
