@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { X, UserPlus, Phone, Loader2 } from 'lucide-react'
 
 interface Colleague {
@@ -18,36 +18,67 @@ interface AddToCallModalProps {
   onAddParticipant: (colleague: Colleague) => Promise<void>
 }
 
+// Module-level cache for colleagues (persists across modal open/close)
+let colleaguesCache: Colleague[] | null = null
+let cacheTimestamp = 0
+const CACHE_TTL = 60000 // 60 seconds
+
 export function AddToCallModal({
   isOpen,
   onClose,
   callSid,
   onAddParticipant,
 }: AddToCallModalProps) {
-  const [colleagues, setColleagues] = useState<Colleague[]>([])
-  const [loading, setLoading] = useState(true)
+  const [colleagues, setColleagues] = useState<Colleague[]>(colleaguesCache || [])
+  const [loading, setLoading] = useState(!colleaguesCache)
   const [adding, setAdding] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const hasFetched = useRef(false)
 
+  // Pre-fetch colleagues on mount (not just when modal opens)
+  useEffect(() => {
+    if (!hasFetched.current) {
+      hasFetched.current = true
+      fetchColleagues(false)
+    }
+  }, [])
+
+  // Refresh when modal opens if cache is stale
   useEffect(() => {
     if (isOpen) {
-      fetchColleagues()
+      const now = Date.now()
+      if (!colleaguesCache || now - cacheTimestamp > CACHE_TTL) {
+        fetchColleagues(true)
+      }
     }
   }, [isOpen])
 
-  const fetchColleagues = async () => {
-    setLoading(true)
+  const fetchColleagues = async (showLoading = true) => {
+    // If we have cached data, don't show loading spinner
+    if (showLoading && !colleaguesCache) {
+      setLoading(true)
+    }
     setError(null)
+
     try {
       const response = await fetch('/api/twilio/add-participant')
       if (!response.ok) {
         throw new Error('Failed to fetch colleagues')
       }
       const data = await response.json()
-      setColleagues(data.colleagues || [])
+      const fetchedColleagues = data.colleagues || []
+
+      // Update cache
+      colleaguesCache = fetchedColleagues
+      cacheTimestamp = Date.now()
+
+      setColleagues(fetchedColleagues)
     } catch (err) {
-      setError('Failed to load colleagues')
+      // Only show error if we don't have cached data
+      if (!colleaguesCache) {
+        setError('Failed to load colleagues')
+      }
       console.error('[AddToCallModal] Error:', err)
     } finally {
       setLoading(false)

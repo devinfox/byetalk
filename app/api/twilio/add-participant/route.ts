@@ -10,6 +10,7 @@ const twilioClient = twilio(accountSid, authToken)
 /**
  * POST /api/twilio/add-participant
  * Adds a colleague to an existing call by creating a conference
+ * Handles both regular calls and turbo mode calls
  *
  * Body: { callSid: string, colleagueId: string }
  */
@@ -30,6 +31,25 @@ export async function POST(request: NextRequest) {
         { error: 'Missing callSid or colleagueId' },
         { status: 400 }
       )
+    }
+
+    // Get current user info - check both auth_id and auth_user_id
+    let currentUser = null
+    const { data: userByAuthId } = await getSupabaseAdmin()
+      .from('users')
+      .select('id, organization_id')
+      .eq('auth_id', user.id)
+      .single()
+
+    if (userByAuthId) {
+      currentUser = userByAuthId
+    } else {
+      const { data: userByAuthUserId } = await getSupabaseAdmin()
+        .from('users')
+        .select('id, organization_id')
+        .eq('auth_user_id', user.id)
+        .single()
+      currentUser = userByAuthUserId
     }
 
     // Get colleague info
@@ -53,12 +73,33 @@ export async function POST(request: NextRequest) {
     const envUrl = process.env.NEXT_PUBLIC_APP_URL || `${protocol}://${host}`
     const baseUrl = envUrl.replace(/\/$/, '')
 
-    // Create a unique conference name based on the original call
-    const conferenceName = `conf_${callSid}`
+    // Check if this user has an active turbo mode session with a conference
+    let conferenceName = `conf_${callSid}` // Default for regular calls
+    let isTurboMode = false
 
-    // First, update the current call to join a conference
-    // This uses TwiML to redirect the existing call to a conference
-    const currentCallTwiml = `<?xml version="1.0" encoding="UTF-8"?>
+    if (currentUser) {
+      const { data: turboSession } = await getSupabaseAdmin()
+        .from('turbo_mode_sessions')
+        .select('id, conference_name, current_call_sid')
+        .eq('user_id', currentUser.id)
+        .eq('status', 'active')
+        .not('conference_name', 'is', null)
+        .single()
+
+      if (turboSession?.conference_name) {
+        // User is in turbo mode - use their existing conference
+        conferenceName = turboSession.conference_name
+        isTurboMode = true
+        console.log('[Add Participant] Using turbo mode conference:', conferenceName)
+      }
+    }
+
+    // Build the client identity for the colleague
+    const clientIdentity = `${colleague.first_name}_${colleague.last_name}_${colleague.id.slice(0, 8)}`
+
+    if (!isTurboMode) {
+      // Regular call - need to move current call to a conference first
+      const currentCallTwiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Say voice="alice">Adding a colleague to the call. Please hold.</Say>
   <Dial>
@@ -71,13 +112,12 @@ export async function POST(request: NextRequest) {
   </Dial>
 </Response>`
 
-    // Update the existing call to join the conference
-    await twilioClient.calls(callSid).update({
-      twiml: currentCallTwiml,
-    })
-
-    // Build the client identity for the colleague
-    const clientIdentity = `${colleague.first_name}_${colleague.last_name}_${colleague.id.slice(0, 8)}`
+      // Update the existing call to join the conference
+      await twilioClient.calls(callSid).update({
+        twiml: currentCallTwiml,
+      })
+    }
+    // For turbo mode, we're already in a conference - just add the colleague
 
     // Create TwiML for the colleague's call
     const colleagueTwimlUrl = `${baseUrl}/api/twilio/join-conference?conference=${encodeURIComponent(conferenceName)}`
@@ -96,12 +136,14 @@ export async function POST(request: NextRequest) {
       clientIdentity,
       callSid: colleagueCall.sid,
       conferenceName,
+      isTurboMode,
     })
 
     return NextResponse.json({
       success: true,
       conferenceName,
       colleagueCallSid: colleagueCall.sid,
+      isTurboMode,
       colleague: {
         id: colleague.id,
         name: `${colleague.first_name} ${colleague.last_name}`,
@@ -131,12 +173,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get current user's profile
-    const { data: currentUser } = await getSupabaseAdmin()
+    // Get current user's profile - check both auth_id and auth_user_id
+    let currentUser = null
+    const { data: userByAuthId } = await getSupabaseAdmin()
       .from('users')
       .select('id, organization_id')
       .eq('auth_id', user.id)
       .single()
+
+    if (userByAuthId) {
+      currentUser = userByAuthId
+    } else {
+      const { data: userByAuthUserId } = await getSupabaseAdmin()
+        .from('users')
+        .select('id, organization_id')
+        .eq('auth_user_id', user.id)
+        .single()
+      currentUser = userByAuthUserId
+    }
 
     if (!currentUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
@@ -157,7 +211,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch colleagues' }, { status: 500 })
     }
 
-    return NextResponse.json({ colleagues: colleagues || [] })
+    // Set cache headers for faster subsequent loads
+    return NextResponse.json(
+      { colleagues: colleagues || [] },
+      {
+        headers: {
+          'Cache-Control': 'private, max-age=60', // Cache for 60 seconds
+        },
+      }
+    )
   } catch (error) {
     console.error('[Add Participant] Error:', error)
     return NextResponse.json(
