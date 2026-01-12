@@ -10,8 +10,12 @@ const VoiceResponse = twilio.twiml.VoiceResponse
  * This is called when the rep's browser connects via Twilio Device
  */
 export async function POST(request: NextRequest) {
+  console.log('[Turbo TwiML] POST received - URL:', request.url)
+
   const { searchParams } = new URL(request.url)
   const sessionId = searchParams.get('session_id')
+
+  console.log('[Turbo TwiML] Session ID:', sessionId)
 
   const twiml = new VoiceResponse()
 

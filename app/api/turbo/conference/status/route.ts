@@ -17,7 +17,13 @@ export async function POST(request: NextRequest) {
     const friendlyName = formData.get('FriendlyName') as string
     const callSid = formData.get('CallSid') as string
 
-    console.log(`[Turbo Conference] Event: ${statusCallbackEvent}, Conference: ${friendlyName}, Session: ${sessionId}`)
+    // Log all form data for debugging
+    const allParams: Record<string, string> = {}
+    formData.forEach((value, key) => {
+      allParams[key] = value.toString()
+    })
+    console.log(`[Turbo Conference] CALLBACK RECEIVED - Event: ${statusCallbackEvent}, Conference: ${friendlyName}, Session: ${sessionId}`)
+    console.log(`[Turbo Conference] Full params:`, JSON.stringify(allParams))
 
     if (!sessionId) {
       return new NextResponse('OK', { status: 200 })

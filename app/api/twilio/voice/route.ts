@@ -116,7 +116,8 @@ export async function POST(request: NextRequest) {
     // Check for TwimlUrl parameter (used for turbo mode conference connection)
     const twimlUrl = formData.get('TwimlUrl') as string | null
     if (twimlUrl) {
-      console.log('[Twilio Voice] Redirecting to TwiML URL for conference:', twimlUrl)
+      console.log('[Twilio Voice] TwimlUrl detected, redirecting to:', twimlUrl)
+      console.log('[Twilio Voice] Generated redirect TwiML:', `<Response><Redirect>${twimlUrl}</Redirect></Response>`)
       twiml.redirect(twimlUrl)
       return new NextResponse(twiml.toString(), {
         headers: { 'Content-Type': 'text/xml' },
