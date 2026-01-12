@@ -57,6 +57,7 @@ export const LEAD_FIELDS = [
   { value: 'utm_source', label: 'UTM Source', required: false },
   { value: 'utm_medium', label: 'UTM Medium', required: false },
   { value: 'utm_campaign', label: 'UTM Campaign', required: false },
+  { value: 'source_status', label: 'Source Status', required: false },
   { value: 'is_dnc', label: 'DNC (Do Not Call)', required: false },
   { value: 'is_dupe', label: 'Dupe', required: false },
   { value: 'dupe_in_file', label: 'Dupe in File', required: false },

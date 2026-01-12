@@ -221,6 +221,7 @@ export interface Lead {
   converted_contact_id: string | null;
   notes: string | null;
   // Import-related fields
+  source_status: string | null;
   is_dnc: boolean;
   is_dupe: boolean;
   dupe_in_file: string | null;
