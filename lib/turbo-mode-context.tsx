@@ -99,6 +99,15 @@ export function TurboModeProvider({ children }: { children: React.ReactNode }) {
 
       const data = await response.json()
 
+      console.log('[TurboMode] refreshStatus() received:', {
+        queueTotal: data.queue?.total,
+        queueItemsCount: data.queue?.items?.length,
+        activeCallsCount: data.active_calls?.length,
+        activeSessionsCount: data.sessions?.active?.length,
+        mySessionId: data.sessions?.my_session?.id?.slice(0, 8),
+        mySessionStatus: data.sessions?.my_session?.status,
+      })
+
       setQueueItems(data.queue.items || [])
       setQueueCount(data.queue.total || 0)
       setActiveCalls(data.active_calls || [])
@@ -118,20 +127,35 @@ export function TurboModeProvider({ children }: { children: React.ReactNode }) {
 
   // Start turbo mode
   const startTurboMode = useCallback(async (): Promise<TurboStartResult> => {
+    console.log('[TurboMode] startTurboMode() called')
     setIsLoading(true)
     setError(null)
 
     try {
+      console.log('[TurboMode] Making POST request to /api/turbo/session/start...')
       const response = await fetch('/api/turbo/session/start', { method: 'POST' })
       const data = await response.json()
+
+      console.log('[TurboMode] Session start response:', {
+        status: response.status,
+        ok: response.ok,
+        session_id: data.session_id,
+        conference_name: data.conference_name,
+        twiml_url: data.twiml_url,
+        error: data.error,
+      })
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to start turbo mode')
       }
 
+      console.log('[TurboMode] Setting isInTurboMode to true')
       setIsInTurboMode(true)
       setTwimlUrl(data.twiml_url || null)
+
+      console.log('[TurboMode] Calling refreshStatus() after session start...')
       await refreshStatus()
+      console.log('[TurboMode] refreshStatus() completed')
 
       // Note: Auto-dialing now starts after rep connects to conference
       // The caller should connect to the twiml_url, then dialing will begin
@@ -229,27 +253,48 @@ export function TurboModeProvider({ children }: { children: React.ReactNode }) {
   }, [refreshStatus])
 
   // Dial next batch of leads
+  // Note: We removed the isInTurboMode check here because it causes stale closure issues
+  // when called from setTimeout. The API will validate the session anyway.
   const dialNextBatch = useCallback(async () => {
-    if (!isInTurboMode) return
-
+    console.log('[TurboMode] dialNextBatch() called at', new Date().toISOString())
     try {
+      console.log('[TurboMode] Making POST request to /api/turbo/dial...')
       const response = await fetch('/api/turbo/dial', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ batch_size: 3 }),
+        body: JSON.stringify({ leads_per_rep: 3 }),
       })
 
+      console.log('[TurboMode] Dial API response status:', response.status, response.statusText)
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('[TurboMode] Dial API error response:', errorText)
+        return
+      }
+
       const data = await response.json()
+      console.log('[TurboMode] Dial API response data:', JSON.stringify(data, null, 2))
 
       if (data.calls_initiated > 0) {
-        console.log(`[TurboMode] Initiated ${data.calls_initiated} calls`)
+        console.log(`[TurboMode] SUCCESS: Initiated ${data.calls_initiated} calls, batch_id: ${data.batch_id}`)
+      } else {
+        console.log(`[TurboMode] No calls initiated. Reason: ${data.message || 'unknown'}`)
+        if (data.debug) {
+          console.log('[TurboMode] Debug info:', JSON.stringify(data.debug, null, 2))
+        }
       }
 
       await refreshStatus()
     } catch (err) {
-      console.error('[TurboMode] Error dialing:', err)
+      console.error('[TurboMode] Error in dialNextBatch:', err)
+      if (err instanceof Error) {
+        console.error('[TurboMode] Error name:', err.name)
+        console.error('[TurboMode] Error message:', err.message)
+        console.error('[TurboMode] Error stack:', err.stack)
+      }
     }
-  }, [isInTurboMode, refreshStatus])
+  }, [refreshStatus])
 
   // Setup realtime subscription
   useEffect(() => {
@@ -297,6 +342,13 @@ export function TurboModeProvider({ children }: { children: React.ReactNode }) {
 
   // Auto-dial when in turbo mode and calls complete
   useEffect(() => {
+    console.log('[TurboMode] Auto-dial effect triggered. State:', {
+      isInTurboMode,
+      activeCallsCount: activeCalls.length,
+      activeCallStatuses: activeCalls.map(c => ({ id: c.id?.slice(0, 8), status: c.status })),
+      queueCount,
+    })
+
     if (isInTurboMode) {
       // Check every 5 seconds if we need to dial more
       statusIntervalRef.current = setInterval(() => {
@@ -308,9 +360,16 @@ export function TurboModeProvider({ children }: { children: React.ReactNode }) {
         ['dialing', 'ringing', 'answered', 'connected'].includes(c.status)
       ).length
 
+      console.log(`[TurboMode] Active call count: ${activeCount}, Queue count: ${queueCount}`)
+
       if (activeCount < 3 && queueCount > 0) {
+        console.log('[TurboMode] Conditions met (activeCount < 3 && queueCount > 0), calling dialNextBatch()')
         dialNextBatch()
+      } else {
+        console.log(`[TurboMode] NOT dialing. Reason: ${activeCount >= 3 ? 'Already have 3+ active calls' : 'Queue is empty'}`)
       }
+    } else {
+      console.log('[TurboMode] Not in turbo mode, skipping auto-dial')
     }
 
     return () => {
