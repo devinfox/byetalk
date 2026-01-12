@@ -104,6 +104,14 @@ async function processImportJob(
                 if (value.length === 10) {
                   lead[leadField] = value
                 }
+              } else if (leadField === 'is_dnc' || leadField === 'is_dupe' || leadField === 'is_accepted') {
+                // Convert Yes/No/Y/N/True/False to boolean
+                const lowerValue = value.toLowerCase()
+                if (['yes', 'y', 'true', '1'].includes(lowerValue)) {
+                  lead[leadField] = true
+                } else if (['no', 'n', 'false', '0'].includes(lowerValue)) {
+                  lead[leadField] = false
+                }
               } else if (value) {
                 lead[leadField] = value
               }
