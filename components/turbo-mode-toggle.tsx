@@ -16,6 +16,7 @@ export function TurboModeToggle() {
     startTurboMode,
     stopTurboMode,
     dialNextBatch,
+    refreshStatus,
   } = useTurboMode()
 
   const { isReady, status, connectToUrl, hangUp } = useTwilioDeviceContext()
