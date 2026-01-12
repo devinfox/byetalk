@@ -133,6 +133,39 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
+    // CLEANUP: Release any stale sessions (reps marked as "on call" but call has ended)
+    // This fixes the issue where reps get stuck and can't receive new calls
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
+    const { data: staleSessions } = await getSupabaseAdmin()
+      .from('turbo_mode_sessions')
+      .select('id, current_call_sid, last_call_started_at')
+      .eq('organization_id', userData.organization_id)
+      .eq('status', 'active')
+      .not('current_call_sid', 'is', null)
+      .lt('last_call_started_at', fiveMinutesAgo)
+
+    if (staleSessions && staleSessions.length > 0) {
+      console.log(`[Turbo Dial] Found ${staleSessions.length} potentially stale sessions, checking...`)
+
+      for (const staleSession of staleSessions) {
+        // Check if the call is actually still active in turbo_active_calls
+        const { data: activeCall } = await getSupabaseAdmin()
+          .from('turbo_active_calls')
+          .select('id, status')
+          .eq('call_sid', staleSession.current_call_sid)
+          .single()
+
+        // If call doesn't exist or is in a terminal state, release the rep
+        const terminalStatuses = ['completed', 'failed', 'busy', 'no_answer', 'machine', 'canceled', 'voicemail']
+        if (!activeCall || terminalStatuses.includes(activeCall.status)) {
+          console.log(`[Turbo Dial] Releasing stale session ${staleSession.id} (call ${staleSession.current_call_sid} is ${activeCall?.status || 'not found'})`)
+          await getSupabaseAdmin().rpc('release_turbo_rep', {
+            p_session_id: staleSession.id,
+          })
+        }
+      }
+    }
+
     // Count available reps (those in turbo mode and not on a call)
     const { data: availableCount, error: countError } = await getSupabaseAdmin()
       .rpc('count_available_turbo_reps', {
@@ -302,6 +335,26 @@ export async function POST(request: NextRequest) {
             last_disposition: 'failed',
           })
           .eq('id', lead.queue_id)
+      }
+    }
+
+    // Increment calls_made counter for the user's session
+    if (initiatedCalls.length > 0) {
+      const { data: userSession } = await getSupabaseAdmin()
+        .from('turbo_mode_sessions')
+        .select('id')
+        .eq('user_id', userData.id)
+        .eq('status', 'active')
+        .single()
+
+      if (userSession) {
+        await getSupabaseAdmin().rpc('increment_turbo_session_dialed', {
+          p_session_id: userSession.id,
+          p_count: initiatedCalls.length,
+        }).catch(err => {
+          // Function might not exist yet, that's OK
+          console.log('[Turbo Dial] Could not increment calls_made:', err)
+        })
       }
     }
 

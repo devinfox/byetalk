@@ -251,7 +251,7 @@ export async function POST(request: NextRequest) {
     dial.conference(
       {
         startConferenceOnEnter: false,  // Don't start if rep left
-        endConferenceOnExit: false,     // Lead leaving doesn't end conference
+        endConferenceOnExit: true,      // End conference when lead hangs up (disconnects rep too)
         beep: 'false' as const,          // No beep
         statusCallback: `${baseUrl}/api/turbo/conference/status?session_id=${rep.session_id}`,
         statusCallbackEvent: ['join', 'leave'],

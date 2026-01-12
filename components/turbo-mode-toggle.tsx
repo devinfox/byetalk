@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTurboMode } from '@/lib/turbo-mode-context'
 import { useTwilioDeviceContext } from '@/lib/twilio-device-context'
 import { Button } from '@/components/ui/button'
@@ -22,8 +22,68 @@ export function TurboModeToggle() {
 
   const { isReady, status, connectToUrl, hangUp } = useTwilioDeviceContext()
   const [isConnecting, setIsConnecting] = useState(false)
+  const [isReconnecting, setIsReconnecting] = useState(false)
+  const reconnectAttemptRef = useRef(false)
+  const lastStatusRef = useRef(status)
 
   const isInConference = status === 'connected' && isInTurboMode
+
+  // Auto-reconnect when call ends but turbo mode is still active
+  useEffect(() => {
+    const wasConnected = lastStatusRef.current === 'connected'
+    const nowDisconnected = status === 'idle' || status === 'disconnected'
+
+    // Update ref for next comparison
+    lastStatusRef.current = status
+
+    // Only auto-reconnect if:
+    // 1. We were connected and now disconnected
+    // 2. Turbo mode is still active
+    // 3. We're not already reconnecting
+    // 4. Device is ready
+    if (wasConnected && nowDisconnected && isInTurboMode && !reconnectAttemptRef.current && isReady) {
+      console.log('[TurboMode] Call ended, auto-reconnecting...')
+      reconnectAttemptRef.current = true
+      setIsReconnecting(true)
+
+      // Small delay to let the backend update the session with new conference name
+      setTimeout(async () => {
+        try {
+          // Refresh status to get the new TwiML URL
+          await refreshStatus()
+
+          // Fetch the updated session info directly
+          const response = await fetch('/api/turbo/queue')
+          const data = await response.json()
+
+          if (data.sessions?.my_session?.id) {
+            const sessionId = data.sessions.my_session.id
+            const baseUrl = window.location.origin
+            const twimlUrl = `${baseUrl}/api/turbo/session/twiml?session_id=${sessionId}`
+
+            console.log('[TurboMode] Reconnecting to new conference:', twimlUrl)
+            const connected = await connectToUrl(twimlUrl)
+
+            if (connected) {
+              console.log('[TurboMode] Reconnected! Starting next dial batch...')
+              setTimeout(() => {
+                dialNextBatch()
+              }, 2000)
+            } else {
+              console.error('[TurboMode] Failed to reconnect')
+            }
+          } else {
+            console.log('[TurboMode] Session no longer active, not reconnecting')
+          }
+        } catch (err) {
+          console.error('[TurboMode] Reconnect error:', err)
+        } finally {
+          setIsReconnecting(false)
+          reconnectAttemptRef.current = false
+        }
+      }, 1500)
+    }
+  }, [status, isInTurboMode, isReady, refreshStatus, connectToUrl, dialNextBatch])
 
   // Find the connected call assigned to this user
   const myConnectedCall = activeCalls.find(
@@ -65,6 +125,7 @@ export function TurboModeToggle() {
 
   const buttonText = () => {
     if (isLoading || isConnecting) return 'Connecting...'
+    if (isReconnecting) return 'Reconnecting...'
     if (isInTurboMode) return 'Exit Turbo Mode'
     return 'Enter Turbo Mode'
   }
@@ -89,7 +150,7 @@ export function TurboModeToggle() {
 
       <Button
         onClick={handleToggle}
-        disabled={isLoading || isConnecting || (!isReady && !isInTurboMode)}
+        disabled={isLoading || isConnecting || isReconnecting || (!isReady && !isInTurboMode)}
         variant={isInTurboMode ? 'destructive' : 'default'}
         size="lg"
         className={cn(
@@ -97,7 +158,7 @@ export function TurboModeToggle() {
           isInTurboMode && 'bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 border-0'
         )}
       >
-        {isLoading || isConnecting ? (
+        {isLoading || isConnecting || isReconnecting ? (
           <Loader2 className="h-5 w-5 animate-spin mr-2" />
         ) : isInTurboMode ? (
           <ZapOff className="h-5 w-5 mr-2" />

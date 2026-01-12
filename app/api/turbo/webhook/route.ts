@@ -94,6 +94,64 @@ export async function POST(request: NextRequest) {
       .update(updates)
       .eq('id', activeCall.id)
 
+    // Also update the main calls table for turbo calls
+    if (recordingUrl || newStatus === 'completed') {
+      const mainCallUpdates: Record<string, unknown> = {
+        updated_at: new Date().toISOString(),
+      }
+
+      if (recordingUrl) {
+        mainCallUpdates.recording_url = recordingUrl
+        mainCallUpdates.ai_analysis_status = 'pending'
+      }
+
+      if (newStatus === 'completed') {
+        mainCallUpdates.disposition = 'answered'
+        mainCallUpdates.ended_at = new Date().toISOString()
+        if (duration) {
+          mainCallUpdates.duration_seconds = parseInt(duration)
+        }
+      }
+
+      // Update the main calls table by call_sid
+      const { error: mainCallError } = await getSupabaseAdmin()
+        .from('calls')
+        .update(mainCallUpdates)
+        .eq('call_sid', callSid)
+
+      if (mainCallError) {
+        console.log(`[Turbo Webhook] Could not update main calls table: ${mainCallError.message}`)
+      } else {
+        console.log(`[Turbo Webhook] Updated main calls table for ${callSid}`)
+
+        // Trigger AI processing if we have a recording URL
+        if (recordingUrl) {
+          try {
+            // Get the call ID from the main calls table
+            const { data: mainCall } = await getSupabaseAdmin()
+              .from('calls')
+              .select('id')
+              .eq('call_sid', callSid)
+              .single()
+
+            if (mainCall) {
+              const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/$/, '')
+              console.log(`[Turbo Webhook] Triggering AI processing for call ${mainCall.id}`)
+
+              // Fire and don't wait - AI processing can take a while
+              fetch(`${baseUrl}/api/calls/process`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ callId: mainCall.id }),
+              }).catch(err => console.error('[Turbo Webhook] AI processing trigger failed:', err))
+            }
+          } catch (err) {
+            console.error('[Turbo Webhook] Error triggering AI processing:', err)
+          }
+        }
+      }
+    }
+
     // Update queue item status
     if (['completed', 'busy', 'no_answer', 'failed'].includes(newStatus)) {
       // For completed calls, mark as completed
@@ -118,6 +176,19 @@ export async function POST(request: NextRequest) {
           })
         } catch {
           // Function might not exist yet, that's OK
+        }
+      }
+
+      // IMPORTANT: Release the rep back to the pool when the call ends
+      // This is a backup in case the conference participant-leave callback doesn't fire
+      if (activeCall.session_id) {
+        try {
+          await getSupabaseAdmin().rpc('release_turbo_rep', {
+            p_session_id: activeCall.session_id,
+          })
+          console.log(`[Turbo Webhook] Released rep from session ${activeCall.session_id} back to pool`)
+        } catch (releaseErr) {
+          console.error(`[Turbo Webhook] Error releasing rep:`, releaseErr)
         }
       }
     }

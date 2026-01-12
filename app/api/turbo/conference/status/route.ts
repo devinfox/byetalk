@@ -44,17 +44,23 @@ export async function POST(request: NextRequest) {
 
       case 'end':
       case 'conference-end':  // Support both formats for compatibility
-        // Conference ended - rep disconnected, end session
+        // Conference ended (lead hung up) - keep session active for next call
+        // Generate a new conference name so rep can reconnect
+        const newConferenceName = `turbo_${sessionId.slice(0, 8)}_${Date.now().toString(36)}`
+
         await getSupabaseAdmin()
           .from('turbo_mode_sessions')
           .update({
-            status: 'ended',
-            ended_at: new Date().toISOString(),
+            // Keep status as 'active' so rep stays in turbo mode
             conference_sid: null,
+            conference_name: newConferenceName,  // New conference for next call
             current_call_sid: null,
+            last_call_ended_at: new Date().toISOString(),
           })
           .eq('id', sessionId)
-        console.log(`[Turbo Conference] Conference ended, session ended: ${sessionId}`)
+          .eq('status', 'active')  // Only update if still active (not manually stopped)
+
+        console.log(`[Turbo Conference] Conference ended, session ready for reconnect: ${sessionId}, new conference: ${newConferenceName}`)
         break
 
       case 'join':

@@ -195,21 +195,11 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Last resort: any recent call without recording
+      // REMOVED: "any recent call without recording" fallback
+      // This was causing recordings to be attached to wrong calls in turbo mode
+      // Turbo calls now handle their own recordings via /api/turbo/webhook
       if (!existingCall) {
-        const { data: recentCall } = await getSupabaseAdmin()
-          .from('calls')
-          .select('id')
-          .eq('direction', 'outbound')
-          .is('recording_url', null)
-          .gte('started_at', thirtyMinutesAgo)
-          .order('started_at', { ascending: false })
-          .limit(1)
-
-        if (recentCall && recentCall.length > 0) {
-          existingCall = recentCall[0]
-          console.log('Found recent call without recording (fallback):', existingCall.id)
-        }
+        console.log('No call found by phone match for recording, skipping fallback to prevent wrong assignment')
       }
     }
 
