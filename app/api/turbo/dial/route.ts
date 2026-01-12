@@ -340,21 +340,26 @@ export async function POST(request: NextRequest) {
 
     // Increment calls_made counter for the user's session
     if (initiatedCalls.length > 0) {
-      const { data: userSession } = await getSupabaseAdmin()
-        .from('turbo_mode_sessions')
-        .select('id')
-        .eq('user_id', userData.id)
-        .eq('status', 'active')
-        .single()
+      try {
+        const { data: userSession } = await getSupabaseAdmin()
+          .from('turbo_mode_sessions')
+          .select('id')
+          .eq('user_id', userData.id)
+          .eq('status', 'active')
+          .single()
 
-      if (userSession) {
-        await getSupabaseAdmin().rpc('increment_turbo_session_dialed', {
-          p_session_id: userSession.id,
-          p_count: initiatedCalls.length,
-        }).catch(err => {
-          // Function might not exist yet, that's OK
-          console.log('[Turbo Dial] Could not increment calls_made:', err)
-        })
+        if (userSession) {
+          const { error: rpcError } = await getSupabaseAdmin().rpc('increment_turbo_session_dialed', {
+            p_session_id: userSession.id,
+            p_count: initiatedCalls.length,
+          })
+          if (rpcError) {
+            console.log('[Turbo Dial] Could not increment calls_made:', rpcError.message)
+          }
+        }
+      } catch (err) {
+        // Function might not exist yet, that's OK
+        console.log('[Turbo Dial] Error incrementing calls_made:', err)
       }
     }
 
