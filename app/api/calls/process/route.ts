@@ -217,12 +217,18 @@ export async function POST(request: NextRequest) {
         console.log(`Downloaded ${Math.round(audioBuffer.byteLength / 1024)} KB audio`)
 
         // Use AssemblyAI for dual-channel transcription
-        // Channel mapping depends on call direction:
-        // - OUTBOUND: Channel 1 = Employee (dialed out), Channel 2 = Lead
+        // Channel mapping depends on call direction AND call type:
+        // - OUTBOUND (normal): Channel 1 = Employee (dialed out), Channel 2 = Lead
         // - INBOUND: Channel 1 = Lead (dialed in), Channel 2 = Employee (answered)
+        // - TURBO MODE (conference): Channel 1 = Lead (bridged in), Channel 2 = Employee (in conference)
+        //   Note: Turbo mode calls are marked as "outbound" but have INVERTED channels because
+        //   the lead is being bridged INTO the rep's existing conference
         if (assemblyai) {
+          const isTurboMode = (call.phone_system_metadata as Record<string, unknown>)?.turbo_mode === true
           const isInbound = call.direction === 'inbound'
-          console.log(`Using AssemblyAI for dual-channel transcription (${isInbound ? 'INBOUND: Ch1=Lead, Ch2=Employee' : 'OUTBOUND: Ch1=Employee, Ch2=Lead'})...`)
+          // For turbo mode, channels are inverted (lead is Ch1, employee is Ch2)
+          const useInvertedChannels = isInbound || isTurboMode
+          console.log(`Using AssemblyAI for dual-channel transcription (${isTurboMode ? 'TURBO MODE' : isInbound ? 'INBOUND' : 'OUTBOUND'}: Ch1=${useInvertedChannels ? 'Lead' : 'Employee'}, Ch2=${useInvertedChannels ? 'Employee' : 'Lead'})...`)
 
           // Upload audio to AssemblyAI first
           const uploadUrl = await assemblyai.files.upload(Buffer.from(audioBuffer))
@@ -235,13 +241,13 @@ export async function POST(request: NextRequest) {
 
           if (transcript.status === 'completed' && transcript.utterances) {
             // Extract channel-labeled utterances
-            // Channel mapping is REVERSED for inbound vs outbound calls
+            // Channel mapping depends on call type (see above)
             // Note: channel can be string or number depending on AssemblyAI response
             diarizedTranscript = transcript.utterances.map((u) => {
               const isChannel1 = String(u.channel) === '1'
-              // For OUTBOUND: Channel 1 = Employee, Channel 2 = Lead
-              // For INBOUND: Channel 1 = Lead, Channel 2 = Employee
-              const speaker = isInbound
+              // For OUTBOUND (normal): Channel 1 = Employee, Channel 2 = Lead
+              // For INBOUND or TURBO MODE: Channel 1 = Lead, Channel 2 = Employee
+              const speaker = useInvertedChannels
                 ? (isChannel1 ? 'Lead' : 'Employee')
                 : (isChannel1 ? 'Employee' : 'Lead')
               return {
@@ -257,7 +263,7 @@ export async function POST(request: NextRequest) {
             transcription = transcript.utterances
               .map((u) => {
                 const isChannel1 = String(u.channel) === '1'
-                const speaker = isInbound
+                const speaker = useInvertedChannels
                   ? (isChannel1 ? 'Lead' : 'Employee')
                   : (isChannel1 ? 'Employee' : 'Lead')
                 return `${speaker}: ${u.text}`
