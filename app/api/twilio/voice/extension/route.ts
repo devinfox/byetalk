@@ -4,6 +4,11 @@ import { createClient } from '@supabase/supabase-js'
 
 const VoiceResponse = twilio.twiml.VoiceResponse
 
+// Twilio client for making outbound calls
+const accountSid = process.env.TWILIO_ACCOUNT_SID!
+const authToken = process.env.TWILIO_AUTH_TOKEN!
+const twilioClient = twilio(accountSid, authToken)
+
 // Supabase admin client for querying users
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -60,28 +65,68 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Generate a unique conference name for this inbound call
+    // This allows seamless add-participant later
+    const conferenceName = `inbound_${callSid}_${Date.now()}`
+    console.log('[Twilio Extension] Using conference-based routing:', conferenceName)
+
+    // Store conference name in call record for later lookup
+    if (supabase) {
+      supabase
+        .from('calls')
+        .update({
+          phone_system_metadata: {
+            conference_name: conferenceName,
+            conference_based: true,
+          },
+        })
+        .eq('call_sid', callSid)
+        .then(({ error }) => {
+          if (error) {
+            console.error('[Twilio Extension] Error storing conference name:', error)
+          } else {
+            console.log('[Twilio Extension] Stored conference name in call record')
+          }
+        })
+    }
+
     if (targetUser) {
       // Ring specific user by extension
       twiml.say({ voice: 'alice' }, `Connecting you to extension ${digits}.`)
 
+      // Put the inbound caller (lead) into a conference
       const dial = twiml.dial({
-        callerId: from,
-        answerOnBridge: true,
-        record: 'record-from-answer-dual',
-        recordingStatusCallback: statusCallbackUrl,
-        recordingStatusCallbackEvent: ['completed'],
-        timeout: 30,
         action: `${baseUrl}/api/twilio/voice/fallback`,
       })
+      dial.conference({
+        beep: 'false',
+        startConferenceOnEnter: true,
+        endConferenceOnExit: true, // End conference when lead hangs up
+        waitUrl: '', // No hold music
+        record: 'record-from-start',
+        recordingStatusCallback: statusCallbackUrl,
+        recordingStatusCallbackEvent: ['completed'],
+        statusCallback: `${baseUrl}/api/twilio/conference/status?conf=${encodeURIComponent(conferenceName)}`,
+        statusCallbackEvent: ['start', 'end', 'join', 'leave'],
+      }, conferenceName)
 
+      // Call the target user's browser to join the same conference
       const clientIdentity = `${targetUser.first_name}_${targetUser.last_name}_${targetUser.id.slice(0, 8)}`
-      console.log('[Twilio Extension] Ringing specific client:', clientIdentity)
+      console.log('[Twilio Extension] Calling client to join conference:', clientIdentity)
 
-      dial.client({
+      // Use fire-and-forget to call the client (don't await)
+      const joinConferenceUrl = `${baseUrl}/api/twilio/join-conference?conference=${encodeURIComponent(conferenceName)}`
+      twilioClient.calls.create({
+        to: `client:${clientIdentity}`,
+        from: process.env.TWILIO_PHONE_NUMBER!,
+        url: joinConferenceUrl,
         statusCallback: statusCallbackUrl,
         statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
-        statusCallbackMethod: 'POST',
-      }, clientIdentity)
+      }).then(call => {
+        console.log('[Twilio Extension] Called client:', clientIdentity, 'CallSid:', call.sid)
+      }).catch(err => {
+        console.error('[Twilio Extension] Error calling client:', err)
+      })
     } else {
       // No valid extension - ring all users
       if (digits) {
@@ -100,25 +145,41 @@ export async function POST(request: NextRequest) {
           .limit(10)
 
         if (users && users.length > 0) {
+          // Put the inbound caller (lead) into a conference
           const dial = twiml.dial({
-            callerId: from,
-            answerOnBridge: true,
-            record: 'record-from-answer-dual',
-            recordingStatusCallback: statusCallbackUrl,
-            recordingStatusCallbackEvent: ['completed'],
-            timeout: 30,
             action: `${baseUrl}/api/twilio/voice/fallback`,
           })
+          dial.conference({
+            beep: 'false',
+            startConferenceOnEnter: true,
+            endConferenceOnExit: true, // End conference when lead hangs up
+            waitUrl: '', // No hold music
+            record: 'record-from-start',
+            recordingStatusCallback: statusCallbackUrl,
+            recordingStatusCallbackEvent: ['completed'],
+            statusCallback: `${baseUrl}/api/twilio/conference/status?conf=${encodeURIComponent(conferenceName)}`,
+            statusCallbackEvent: ['start', 'end', 'join', 'leave'],
+          }, conferenceName)
 
-          // Ring all connected clients
+          // Call all users' browsers to join the conference
+          // First one to answer will be in the conference with the lead
+          const joinConferenceUrl = `${baseUrl}/api/twilio/join-conference?conference=${encodeURIComponent(conferenceName)}`
+
           for (const user of users) {
             const clientIdentity = `${user.first_name}_${user.last_name}_${user.id.slice(0, 8)}`
-            console.log('[Twilio Extension] Ringing client:', clientIdentity)
-            dial.client({
+            console.log('[Twilio Extension] Calling client to join conference:', clientIdentity)
+
+            twilioClient.calls.create({
+              to: `client:${clientIdentity}`,
+              from: process.env.TWILIO_PHONE_NUMBER!,
+              url: joinConferenceUrl,
               statusCallback: statusCallbackUrl,
               statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
-              statusCallbackMethod: 'POST',
-            }, clientIdentity)
+            }).then(call => {
+              console.log('[Twilio Extension] Called client:', clientIdentity, 'CallSid:', call.sid)
+            }).catch(err => {
+              console.error('[Twilio Extension] Error calling client:', err)
+            })
           }
         } else {
           // No users available, go to voicemail

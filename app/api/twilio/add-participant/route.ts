@@ -99,8 +99,25 @@ export async function POST(request: NextRequest) {
     // Build the client identity for the colleague
     const clientIdentity = `${colleague.first_name}_${colleague.last_name}_${colleague.id.slice(0, 8)}`
 
+    // Check if this is an inbound call that's already in a conference
+    // (new conference-based inbound routing stores conference_name in phone_system_metadata)
+    let isConferenceBasedInbound = false
     if (!isTurboMode) {
-      // Regular call - need to move both call legs to a conference
+      const { data: callRecord } = await getSupabaseAdmin()
+        .from('calls')
+        .select('phone_system_metadata')
+        .eq('call_sid', callSid)
+        .single()
+
+      if (callRecord?.phone_system_metadata?.conference_based && callRecord?.phone_system_metadata?.conference_name) {
+        isConferenceBasedInbound = true
+        conferenceName = callRecord.phone_system_metadata.conference_name
+        console.log('[Add Participant] Found conference-based inbound call, using existing conference:', conferenceName)
+      }
+    }
+
+    if (!isTurboMode && !isConferenceBasedInbound) {
+      // Regular OUTBOUND call - need to move both call legs to a conference
       console.log('[Add Participant] Analyzing call structure for:', callSid)
 
       // Get info about the current call
@@ -219,6 +236,7 @@ export async function POST(request: NextRequest) {
       callSid: colleagueCall.sid,
       conferenceName,
       isTurboMode,
+      isConferenceBasedInbound,
     })
 
     return NextResponse.json({
@@ -226,6 +244,7 @@ export async function POST(request: NextRequest) {
       conferenceName,
       colleagueCallSid: colleagueCall.sid,
       isTurboMode,
+      isConferenceBasedInbound,
       colleague: {
         id: colleague.id,
         name: `${colleague.first_name} ${colleague.last_name}`,
