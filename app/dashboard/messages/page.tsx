@@ -104,13 +104,30 @@ export default function ByeMessagePage() {
       // Get colleagues
       const { data: colleagues } = await supabase
         .from('users')
-        .select('id, first_name, last_name, avatar_url, is_active')
+        .select('id, first_name, last_name, avatar_url, is_active, email')
         .eq('organization_id', userData.organization_id)
         .eq('is_deleted', false)
         .neq('id', userData.id)
         .order('first_name')
 
-      setUsers(colleagues || [])
+      // Filter out hidden users:
+      // 1. Specific UID that should be hidden
+      // 2. Devin Fox
+      // 3. Any Shaun Bina except the one with admin@ email
+      const hiddenUserIds = ['ac3512eb-286e-4b5c-b95d-17bddbd142d4']
+      const filteredColleagues = (colleagues || []).filter(user => {
+        // Hide specific user ID
+        if (hiddenUserIds.includes(user.id)) return false
+        // Hide Devin Fox
+        if (user.first_name?.toLowerCase() === 'devin' && user.last_name?.toLowerCase() === 'fox') return false
+        // For Shaun Bina, only show if email starts with admin@
+        if (user.first_name?.toLowerCase() === 'shaun' && user.last_name?.toLowerCase() === 'bina') {
+          return user.email?.toLowerCase().startsWith('admin@')
+        }
+        return true
+      })
+
+      setUsers(filteredColleagues)
 
       // Get groups user belongs to
       const { data: memberOf } = await supabase
