@@ -150,9 +150,9 @@ export function EmailList({
   }
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
+    <div className="h-full flex flex-col overflow-hidden max-w-full">
       {/* Toolbar */}
-      <div className="px-4 py-2 border-b border-white/10 flex items-center gap-2 flex-shrink-0">
+      <div className="px-4 py-2 border-b border-white/10 flex items-center gap-2 flex-shrink-0 max-w-full">
         <button
           onClick={selectAll}
           className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-colors"
@@ -196,7 +196,7 @@ export function EmailList({
       </div>
 
       {/* Thread List */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden max-w-full">
         {threads.map((thread) => {
           const latestEmail = thread.emails?.[0]
           const isSelected = selectedIds.has(thread.id)
@@ -205,7 +205,7 @@ export function EmailList({
             <Link
               key={thread.id}
               href={`/dashboard/email/${thread.id}`}
-              className={`flex items-center gap-3 px-4 py-3 border-b border-white/5 hover:bg-white/5 transition-colors min-w-0 ${
+              className={`flex items-center gap-3 px-4 py-3 border-b border-white/5 hover:bg-white/5 transition-colors w-full max-w-full min-w-0 ${
                 !thread.is_read ? 'bg-white/[0.02]' : ''
               } ${isSelected ? 'bg-yellow-500/10' : ''}`}
             >
@@ -274,7 +274,7 @@ export function EmailList({
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="px-4 py-3 border-t border-white/10 flex items-center justify-between flex-shrink-0">
+        <div className="px-4 py-3 border-t border-white/10 flex items-center justify-between flex-shrink-0 max-w-full">
           <div className="text-sm text-gray-400">
             Showing {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, totalCount)} of {totalCount}
           </div>

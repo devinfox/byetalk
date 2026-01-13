@@ -91,9 +91,9 @@ export default async function EmailInboxPage({
   const selectedAccount = accounts.find(a => a.id === selectedAccountId) || accounts[0]
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
+    <div className="h-full flex flex-col overflow-hidden max-w-full">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-white/10 flex-shrink-0">
+      <div className="px-6 py-4 border-b border-white/10 flex-shrink-0 max-w-full">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-light text-white">
@@ -112,7 +112,7 @@ export default async function EmailInboxPage({
       </div>
 
       {/* Email List */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden max-w-full min-w-0">
         <EmailList
           threads={threads || []}
           selectedAccountId={selectedAccountId}
