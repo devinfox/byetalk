@@ -100,6 +100,31 @@ export async function POST(request: NextRequest) {
     }
 
     if (targetUser) {
+      // Check if target user is in turbo mode (should not be interrupted)
+      let isTargetInTurboMode = false
+      if (supabase) {
+        const { data: turboSession } = await supabase
+          .from('turbo_mode_sessions')
+          .select('id')
+          .eq('user_id', targetUser.id)
+          .eq('status', 'active')
+          .single()
+
+        isTargetInTurboMode = !!turboSession
+      }
+
+      if (isTargetInTurboMode) {
+        // User is in turbo mode - don't interrupt them
+        console.log('[Twilio Extension] User', targetUser.first_name, 'is in turbo mode, redirecting to other reps')
+        twiml.say({ voice: 'alice' }, `Extension ${digits} is currently busy. Please hold while we connect you to another representative.`)
+        // Fall through to ring other available users
+        twiml.redirect({ method: 'POST' }, `${baseUrl}/api/twilio/voice/extension`)
+
+        return new NextResponse(twiml.toString(), {
+          headers: { 'Content-Type': 'text/xml' },
+        })
+      }
+
       // Ring specific user by extension
       twiml.say({ voice: 'alice' }, `Connecting you to extension ${digits}.`)
 
@@ -150,14 +175,31 @@ export async function POST(request: NextRequest) {
         twiml.say({ voice: 'alice' }, 'Please hold while we connect you.')
       }
 
-      // Get all active users
+      // Get all active users, excluding those in turbo mode
       if (supabase) {
-        const { data: users } = await supabase
+        // First, get users who are currently in turbo mode (should not be interrupted)
+        const { data: turboSessions } = await supabase
+          .from('turbo_mode_sessions')
+          .select('user_id')
+          .eq('status', 'active')
+
+        const turboUserIds = turboSessions?.map(s => s.user_id) || []
+        console.log('[Twilio Extension] Users in turbo mode (excluded):', turboUserIds.length)
+
+        // Get active users excluding those in turbo mode
+        let usersQuery = supabase
           .from('users')
           .select('id, first_name, last_name')
           .eq('is_active', true)
           .eq('is_deleted', false)
           .limit(10)
+
+        // Exclude turbo mode users if any
+        if (turboUserIds.length > 0) {
+          usersQuery = usersQuery.not('id', 'in', `(${turboUserIds.join(',')})`)
+        }
+
+        const { data: users } = await usersQuery
 
         if (users && users.length > 0) {
           // Put lead into conference
