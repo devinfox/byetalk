@@ -59,15 +59,21 @@ export async function GET(request: NextRequest) {
 
   try {
     // Find all unprocessed calls with recordings (created in last 24 hours)
+    // This catches:
+    // 1. Calls where AI processing never ran (ai_analysis_status is null)
+    // 2. Calls where AI processing was marked pending but never completed
+    // 3. Calls where AI processing failed
+    // 4. Calls where tasks weren't generated for some reason
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
 
     const { data: unprocessedCalls, error: fetchError } = await getSupabaseAdmin()
       .from('calls')
-      .select('id, direction, duration_seconds, recording_url, created_at')
+      .select('id, direction, duration_seconds, recording_url, created_at, ai_analysis_status')
       .eq('is_deleted', false)
-      .eq('ai_tasks_generated', false)
       .not('recording_url', 'is', null)
       .gte('created_at', oneDayAgo)
+      // Find calls that need processing: either ai_tasks_generated is false OR ai_analysis_status is not 'completed'
+      .or('ai_tasks_generated.eq.false,ai_analysis_status.is.null,ai_analysis_status.eq.pending,ai_analysis_status.eq.failed')
       .order('created_at', { ascending: true })
       .limit(10) // Process max 10 per run to avoid timeout
 
@@ -98,7 +104,7 @@ export async function GET(request: NextRequest) {
     const results: Array<{ callId: string; success: boolean; error?: string }> = []
 
     for (const call of unprocessedCalls) {
-      console.log(`Cron: Processing call ${call.id} (${call.direction}, ${call.duration_seconds}s)`)
+      console.log(`Cron: Processing call ${call.id} (${call.direction}, ${call.duration_seconds}s, status: ${call.ai_analysis_status || 'null'})`)
 
       const result = await processCall(call.id, baseUrl)
       results.push({ callId: call.id, ...result })

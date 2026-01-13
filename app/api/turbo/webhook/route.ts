@@ -1,9 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
 
+// Trigger AI processing for a call (synchronous to ensure completion)
+async function triggerAIProcessing(callId: string, baseUrl: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    console.log(`[Turbo Webhook] Triggering AI processing for call ${callId}`)
+    const response = await fetch(`${baseUrl}/api/calls/process`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ callId }),
+    })
+    const result = await response.json()
+    if (response.ok) {
+      console.log(`[Turbo Webhook] AI processing completed for call ${callId}:`, result.message || 'success')
+      return { success: true }
+    } else {
+      console.error(`[Turbo Webhook] AI processing failed for call ${callId}:`, result.error)
+      return { success: false, error: result.error }
+    }
+  } catch (error) {
+    console.error(`[Turbo Webhook] Error triggering AI processing for call ${callId}:`, error)
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
+  }
+}
+
 /**
  * POST /api/turbo/webhook
  * Handle Twilio status callbacks for turbo calls
+ * Also handles recording status callbacks (when RecordingUrl is present)
  */
 export async function POST(request: NextRequest) {
   try {
@@ -14,8 +38,12 @@ export async function POST(request: NextRequest) {
     const answeredBy = formData.get('AnsweredBy') as string | null
     const duration = formData.get('CallDuration') as string | null
     const recordingUrl = formData.get('RecordingUrl') as string | null
+    const recordingStatus = formData.get('RecordingStatus') as string | null
+    const recordingSid = formData.get('RecordingSid') as string | null
 
-    console.log(`[Turbo Webhook] CallSid: ${callSid}, Status: ${callStatus}, AnsweredBy: ${answeredBy}`)
+    // Log both call status and recording callbacks
+    const isRecordingCallback = !!recordingUrl || !!recordingStatus
+    console.log(`[Turbo Webhook] ${isRecordingCallback ? 'RECORDING' : 'STATUS'} callback - CallSid: ${callSid}, CallStatus: ${callStatus || 'N/A'}, RecordingStatus: ${recordingStatus || 'N/A'}, HasRecordingUrl: ${!!recordingUrl}`)
 
     if (!callSid) {
       return new NextResponse('OK', { status: 200 })
@@ -125,28 +153,21 @@ export async function POST(request: NextRequest) {
         console.log(`[Turbo Webhook] Updated main calls table for ${callSid}`)
 
         // Trigger AI processing if we have a recording URL
+        // We await this to ensure it completes before the serverless function terminates
         if (recordingUrl) {
-          try {
-            // Get the call ID from the main calls table
-            const { data: mainCall } = await getSupabaseAdmin()
-              .from('calls')
-              .select('id')
-              .eq('call_sid', callSid)
-              .single()
+          // Get the call ID from the main calls table
+          const { data: mainCall } = await getSupabaseAdmin()
+            .from('calls')
+            .select('id')
+            .eq('call_sid', callSid)
+            .single()
 
-            if (mainCall) {
-              const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/$/, '')
-              console.log(`[Turbo Webhook] Triggering AI processing for call ${mainCall.id}`)
-
-              // Fire and don't wait - AI processing can take a while
-              fetch(`${baseUrl}/api/calls/process`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ callId: mainCall.id }),
-              }).catch(err => console.error('[Turbo Webhook] AI processing trigger failed:', err))
-            }
-          } catch (err) {
-            console.error('[Turbo Webhook] Error triggering AI processing:', err)
+          if (mainCall) {
+            const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/$/, '')
+            // Await AI processing to ensure it completes
+            await triggerAIProcessing(mainCall.id, baseUrl)
+          } else {
+            console.log(`[Turbo Webhook] No main call record found for ${callSid} - cannot trigger AI processing`)
           }
         }
       }
