@@ -21,13 +21,14 @@ export async function POST(request: NextRequest) {
     twiml.say({ voice: 'alice' }, 'Unable to join the call.')
     twiml.hangup()
   } else {
-    // SILENT join - no announcement
+    // SILENT join - no announcement, no hold music
     const dial = twiml.dial()
     dial.conference(
       {
         beep: 'false', // No beep when joining
         startConferenceOnEnter: true,
         endConferenceOnExit: false,
+        waitUrl: '', // No hold music - immediate silent connection
       },
       conferenceName
     )

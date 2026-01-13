@@ -133,6 +133,7 @@ export async function POST(request: NextRequest) {
       }
 
       // SILENT TwiML for joining conference (no voice messages)
+      // waitUrl="" prevents hold music, startConferenceOnEnter ensures immediate connection
       const silentConferenceTwiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Dial>
@@ -140,12 +141,16 @@ export async function POST(request: NextRequest) {
       beep="false"
       startConferenceOnEnter="true"
       endConferenceOnExit="false"
+      waitUrl=""
     >${conferenceName}</Conference>
   </Dial>
 </Response>`
 
       // Find all call legs and redirect them to the conference
-      let callsToRedirect: string[] = []
+      // For inbound calls: browser (child) must join first, then lead (parent)
+      // For outbound calls: order is less critical but we do browser last to keep them connected
+      let browserCallSid: string | null = null
+      let leadCallSid: string | null = null
 
       // Check for child calls (OUTBOUND scenario - browser is parent, lead is child)
       const childCalls = await twilioClient.calls.list({
@@ -154,50 +159,70 @@ export async function POST(request: NextRequest) {
       })
 
       if (childCalls.length > 0) {
-        // Outbound call - browser call has children
-        callsToRedirect = [childCalls[0].sid, callSid] // Lead first, then browser
-        console.log('[Add Participant] Outbound call detected. Lead:', childCalls[0].sid, 'Browser:', callSid)
+        // Outbound call - browser call has children (lead calls)
+        browserCallSid = callSid
+        leadCallSid = childCalls[0].sid
+        console.log('[Add Participant] Outbound call detected. Browser:', browserCallSid, 'Lead:', leadCallSid)
       } else if (currentCall.parentCallSid) {
-        // Inbound call - browser is child of incoming call
-        // Check if parent call is still active
+        // Inbound call - browser is child of incoming call from lead
+        // The parent is the lead's incoming call
         try {
           const parentCall = await twilioClient.calls(currentCall.parentCallSid).fetch()
           if (parentCall.status === 'in-progress') {
-            callsToRedirect = [currentCall.parentCallSid, callSid] // Lead (parent) first, then browser
-            console.log('[Add Participant] Inbound call detected. Lead:', currentCall.parentCallSid, 'Browser:', callSid)
+            browserCallSid = callSid
+            leadCallSid = currentCall.parentCallSid
+            console.log('[Add Participant] Inbound call detected. Browser:', browserCallSid, 'Lead:', leadCallSid)
           } else {
             // Parent not in progress, just redirect the browser
-            callsToRedirect = [callSid]
+            browserCallSid = callSid
             console.log('[Add Participant] Inbound call - parent not active, redirecting browser only')
           }
         } catch (parentError) {
           console.error('[Add Participant] Error fetching parent call:', parentError)
-          callsToRedirect = [callSid]
+          browserCallSid = callSid
         }
       } else {
         // No parent or children - might be a direct client call
-        callsToRedirect = [callSid]
+        browserCallSid = callSid
         console.log('[Add Participant] Direct call - redirecting single call')
       }
 
-      // Redirect all calls to the conference
-      for (const sid of callsToRedirect) {
+      // CRITICAL: For inbound calls, we must redirect the browser (employee) FIRST
+      // This ensures the employee stays connected while we move the lead
+      // If we redirect the lead (parent) first, it can disconnect the browser (child)
+
+      // Step 1: Redirect browser/employee to conference first
+      if (browserCallSid) {
         try {
-          console.log('[Add Participant] Redirecting call to conference:', sid)
-          await twilioClient.calls(sid).update({
+          console.log('[Add Participant] Step 1: Moving browser/employee to conference:', browserCallSid)
+          await twilioClient.calls(browserCallSid).update({
             twiml: silentConferenceTwiml,
           })
-          // Small delay between redirects for stability
-          await new Promise(resolve => setTimeout(resolve, 200))
+          // Wait for browser to join conference
+          await new Promise(resolve => setTimeout(resolve, 500))
         } catch (redirectError: unknown) {
           const error = redirectError as { message?: string; code?: number }
-          console.error('[Add Participant] Error redirecting call', sid, ':', error.message || error)
-          // Continue with other calls even if one fails
+          console.error('[Add Participant] Error redirecting browser call:', error.message || error)
         }
       }
 
-      // Wait a moment for redirects to process
-      await new Promise(resolve => setTimeout(resolve, 500))
+      // Step 2: Redirect lead to the same conference
+      if (leadCallSid && leadCallSid !== browserCallSid) {
+        try {
+          console.log('[Add Participant] Step 2: Moving lead to conference:', leadCallSid)
+          await twilioClient.calls(leadCallSid).update({
+            twiml: silentConferenceTwiml,
+          })
+          // Wait for lead to join conference
+          await new Promise(resolve => setTimeout(resolve, 500))
+        } catch (redirectError: unknown) {
+          const error = redirectError as { message?: string; code?: number }
+          console.error('[Add Participant] Error redirecting lead call:', error.message || error)
+        }
+      }
+
+      // Additional delay to ensure both parties are fully connected to conference
+      await new Promise(resolve => setTimeout(resolve, 300))
     }
 
     // Call the colleague to join the conference (SILENT - no announcement)
