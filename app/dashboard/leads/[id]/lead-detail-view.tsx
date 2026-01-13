@@ -33,6 +33,7 @@ import {
   Star,
   Loader2,
   Send,
+  RefreshCw,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import { CallButton } from '@/components/call-button'
@@ -108,6 +109,7 @@ export function LeadDetailView({
   const [newTask, setNewTask] = useState({ title: '', due_at: '' })
   const [addingTask, setAddingTask] = useState(false)
   const [isProfileUpdating, setIsProfileUpdating] = useState(false)
+  const [reprocessingCallId, setReprocessingCallId] = useState<string | null>(null)
 
   // Subscribe to realtime updates for this lead's AI profile
   useEffect(() => {
@@ -150,9 +152,14 @@ export function LeadDetailView({
           filter: `lead_id=eq.${lead.id}`,
         },
         (payload) => {
-          const newCall = payload.new as { ai_analysis_status?: string }
+          const newCall = payload.new as { id?: string; ai_analysis_status?: string }
           if (newCall.ai_analysis_status === 'processing') {
             setIsProfileUpdating(true)
+          } else if (newCall.ai_analysis_status === 'completed' || newCall.ai_analysis_status === 'failed') {
+            // Clear reprocessing state when done
+            setReprocessingCallId(null)
+            setIsProfileUpdating(false)
+            router.refresh()
           }
         }
       )
@@ -256,6 +263,32 @@ export function LeadDetailView({
       .eq('id', taskId)
 
     router.refresh()
+  }
+
+  const handleReprocessCall = async (callId: string) => {
+    setReprocessingCallId(callId)
+    try {
+      const response = await fetch('/api/calls/reprocess', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ callId }),
+      })
+
+      if (response.ok) {
+        // The realtime subscription will detect when processing is complete
+        // and refresh the page
+        console.log('Call reprocessing started')
+      } else {
+        const error = await response.json()
+        console.error('Failed to reprocess call:', error)
+        alert('Failed to reprocess call. Please try again.')
+        setReprocessingCallId(null)
+      }
+    } catch (error) {
+      console.error('Error reprocessing call:', error)
+      alert('Failed to reprocess call. Please try again.')
+      setReprocessingCallId(null)
+    }
   }
 
   const statusStyle = statusColors[lead.status] || statusColors.new
@@ -957,9 +990,25 @@ export function LeadDetailView({
                                 {/* Transcription */}
                                 {call.transcription && (
                                   <div className="mt-4">
-                                    <div className="flex items-center gap-2 mb-2">
-                                      <FileText className="w-4 h-4 text-gray-400" />
-                                      <span className="text-gray-400 font-medium text-sm uppercase tracking-wide">Transcription</span>
+                                    <div className="flex items-center justify-between mb-2">
+                                      <div className="flex items-center gap-2">
+                                        <FileText className="w-4 h-4 text-gray-400" />
+                                        <span className="text-gray-400 font-medium text-sm uppercase tracking-wide">Transcription</span>
+                                      </div>
+                                      {call.recording_url && (
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation()
+                                            handleReprocessCall(call.id)
+                                          }}
+                                          disabled={reprocessingCallId === call.id}
+                                          className="flex items-center gap-1.5 px-2 py-1 text-xs text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors disabled:opacity-50"
+                                          title="Reprocess transcription with corrected speaker labels"
+                                        >
+                                          <RefreshCw className={`w-3 h-3 ${reprocessingCallId === call.id ? 'animate-spin' : ''}`} />
+                                          {reprocessingCallId === call.id ? 'Reprocessing...' : 'Reprocess'}
+                                        </button>
+                                      )}
                                     </div>
                                     {/* Check for diarized transcript in custom_fields */}
                                     {(call.custom_fields as Record<string, unknown>)?.diarized_transcript ? (
