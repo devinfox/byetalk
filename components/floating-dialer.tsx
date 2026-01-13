@@ -37,6 +37,7 @@ export function FloatingDialer({ userId }: FloatingDialerProps) {
   const [callDuration, setCallDuration] = useState(0)
   const [showAddToCall, setShowAddToCall] = useState(false)
   const [addingParticipant, setAddingParticipant] = useState(false)
+  const [colleagueJoinedNotification, setColleagueJoinedNotification] = useState<{ name: string } | null>(null)
   const ringtoneRef = useRef<{ oscillator: OscillatorNode; gainNode: GainNode; context: AudioContext } | null>(null)
   const ringtoneIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -265,6 +266,12 @@ export function FloatingDialer({ userId }: FloatingDialerProps) {
 
       const result = await response.json()
       console.log('[Dialer] Added participant to call:', result)
+
+      // Show notification that colleague is joining
+      setColleagueJoinedNotification({ name: `${colleague.first_name} ${colleague.last_name}` })
+      setTimeout(() => {
+        setColleagueJoinedNotification(null)
+      }, 5000)
     } finally {
       setAddingParticipant(false)
     }
@@ -511,6 +518,29 @@ export function FloatingDialer({ userId }: FloatingDialerProps) {
         callSid={callSid}
         onAddParticipant={handleAddParticipant}
       />
+
+      {/* Colleague Joined Notification - Only shows to the person who added them */}
+      {colleagueJoinedNotification && (
+        <div className="fixed top-20 right-4 z-[100] max-w-sm animate-in slide-in-from-right">
+          <div className="flex items-center gap-3 p-4 bg-gray-900/95 backdrop-blur-sm border border-green-500/30 rounded-xl shadow-2xl">
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
+              <UserPlus className="w-5 h-5 text-green-400" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-green-400 font-medium">Joined the call</span>
+              </div>
+              <p className="text-white font-semibold">{colleagueJoinedNotification.name}</p>
+            </div>
+            <button
+              onClick={() => setColleagueJoinedNotification(null)}
+              className="flex-shrink-0 text-gray-400 hover:text-white transition-colors ml-2"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

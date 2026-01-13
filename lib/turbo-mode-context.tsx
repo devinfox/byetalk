@@ -420,41 +420,17 @@ export function TurboModeProvider({ children }: { children: React.ReactNode }) {
     refreshStatus()
   }, [refreshStatus])
 
-  // Track when calls become connected and show notifications
+  // Track connected calls (for cleanup purposes only - notifications removed)
   useEffect(() => {
     if (!isInTurboMode) {
-      // Clear tracked IDs when not in turbo mode
       connectedCallIdsRef.current.clear()
       return
     }
 
-    // Find newly connected calls
+    // Track connected calls for cleanup
     const connectedCalls = activeCalls.filter(call => call.status === 'connected')
-
     connectedCalls.forEach(call => {
-      // Only notify for calls we haven't seen as connected before
-      if (!connectedCallIdsRef.current.has(call.id)) {
-        connectedCallIdsRef.current.add(call.id)
-
-        // Play sound and show notification
-        playJoinSound()
-
-        const notificationId = `join-${call.id}-${Date.now()}`
-        setCallJoinNotifications(prev => [
-          ...prev,
-          {
-            id: notificationId,
-            leadName: call.lead_name || 'Unknown',
-            leadPhone: call.lead_phone,
-            timestamp: new Date(),
-          },
-        ])
-
-        // Auto-dismiss after 5 seconds
-        setTimeout(() => {
-          setCallJoinNotifications(prev => prev.filter(n => n.id !== notificationId))
-        }, 5000)
-      }
+      connectedCallIdsRef.current.add(call.id)
     })
 
     // Clean up tracked IDs for calls that are no longer active
