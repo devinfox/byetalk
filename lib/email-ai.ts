@@ -1,8 +1,9 @@
 import OpenAI from 'openai'
 import { createClient } from '@supabase/supabase-js'
 
-// Lazy initialization to avoid errors when API key is missing
+// Lazy initialization to avoid errors when env vars are missing at build time
 let openaiInstance: OpenAI | null = null
+let supabaseAdminInstance: ReturnType<typeof createClient> | null = null
 
 function getOpenAI(): OpenAI | null {
   if (!openaiInstance && process.env.OPENAI_API_KEY) {
@@ -13,10 +14,16 @@ function getOpenAI(): OpenAI | null {
   return openaiInstance
 }
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+function getSupabaseAdmin() {
+  if (!supabaseAdminInstance) {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (url && key) {
+      supabaseAdminInstance = createClient(url, key)
+    }
+  }
+  return supabaseAdminInstance
+}
 
 export interface EmailAIAnalysis {
   summary: string
@@ -460,7 +467,7 @@ export async function createEmailActivityLog(
     ? `Email received from ${fromAddress}: "${subject || '(no subject)'}"`
     : `Email sent: "${subject || '(no subject)'}"`
 
-  await supabaseAdmin.from('activity_log').insert({
+  await getSupabaseAdmin()?.from('activity_log').insert({
     event_type: eventType,
     event_description: description,
     user_id: userId,
@@ -515,7 +522,7 @@ export async function createTasksFromEmail(
       createdTaskIds.push(data.id)
 
       // Log task creation
-      await supabaseAdmin.from('activity_log').insert({
+      await getSupabaseAdmin()?.from('activity_log').insert({
         event_type: 'task_created',
         event_description: `AI-generated task from email: ${task.title}`,
         user_id: assignedTo,
