@@ -107,10 +107,11 @@ export async function POST(request: NextRequest) {
         action: `${baseUrl}/api/twilio/voice/fallback`,
       })
       dial.conference({
-        beep: 'false',
+        beep: 'false' as const,
         startConferenceOnEnter: true,
         endConferenceOnExit: true, // End conference when lead hangs up
-        waitUrl: '', // No hold music
+        waitUrl: '',               // No hold music - required for proper audio
+        muted: false,              // Explicitly allow speaking
         record: 'record-from-start',
         recordingStatusCallback: statusCallbackUrl,
         recordingStatusCallbackEvent: ['completed'],
@@ -165,10 +166,11 @@ export async function POST(request: NextRequest) {
             action: `${baseUrl}/api/twilio/voice/fallback`,
           })
           dial.conference({
-            beep: 'false',
+            beep: 'false' as const,
             startConferenceOnEnter: true,
             endConferenceOnExit: true, // End conference when lead hangs up
-            waitUrl: '', // No hold music
+            waitUrl: '',               // No hold music - required for proper audio
+            muted: false,              // Explicitly allow speaking
             record: 'record-from-start',
             recordingStatusCallback: statusCallbackUrl,
             recordingStatusCallbackEvent: ['completed'],

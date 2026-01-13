@@ -25,12 +25,15 @@ export async function POST(request: NextRequest) {
     twiml.hangup()
   } else {
     // SILENT join - no announcement
+    // Match turbo mode conference settings for proper audio
     const dial = twiml.dial()
     dial.conference(
       {
-        beep: 'false', // No beep when joining
+        beep: 'false' as const,     // No beep when joining
         startConferenceOnEnter: true,
-        endConferenceOnExit: false,
+        endConferenceOnExit: false, // Don't end conference when browser hangs up (lead controls)
+        waitUrl: '',                // Silent waiting - required for proper audio routing
+        muted: false,               // Explicitly allow speaking
       },
       conferenceName
     )
