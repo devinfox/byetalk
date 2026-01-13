@@ -2,8 +2,9 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode, useRef } from 'react'
 import { createClient } from '@/lib/supabase'
-import { X, CheckCircle2 } from 'lucide-react'
+import { X, CheckCircle2, MessageCircle } from 'lucide-react'
 import { useNimbus } from '@/components/nimbus'
+import { usePathname, useRouter } from 'next/navigation'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 
 // Module-level Set to persist across component remounts (HMR, navigation, etc.)
@@ -32,6 +33,40 @@ interface TaskNotification {
   taskTitle: string
 }
 
+interface MessageNotification {
+  id: string
+  senderId: string
+  senderName: string
+  senderInitials: string
+  content: string
+  timestamp: Date
+}
+
+// Play notification sound
+function playPingSound() {
+  try {
+    const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
+    const oscillator = audioContext.createOscillator()
+    const gainNode = audioContext.createGain()
+
+    oscillator.connect(gainNode)
+    gainNode.connect(audioContext.destination)
+
+    // Pleasant ping sound
+    oscillator.frequency.setValueAtTime(880, audioContext.currentTime) // A5 note
+    oscillator.frequency.setValueAtTime(1318.5, audioContext.currentTime + 0.1) // E6 note
+    oscillator.type = 'sine'
+
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime)
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3)
+
+    oscillator.start(audioContext.currentTime)
+    oscillator.stop(audioContext.currentTime + 0.3)
+  } catch (e) {
+    console.log('Could not play notification sound:', e)
+  }
+}
+
 interface ChatContextType {
   isOpen: boolean
   selectedUserId: string | null
@@ -57,9 +92,12 @@ export function ChatProvider({ children, currentUserId }: ChatProviderProps) {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({})
   const [taskNotifications, setTaskNotifications] = useState<TaskNotification[]>([])
+  const [messageNotifications, setMessageNotifications] = useState<MessageNotification[]>([])
   const processedMessageIds = useRef<Set<string>>(new Set())
   const usersCache = useRef<Record<string, { first_name: string; last_name: string }>>({})
   const { showNimbus } = useNimbus()
+  const pathname = usePathname()
+  const router = useRouter()
 
   const totalUnreadCount = Object.values(unreadCounts).reduce((sum, count) => sum + count, 0)
 
@@ -215,6 +253,49 @@ export function ChatProvider({ children, currentUserId }: ChatProviderProps) {
     setTaskNotifications((prev) => prev.filter((n) => n.id !== id))
   }, [])
 
+  const dismissMessageNotification = useCallback((id: string) => {
+    setMessageNotifications((prev) => prev.filter((n) => n.id !== id))
+  }, [])
+
+  const showMessageNotification = useCallback(async (
+    messageId: string,
+    senderId: string,
+    content: string
+  ) => {
+    // Don't show notification if on messages page or chat is open with this sender
+    if (pathname === '/dashboard/messages') return
+    if (isOpen && selectedUserId === senderId) return
+
+    const senderName = await getUserName(senderId)
+    const nameParts = senderName.split(' ')
+    const initials = nameParts.map(n => n[0]).join('').toUpperCase()
+
+    // Play ping sound
+    playPingSound()
+
+    const notificationId = `msg-${messageId}`
+    setMessageNotifications((prev) => {
+      // Don't add duplicate
+      if (prev.some(n => n.id === notificationId)) return prev
+      return [
+        ...prev,
+        {
+          id: notificationId,
+          senderId,
+          senderName,
+          senderInitials: initials,
+          content: content.length > 100 ? content.substring(0, 100) + '...' : content,
+          timestamp: new Date(),
+        },
+      ]
+    })
+
+    // Auto-dismiss after 8 seconds
+    setTimeout(() => {
+      setMessageNotifications((prev) => prev.filter((n) => n.id !== notificationId))
+    }, 8000)
+  }, [pathname, isOpen, selectedUserId, getUserName])
+
   // Fetch unread counts from database
   const refreshUnreadCounts = useCallback(async () => {
     const supabase = createClient()
@@ -276,8 +357,10 @@ export function ChatProvider({ children, currentUserId }: ChatProviderProps) {
             : Infinity // If no timestamp, assume it's old
           const isRecentMessage = messageAge >= 0 && messageAge < 10000 // 10 seconds
 
-          // Analyze message for potential task request
+          // Show notification and play sound for recent messages
           if (newMessage.content && newMessage.sender_id !== currentUserId && isRecentMessage) {
+            showMessageNotification(newMessage.id, newMessage.sender_id, newMessage.content)
+
             console.log('[Chat] Triggering task analysis for recent message:', newMessage.id, `(${Math.round(messageAge / 1000)}s old)`)
             analyzeMessageForTask(newMessage.id, newMessage.content, newMessage.sender_id)
           } else if (!isRecentMessage && newMessage.content) {
@@ -305,7 +388,7 @@ export function ChatProvider({ children, currentUserId }: ChatProviderProps) {
         supabase.removeChannel(channel)
       }
     }
-  }, [currentUserId, refreshUnreadCounts, analyzeMessageForTask])
+  }, [currentUserId, refreshUnreadCounts, analyzeMessageForTask, showMessageNotification])
 
   const openChat = useCallback((userId?: string) => {
     if (userId) {
@@ -392,6 +475,45 @@ export function ChatProvider({ children, currentUserId }: ChatProviderProps) {
         </div>
       )}
 
+      {/* Message Notifications - Top Right */}
+      {messageNotifications.length > 0 && (
+        <div className="fixed top-20 right-4 z-[100] space-y-2 max-w-sm">
+          {messageNotifications.map((notification) => (
+            <div
+              key={notification.id}
+              className="flex items-start gap-3 p-4 bg-gray-900/95 backdrop-blur-sm border border-yellow-500/30 rounded-xl shadow-2xl animate-slide-in-right cursor-pointer hover:bg-gray-800/95 transition-colors"
+              onClick={() => {
+                dismissMessageNotification(notification.id)
+                router.push('/dashboard/messages')
+              }}
+            >
+              <div className="flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center text-black font-bold text-sm">
+                  {notification.senderInitials}
+                </div>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium text-white">{notification.senderName}</p>
+                  <MessageCircle className="w-3 h-3 text-yellow-400" />
+                </div>
+                <p className="text-sm text-gray-300 mt-1 line-clamp-2">{notification.content}</p>
+                <p className="text-xs text-gray-500 mt-1">Click to view</p>
+              </div>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  dismissMessageNotification(notification.id)
+                }}
+                className="flex-shrink-0 text-gray-400 hover:text-white transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       <style jsx global>{`
         @keyframes slide-in-left {
           from {
@@ -405,6 +527,19 @@ export function ChatProvider({ children, currentUserId }: ChatProviderProps) {
         }
         .animate-slide-in-left {
           animation: slide-in-left 0.3s ease-out;
+        }
+        @keyframes slide-in-right {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+        .animate-slide-in-right {
+          animation: slide-in-right 0.3s ease-out;
         }
       `}</style>
     </ChatContext.Provider>

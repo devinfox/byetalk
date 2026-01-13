@@ -65,6 +65,31 @@ interface Conversation {
   group?: MessageGroup
 }
 
+// Play notification sound
+function playPingSound() {
+  try {
+    const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
+    const oscillator = audioContext.createOscillator()
+    const gainNode = audioContext.createGain()
+
+    oscillator.connect(gainNode)
+    gainNode.connect(audioContext.destination)
+
+    // Pleasant ping sound
+    oscillator.frequency.setValueAtTime(880, audioContext.currentTime) // A5 note
+    oscillator.frequency.setValueAtTime(1318.5, audioContext.currentTime + 0.1) // E6 note
+    oscillator.type = 'sine'
+
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime)
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3)
+
+    oscillator.start(audioContext.currentTime)
+    oscillator.stop(audioContext.currentTime + 0.3)
+  } catch (e) {
+    console.log('Could not play notification sound:', e)
+  }
+}
+
 export default function ByeMessagePage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [users, setUsers] = useState<User[]>([])
@@ -257,6 +282,8 @@ export default function ByeMessagePage() {
             const isRelevant = newMsg.sender_id === convo.id && newMsg.recipient_id === user.id
 
             if (isRelevant) {
+              // Play ping sound for new message
+              playPingSound()
               setMessages(prev => {
                 if (prev.some(m => m.id === newMsg.id)) return prev
                 return [...prev, newMsg]
@@ -281,6 +308,8 @@ export default function ByeMessagePage() {
             // Skip messages from current user (already added via optimistic update)
             if (newMsg.sender_id === user.id) return
 
+            // Play ping sound for new message
+            playPingSound()
             setMessages(prev => {
               if (prev.some(m => m.id === newMsg.id)) return prev
               return [...prev, newMsg]

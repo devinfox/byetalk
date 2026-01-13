@@ -26,6 +26,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import { useChat } from '@/lib/chat-context'
 import type { User } from '@/types/database.types'
 
 interface NavItem {
@@ -71,6 +72,16 @@ export function Sidebar({ user, unreadEmailCount = 0 }: SidebarProps) {
   const router = useRouter()
   const [expandedItems, setExpandedItems] = useState<string[]>(['Email'])
 
+  // Get unread message count from chat context
+  let unreadMessageCount = 0
+  try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const { totalUnreadCount } = useChat()
+    unreadMessageCount = totalUnreadCount
+  } catch {
+    // Chat context not available (e.g., during SSR or outside ChatWrapper)
+  }
+
   const handleSignOut = async () => {
     const supabase = createClient()
     await supabase.auth.signOut()
@@ -90,7 +101,10 @@ export function Sidebar({ user, unreadEmailCount = 0 }: SidebarProps) {
     const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
     const hasSubitems = item.subitems && item.subitems.length > 0
     const isExpanded = expandedItems.includes(item.name)
-    const showBadge = item.name === 'Email' && unreadEmailCount > 0
+    const showEmailBadge = item.name === 'Email' && unreadEmailCount > 0
+    const showMessageBadge = item.name === 'ByeMessage' && unreadMessageCount > 0
+    const badgeCount = item.name === 'Email' ? unreadEmailCount : item.name === 'ByeMessage' ? unreadMessageCount : 0
+    const showBadge = showEmailBadge || showMessageBadge
 
     if (hasSubitems) {
       const isParentActive = isActive || item.subitems!.some(sub =>
@@ -112,7 +126,7 @@ export function Sidebar({ user, unreadEmailCount = 0 }: SidebarProps) {
               <span className="flex-1">{item.name}</span>
               {showBadge && (
                 <span className="min-w-[20px] h-5 px-1.5 flex items-center justify-center bg-red-500 text-white text-xs font-bold rounded-full">
-                  {unreadEmailCount > 99 ? '99+' : unreadEmailCount}
+                  {badgeCount > 99 ? '99+' : badgeCount}
                 </span>
               )}
             </Link>
@@ -154,7 +168,7 @@ export function Sidebar({ user, unreadEmailCount = 0 }: SidebarProps) {
         <span className="flex-1">{item.name}</span>
         {showBadge && (
           <span className="min-w-[20px] h-5 px-1.5 flex items-center justify-center bg-red-500 text-white text-xs font-bold rounded-full">
-            {unreadEmailCount > 99 ? '99+' : unreadEmailCount}
+            {badgeCount > 99 ? '99+' : badgeCount}
           </span>
         )}
       </Link>

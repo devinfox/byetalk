@@ -2,9 +2,16 @@
 
 import { MessageCircle } from 'lucide-react'
 import { useChat } from '@/lib/chat-context'
+import { usePathname } from 'next/navigation'
 
 export function ChatButton() {
   const { openChat, totalUnreadCount } = useChat()
+  const pathname = usePathname()
+
+  // Hide on messages page since user is already there
+  if (pathname === '/dashboard/messages') {
+    return null
+  }
 
   return (
     <button
