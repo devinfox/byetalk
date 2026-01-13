@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase'
+import { X, User, Phone } from 'lucide-react'
 
 interface TurboSession {
   id: string
@@ -52,6 +53,39 @@ interface TurboActiveCall {
   connected_at: string | null
 }
 
+interface CallJoinNotification {
+  id: string
+  leadName: string
+  leadPhone: string
+  timestamp: Date
+}
+
+// Play notification sound for call join
+function playJoinSound() {
+  try {
+    const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
+    const oscillator = audioContext.createOscillator()
+    const gainNode = audioContext.createGain()
+
+    oscillator.connect(gainNode)
+    gainNode.connect(audioContext.destination)
+
+    // Pleasant ascending tone for someone joining
+    oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime) // C5
+    oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.1) // E5
+    oscillator.frequency.setValueAtTime(783.99, audioContext.currentTime + 0.2) // G5
+    oscillator.type = 'sine'
+
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime)
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4)
+
+    oscillator.start(audioContext.currentTime)
+    oscillator.stop(audioContext.currentTime + 0.4)
+  } catch (e) {
+    console.log('Could not play join sound:', e)
+  }
+}
+
 interface TurboModeContextType {
   // State
   isInTurboMode: boolean
@@ -86,10 +120,12 @@ export function TurboModeProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [twimlUrl, setTwimlUrl] = useState<string | null>(null)
+  const [callJoinNotifications, setCallJoinNotifications] = useState<CallJoinNotification[]>([])
 
   const supabase = createClient()
   const dialIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const statusIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const connectedCallIdsRef = useRef<Set<string>>(new Set())
 
   // Fetch current status
   const refreshStatus = useCallback(async () => {
@@ -384,6 +420,57 @@ export function TurboModeProvider({ children }: { children: React.ReactNode }) {
     refreshStatus()
   }, [refreshStatus])
 
+  // Track when calls become connected and show notifications
+  useEffect(() => {
+    if (!isInTurboMode) {
+      // Clear tracked IDs when not in turbo mode
+      connectedCallIdsRef.current.clear()
+      return
+    }
+
+    // Find newly connected calls
+    const connectedCalls = activeCalls.filter(call => call.status === 'connected')
+
+    connectedCalls.forEach(call => {
+      // Only notify for calls we haven't seen as connected before
+      if (!connectedCallIdsRef.current.has(call.id)) {
+        connectedCallIdsRef.current.add(call.id)
+
+        // Play sound and show notification
+        playJoinSound()
+
+        const notificationId = `join-${call.id}-${Date.now()}`
+        setCallJoinNotifications(prev => [
+          ...prev,
+          {
+            id: notificationId,
+            leadName: call.lead_name || 'Unknown',
+            leadPhone: call.lead_phone,
+            timestamp: new Date(),
+          },
+        ])
+
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+          setCallJoinNotifications(prev => prev.filter(n => n.id !== notificationId))
+        }, 5000)
+      }
+    })
+
+    // Clean up tracked IDs for calls that are no longer active
+    const activeCallIds = new Set(activeCalls.map(c => c.id))
+    connectedCallIdsRef.current.forEach(id => {
+      if (!activeCallIds.has(id)) {
+        connectedCallIdsRef.current.delete(id)
+      }
+    })
+  }, [activeCalls, isInTurboMode])
+
+  // Dismiss notification manually
+  const dismissJoinNotification = useCallback((id: string) => {
+    setCallJoinNotifications(prev => prev.filter(n => n.id !== id))
+  }, [])
+
   const value: TurboModeContextType = {
     isInTurboMode,
     session,
@@ -406,6 +493,54 @@ export function TurboModeProvider({ children }: { children: React.ReactNode }) {
   return (
     <TurboModeContext.Provider value={value}>
       {children}
+
+      {/* Call Join Notifications - Right side */}
+      {callJoinNotifications.length > 0 && (
+        <div className="fixed top-20 right-4 z-[100] space-y-2 max-w-sm">
+          {callJoinNotifications.map((notification) => (
+            <div
+              key={notification.id}
+              className="flex items-center gap-3 p-4 bg-gray-900/95 backdrop-blur-sm border border-green-500/30 rounded-xl shadow-2xl animate-slide-in-right"
+            >
+              <div className="flex-shrink-0">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
+                  <User className="w-6 h-6 text-white" />
+                </div>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <Phone className="w-4 h-4 text-green-400" />
+                  <span className="text-sm text-green-400 font-medium">Joined the call</span>
+                </div>
+                <p className="text-white font-semibold text-lg truncate">{notification.leadName}</p>
+                <p className="text-sm text-gray-400">{notification.leadPhone}</p>
+              </div>
+              <button
+                onClick={() => dismissJoinNotification(notification.id)}
+                className="flex-shrink-0 text-gray-400 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <style jsx global>{`
+        @keyframes slide-in-right {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+        .animate-slide-in-right {
+          animation: slide-in-right 0.3s ease-out;
+        }
+      `}</style>
     </TurboModeContext.Provider>
   )
 }
