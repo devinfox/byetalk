@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
       if (client) {
         client.calls.create({
           to: `client:${clientIdentity}`,
-          from: process.env.TWILIO_PHONE_NUMBER!,
+          from: from || process.env.TWILIO_PHONE_NUMBER!, // Use caller's number for caller ID
           url: joinConferenceUrl,
           statusCallback: statusCallbackUrl,
           statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
@@ -184,7 +184,7 @@ export async function POST(request: NextRequest) {
 
               client.calls.create({
                 to: `client:${clientIdentity}`,
-                from: process.env.TWILIO_PHONE_NUMBER!,
+                from: from || process.env.TWILIO_PHONE_NUMBER!, // Use caller's number for caller ID
                 url: joinConferenceUrl,
                 statusCallback: statusCallbackUrl,
                 statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
