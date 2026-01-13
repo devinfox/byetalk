@@ -20,6 +20,7 @@ interface CallerInfo {
 export function IncomingCallModal({ callInfo, onAnswer, onReject }: IncomingCallModalProps) {
   const [callerInfo, setCallerInfo] = useState<CallerInfo>({ name: 'Unknown Caller', type: 'unknown' })
   const [loading, setLoading] = useState(true)
+  const [displayPhoneNumber, setDisplayPhoneNumber] = useState(callInfo.from)
 
   // Format phone number for display
   const formatPhoneNumber = (phone: string) => {
@@ -35,7 +36,36 @@ export function IncomingCallModal({ callInfo, onAnswer, onReject }: IncomingCall
   // Look up caller info from database
   useEffect(() => {
     const lookupCaller = async () => {
-      const cleanNumber = callInfo.from.replace(/\D/g, '').slice(-10)
+      let phoneToLookup = callInfo.from
+
+      // Always check for conference-based inbound calls first
+      // This handles the case where we're being called to join a conference with a lead
+      try {
+        const response = await fetch('/api/twilio/conference-caller')
+        if (response.ok) {
+          const data = await response.json()
+          if (data.found && data.originalCaller) {
+            console.log('[IncomingCallModal] Found conference caller:', data.originalCaller)
+            phoneToLookup = data.originalCaller
+            setDisplayPhoneNumber(data.originalCaller)
+
+            // If we got lead info from the API, use it directly
+            if (data.leadInfo) {
+              setCallerInfo({
+                name: data.leadInfo.name || 'Unknown',
+                type: data.leadInfo.type,
+                id: data.leadInfo.id,
+              })
+              setLoading(false)
+              return
+            }
+          }
+        }
+      } catch (err) {
+        console.error('[IncomingCallModal] Error checking conference caller:', err)
+      }
+
+      const cleanNumber = phoneToLookup.replace(/\D/g, '').slice(-10)
       if (cleanNumber.length < 7) {
         setLoading(false)
         return
@@ -108,7 +138,7 @@ export function IncomingCallModal({ callInfo, onAnswer, onReject }: IncomingCall
               {loading ? 'Looking up...' : callerInfo.name}
             </h2>
             <p className="text-gray-400 text-lg font-mono">
-              {formatPhoneNumber(callInfo.from)}
+              {formatPhoneNumber(displayPhoneNumber)}
             </p>
             {callerInfo.type !== 'unknown' && (
               <span className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-medium ${

@@ -8,11 +8,14 @@ const VoiceResponse = twilio.twiml.VoiceResponse
  * TwiML endpoint for joining a conference call
  * SILENT - No voice announcements
  *
- * Query: ?conference=<conference_name>
+ * Query: ?conference=<conference_name>&callerNumber=<original_caller>
  */
 export async function POST(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
   const conferenceName = searchParams.get('conference')
+  const callerNumber = searchParams.get('callerNumber')
+
+  console.log('[Join Conference] Request:', { conferenceName, callerNumber })
 
   const twiml = new VoiceResponse()
 

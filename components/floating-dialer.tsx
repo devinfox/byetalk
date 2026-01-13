@@ -15,6 +15,7 @@ import {
 import { useTwilioDeviceContext, CallStatus } from '@/lib/twilio-device-context'
 import { createClient } from '@/lib/supabase'
 import { useDialer } from '@/lib/dialer-context'
+import { useTurboMode } from '@/lib/turbo-mode-context'
 import { IncomingCallModal } from './incoming-call-modal'
 import { AddToCallModal } from './add-to-call-modal'
 
@@ -31,6 +32,7 @@ const dialPadKeys = [
 
 export function FloatingDialer({ userId }: FloatingDialerProps) {
   const { isOpen, phoneNumber, entityInfo, closeDialer, setPhoneNumber, openDialer } = useDialer()
+  const { isInTurboMode, activeCalls } = useTurboMode()
   const [isMinimized, setIsMinimized] = useState(false)
   const [callDuration, setCallDuration] = useState(0)
   const [showAddToCall, setShowAddToCall] = useState(false)
@@ -56,6 +58,11 @@ export function FloatingDialer({ userId }: FloatingDialerProps) {
     sendDigits,
     setCallMetadata,
   } = useTwilioDeviceContext()
+
+  // Get turbo mode connected call info if in turbo mode
+  const turboConnectedCall = isInTurboMode
+    ? activeCalls.find(call => call.status === 'connected')
+    : null
 
   // Play/stop ringtone for incoming calls using Web Audio API
   useEffect(() => {
@@ -294,7 +301,8 @@ export function FloatingDialer({ userId }: FloatingDialerProps) {
   const isInCall = ['connecting', 'ringing', 'connected'].includes(status)
 
   // Display name: prefer entity info, then current call name, then phone number
-  const displayName = entityInfo?.entityName || currentCallName || (isInCall ? currentCallNumber || phoneNumber : null)
+  // Display name: prefer entity info, then turbo call info, then current call info, then phone number
+  const displayName = entityInfo?.entityName || turboConnectedCall?.lead_name || currentCallName || (isInCall ? (turboConnectedCall?.lead_phone || currentCallNumber || phoneNumber) : null)
 
   // Show incoming call modal
   if (status === 'incoming' && incomingCallInfo) {

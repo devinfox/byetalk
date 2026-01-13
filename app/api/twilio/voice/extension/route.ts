@@ -123,17 +123,21 @@ export async function POST(request: NextRequest) {
       console.log('[Twilio Extension] Calling client to join conference:', clientIdentity)
 
       // Use fire-and-forget to call the client (don't await)
-      const joinConferenceUrl = `${baseUrl}/api/twilio/join-conference?conference=${encodeURIComponent(conferenceName)}`
+      // Pass caller info in the TwiML URL so browser knows who's calling
+      const joinConferenceUrl = `${baseUrl}/api/twilio/join-conference?conference=${encodeURIComponent(conferenceName)}&callerNumber=${encodeURIComponent(from)}`
       const client = getTwilioClient()
       if (client) {
+        // Pass custom parameters so the browser SDK can access the real caller info
         client.calls.create({
           to: `client:${clientIdentity}`,
           from: process.env.TWILIO_PHONE_NUMBER!,
           url: joinConferenceUrl,
           statusCallback: statusCallbackUrl,
           statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
+          // Custom parameters that get passed to the client SDK
+          machineDetection: undefined, // Clear any AMD settings
         }).then(call => {
-          console.log('[Twilio Extension] Called client:', clientIdentity, 'CallSid:', call.sid)
+          console.log('[Twilio Extension] Called client:', clientIdentity, 'CallSid:', call.sid, 'Original caller:', from)
         }).catch(err => {
           console.error('[Twilio Extension] Error calling client:', err)
         })
@@ -174,13 +178,14 @@ export async function POST(request: NextRequest) {
 
           // Call all users' browsers to join the conference
           // First one to answer will be in the conference with the lead
-          const joinConferenceUrl = `${baseUrl}/api/twilio/join-conference?conference=${encodeURIComponent(conferenceName)}`
+          // Pass caller info in the TwiML URL so browser knows who's calling
+          const joinConferenceUrl = `${baseUrl}/api/twilio/join-conference?conference=${encodeURIComponent(conferenceName)}&callerNumber=${encodeURIComponent(from)}`
           const client = getTwilioClient()
 
           if (client) {
             for (const user of users) {
               const clientIdentity = `${user.first_name}_${user.last_name}_${user.id.slice(0, 8)}`
-              console.log('[Twilio Extension] Calling client to join conference:', clientIdentity)
+              console.log('[Twilio Extension] Calling client to join conference:', clientIdentity, 'Original caller:', from)
 
               client.calls.create({
                 to: `client:${clientIdentity}`,
