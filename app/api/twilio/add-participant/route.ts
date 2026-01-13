@@ -100,9 +100,11 @@ export async function POST(request: NextRequest) {
     const clientIdentity = `${colleague.first_name}_${colleague.last_name}_${colleague.id.slice(0, 8)}`
 
     // Check if this is an inbound call that's already in a conference
-    // (new conference-based inbound routing stores conference_name in phone_system_metadata)
+    // Conference info is stored under the LEAD's call_sid, not the browser's
+    // So we need to check multiple ways to find the conference
     let isConferenceBasedInbound = false
     if (!isTurboMode) {
+      // First try: look up by the provided callSid (might be browser's call)
       const { data: callRecord } = await getSupabaseAdmin()
         .from('calls')
         .select('phone_system_metadata')
@@ -112,7 +114,28 @@ export async function POST(request: NextRequest) {
       if (callRecord?.phone_system_metadata?.conference_based && callRecord?.phone_system_metadata?.conference_name) {
         isConferenceBasedInbound = true
         conferenceName = callRecord.phone_system_metadata.conference_name
-        console.log('[Add Participant] Found conference-based inbound call, using existing conference:', conferenceName)
+        console.log('[Add Participant] Found conference info by callSid:', conferenceName)
+      } else {
+        // Second try: The callSid might be the browser's call, not the lead's
+        // Look for recent inbound calls with conference_based=true
+        const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString()
+        const { data: recentInboundCall } = await getSupabaseAdmin()
+          .from('calls')
+          .select('phone_system_metadata, call_sid')
+          .eq('direction', 'inbound')
+          .gte('started_at', twoMinutesAgo)
+          .not('phone_system_metadata', 'is', null)
+          .order('started_at', { ascending: false })
+          .limit(1)
+          .single()
+
+        if (recentInboundCall?.phone_system_metadata?.conference_based &&
+            recentInboundCall?.phone_system_metadata?.conference_name) {
+          isConferenceBasedInbound = true
+          conferenceName = recentInboundCall.phone_system_metadata.conference_name
+          console.log('[Add Participant] Found conference from recent inbound call:', conferenceName,
+                      'Lead CallSid:', recentInboundCall.call_sid)
+        }
       }
     }
 
