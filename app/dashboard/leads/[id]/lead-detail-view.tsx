@@ -988,7 +988,7 @@ export function LeadDetailView({
                                 )}
 
                                 {/* Transcription */}
-                                {call.transcription && (
+                                {(call.transcription || call.recording_url) && (
                                   <div className="mt-4">
                                     <div className="flex items-center justify-between mb-2">
                                       <div className="flex items-center gap-2">
@@ -1003,10 +1003,10 @@ export function LeadDetailView({
                                           }}
                                           disabled={reprocessingCallId === call.id}
                                           className="flex items-center gap-1.5 px-2 py-1 text-xs text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors disabled:opacity-50"
-                                          title="Reprocess transcription with corrected speaker labels"
+                                          title={call.transcription ? "Reprocess transcription with corrected speaker labels" : "Process recording to generate transcription"}
                                         >
                                           <RefreshCw className={`w-3 h-3 ${reprocessingCallId === call.id ? 'animate-spin' : ''}`} />
-                                          {reprocessingCallId === call.id ? 'Reprocessing...' : 'Reprocess'}
+                                          {reprocessingCallId === call.id ? 'Processing...' : (call.transcription ? 'Reprocess' : 'Process')}
                                         </button>
                                       )}
                                     </div>
@@ -1048,10 +1048,16 @@ export function LeadDetailView({
                                           )
                                         })}
                                       </div>
-                                    ) : (
+                                    ) : call.transcription ? (
                                       <div className="glass-card-subtle rounded-xl p-4 max-h-48 overflow-y-auto">
                                         <p className="text-gray-300 text-sm whitespace-pre-wrap">
                                           {call.transcription}
+                                        </p>
+                                      </div>
+                                    ) : (
+                                      <div className="glass-card-subtle rounded-xl p-4 text-center">
+                                        <p className="text-gray-500 text-sm">
+                                          No transcription available. Click "Process" to generate one.
                                         </p>
                                       </div>
                                     )}
