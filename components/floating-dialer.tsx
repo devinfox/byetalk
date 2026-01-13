@@ -38,6 +38,7 @@ export function FloatingDialer({ userId }: FloatingDialerProps) {
   const [showAddToCall, setShowAddToCall] = useState(false)
   const [addingParticipant, setAddingParticipant] = useState(false)
   const [colleagueJoinedNotification, setColleagueJoinedNotification] = useState<{ name: string } | null>(null)
+  const [pendingColleague, setPendingColleague] = useState<{ callSid: string; name: string } | null>(null)
   const ringtoneRef = useRef<{ oscillator: OscillatorNode; gainNode: GainNode; context: AudioContext } | null>(null)
   const ringtoneIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -138,6 +139,47 @@ export function FloatingDialer({ userId }: FloatingDialerProps) {
       return () => clearInterval(timer)
     } else if (status === 'idle' || status === 'disconnected') {
       setCallDuration(0)
+    }
+  }, [status])
+
+  // Poll for colleague's call status when they're being added
+  useEffect(() => {
+    if (!pendingColleague) return
+
+    const checkColleagueStatus = async () => {
+      try {
+        const response = await fetch(`/api/twilio/call-status?callSid=${pendingColleague.callSid}`)
+        if (response.ok) {
+          const data = await response.json()
+          if (data.status === 'in-progress') {
+            // Colleague has answered - show notification
+            setColleagueJoinedNotification({ name: pendingColleague.name })
+            setPendingColleague(null)
+            setTimeout(() => {
+              setColleagueJoinedNotification(null)
+            }, 5000)
+          } else if (['completed', 'busy', 'no-answer', 'failed', 'canceled'].includes(data.status)) {
+            // Call ended without answering
+            setPendingColleague(null)
+          }
+        }
+      } catch (err) {
+        console.error('[Dialer] Error checking colleague status:', err)
+      }
+    }
+
+    // Poll every 2 seconds
+    const interval = setInterval(checkColleagueStatus, 2000)
+    // Check immediately
+    checkColleagueStatus()
+
+    return () => clearInterval(interval)
+  }, [pendingColleague])
+
+  // Clear pending colleague when our call ends
+  useEffect(() => {
+    if (status === 'idle' || status === 'disconnected') {
+      setPendingColleague(null)
     }
   }, [status])
 
@@ -267,11 +309,13 @@ export function FloatingDialer({ userId }: FloatingDialerProps) {
       const result = await response.json()
       console.log('[Dialer] Added participant to call:', result)
 
-      // Show notification that colleague is joining
-      setColleagueJoinedNotification({ name: `${colleague.first_name} ${colleague.last_name}` })
-      setTimeout(() => {
-        setColleagueJoinedNotification(null)
-      }, 5000)
+      // Track the colleague's call so we can show notification when they answer
+      if (result.colleagueCallSid) {
+        setPendingColleague({
+          callSid: result.colleagueCallSid,
+          name: `${colleague.first_name} ${colleague.last_name}`,
+        })
+      }
     } finally {
       setAddingParticipant(false)
     }
