@@ -183,23 +183,20 @@ export async function POST(request: NextRequest) {
           .select('user_id')
           .eq('status', 'active')
 
-        const turboUserIds = turboSessions?.map(s => s.user_id) || []
-        console.log('[Twilio Extension] Users in turbo mode (excluded):', turboUserIds.length)
+        const turboUserIds = new Set(turboSessions?.map(s => s.user_id) || [])
+        console.log('[Twilio Extension] Users in turbo mode (excluded):', turboUserIds.size)
 
-        // Get active users excluding those in turbo mode
-        let usersQuery = supabase
+        // Get all active users
+        const { data: allUsers } = await supabase
           .from('users')
           .select('id, first_name, last_name')
           .eq('is_active', true)
           .eq('is_deleted', false)
-          .limit(10)
+          .limit(20)
 
-        // Exclude turbo mode users if any
-        if (turboUserIds.length > 0) {
-          usersQuery = usersQuery.not('id', 'in', `(${turboUserIds.join(',')})`)
-        }
-
-        const { data: users } = await usersQuery
+        // Filter out turbo mode users in JavaScript (more reliable than complex SQL)
+        const users = allUsers?.filter(u => !turboUserIds.has(u.id)).slice(0, 10) || []
+        console.log('[Twilio Extension] Available users after filtering:', users.length)
 
         if (users && users.length > 0) {
           // Put lead into conference
