@@ -1,9 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import twilio from 'twilio'
 
-const accountSid = process.env.TWILIO_ACCOUNT_SID!
-const authToken = process.env.TWILIO_AUTH_TOKEN!
-const twilioClient = twilio(accountSid, authToken)
+// Lazy Twilio client - created on first use to avoid build-time errors
+let twilioClient: ReturnType<typeof twilio> | null = null
+function getTwilioClient() {
+  if (!twilioClient) {
+    const accountSid = process.env.TWILIO_ACCOUNT_SID
+    const authToken = process.env.TWILIO_AUTH_TOKEN
+    if (accountSid && authToken) {
+      twilioClient = twilio(accountSid, authToken)
+    }
+  }
+  return twilioClient
+}
 
 /**
  * GET /api/twilio/call-status
@@ -18,8 +27,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Missing callSid' }, { status: 400 })
   }
 
+  const client = getTwilioClient()
+  if (!client) {
+    return NextResponse.json({ error: 'Twilio not configured' }, { status: 500 })
+  }
+
   try {
-    const call = await twilioClient.calls(callSid).fetch()
+    const call = await client.calls(callSid).fetch()
 
     return NextResponse.json({
       callSid: call.sid,
