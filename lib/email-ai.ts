@@ -1,9 +1,8 @@
 import OpenAI from 'openai'
 import { createClient } from '@supabase/supabase-js'
 
-// Lazy initialization to avoid errors when env vars are missing at build time
+// Lazy initialization to avoid errors when API key is missing
 let openaiInstance: OpenAI | null = null
-let supabaseAdminInstance: ReturnType<typeof createClient> | null = null
 
 function getOpenAI(): OpenAI | null {
   if (!openaiInstance && process.env.OPENAI_API_KEY) {
@@ -14,17 +13,10 @@ function getOpenAI(): OpenAI | null {
   return openaiInstance
 }
 
-function getSupabaseAdmin() {
-  if (!supabaseAdminInstance) {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-    if (!url || !key) {
-      throw new Error('Missing Supabase environment variables')
-    }
-    supabaseAdminInstance = createClient(url, key)
-  }
-  return supabaseAdminInstance
-}
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 export interface EmailAIAnalysis {
   summary: string
@@ -355,7 +347,7 @@ export async function findLeadOrContactByEmail(email: string): Promise<{
   const normalizedEmail = email.toLowerCase().trim()
 
   // Search leads first
-  const { data: lead } = await getSupabaseAdmin()
+  const { data: lead } = await supabaseAdmin
     .from('leads')
     .select('id, first_name, last_name')
     .ilike('email', normalizedEmail)
@@ -373,7 +365,7 @@ export async function findLeadOrContactByEmail(email: string): Promise<{
   }
 
   // Search contacts
-  const { data: contact } = await getSupabaseAdmin()
+  const { data: contact } = await supabaseAdmin
     .from('contacts')
     .select('id, first_name, last_name')
     .ilike('email', normalizedEmail)
@@ -430,7 +422,7 @@ export async function findLeadByPhone(phoneNumber: string): Promise<{
   // Search leads by phone or phone_secondary
   for (const variant of phoneVariants) {
     // Check primary phone
-    const { data: leadByPhone } = await getSupabaseAdmin()
+    const { data: leadByPhone } = await supabaseAdmin
       .from('leads')
       .select('id, first_name, last_name, email')
       .or(`phone.ilike.%${variant}%,phone_secondary.ilike.%${variant}%`)
@@ -468,7 +460,7 @@ export async function createEmailActivityLog(
     ? `Email received from ${fromAddress}: "${subject || '(no subject)'}"`
     : `Email sent: "${subject || '(no subject)'}"`
 
-  await getSupabaseAdmin().from('activity_log').insert({
+  await supabaseAdmin.from('activity_log').insert({
     event_type: eventType,
     event_description: description,
     user_id: userId,
@@ -500,7 +492,7 @@ export async function createTasksFromEmail(
   const createdTaskIds: string[] = []
 
   for (const task of tasks) {
-    const { data, error } = await getSupabaseAdmin()
+    const { data, error } = await supabaseAdmin
       .from('tasks')
       .insert({
         title: task.title,
@@ -523,7 +515,7 @@ export async function createTasksFromEmail(
       createdTaskIds.push(data.id)
 
       // Log task creation
-      await getSupabaseAdmin().from('activity_log').insert({
+      await supabaseAdmin.from('activity_log').insert({
         event_type: 'task_created',
         event_description: `AI-generated task from email: ${task.title}`,
         user_id: assignedTo,
@@ -555,7 +547,7 @@ export async function updateEmailWithAnalysis(
   analysis: EmailAIAnalysis,
   tasksGenerated: boolean
 ): Promise<void> {
-  await getSupabaseAdmin()
+  await supabaseAdmin
     .from('emails')
     .update({
       ai_analysis_status: 'completed',
@@ -588,7 +580,7 @@ export async function linkEmailToLeadOrContact(
   if (!leadId && !contactId) return
 
   // Update the email record
-  await getSupabaseAdmin()
+  await supabaseAdmin
     .from('emails')
     .update({
       lead_id: leadId,
@@ -597,14 +589,14 @@ export async function linkEmailToLeadOrContact(
     .eq('id', emailId)
 
   // Also update the thread
-  const { data: email } = await getSupabaseAdmin()
+  const { data: email } = await supabaseAdmin
     .from('emails')
     .select('thread_id')
     .eq('id', emailId)
     .single()
 
   if (email?.thread_id) {
-    await getSupabaseAdmin()
+    await supabaseAdmin
       .from('email_threads')
       .update({
         lead_id: leadId,
@@ -614,7 +606,7 @@ export async function linkEmailToLeadOrContact(
   }
 
   // Create link record for many-to-many tracking
-  await getSupabaseAdmin()
+  await supabaseAdmin
     .from('email_lead_links')
     .upsert({
       email_id: emailId,
