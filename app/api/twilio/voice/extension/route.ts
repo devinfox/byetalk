@@ -4,11 +4,6 @@ import { createClient } from '@supabase/supabase-js'
 
 const VoiceResponse = twilio.twiml.VoiceResponse
 
-// Twilio client for making outbound calls
-const accountSid = process.env.TWILIO_ACCOUNT_SID!
-const authToken = process.env.TWILIO_AUTH_TOKEN!
-const twilioClient = twilio(accountSid, authToken)
-
 // Supabase admin client for querying users
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -16,6 +11,19 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 const supabase = supabaseUrl && supabaseKey
   ? createClient(supabaseUrl, supabaseKey)
   : null
+
+// Lazy Twilio client - created on first use to avoid build-time errors
+let twilioClient: ReturnType<typeof twilio> | null = null
+function getTwilioClient() {
+  if (!twilioClient) {
+    const accountSid = process.env.TWILIO_ACCOUNT_SID
+    const authToken = process.env.TWILIO_AUTH_TOKEN
+    if (accountSid && authToken) {
+      twilioClient = twilio(accountSid, authToken)
+    }
+  }
+  return twilioClient
+}
 
 /**
  * POST /api/twilio/voice/extension
@@ -116,17 +124,20 @@ export async function POST(request: NextRequest) {
 
       // Use fire-and-forget to call the client (don't await)
       const joinConferenceUrl = `${baseUrl}/api/twilio/join-conference?conference=${encodeURIComponent(conferenceName)}`
-      twilioClient.calls.create({
-        to: `client:${clientIdentity}`,
-        from: process.env.TWILIO_PHONE_NUMBER!,
-        url: joinConferenceUrl,
-        statusCallback: statusCallbackUrl,
-        statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
-      }).then(call => {
-        console.log('[Twilio Extension] Called client:', clientIdentity, 'CallSid:', call.sid)
-      }).catch(err => {
-        console.error('[Twilio Extension] Error calling client:', err)
-      })
+      const client = getTwilioClient()
+      if (client) {
+        client.calls.create({
+          to: `client:${clientIdentity}`,
+          from: process.env.TWILIO_PHONE_NUMBER!,
+          url: joinConferenceUrl,
+          statusCallback: statusCallbackUrl,
+          statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
+        }).then(call => {
+          console.log('[Twilio Extension] Called client:', clientIdentity, 'CallSid:', call.sid)
+        }).catch(err => {
+          console.error('[Twilio Extension] Error calling client:', err)
+        })
+      }
     } else {
       // No valid extension - ring all users
       if (digits) {
@@ -164,22 +175,25 @@ export async function POST(request: NextRequest) {
           // Call all users' browsers to join the conference
           // First one to answer will be in the conference with the lead
           const joinConferenceUrl = `${baseUrl}/api/twilio/join-conference?conference=${encodeURIComponent(conferenceName)}`
+          const client = getTwilioClient()
 
-          for (const user of users) {
-            const clientIdentity = `${user.first_name}_${user.last_name}_${user.id.slice(0, 8)}`
-            console.log('[Twilio Extension] Calling client to join conference:', clientIdentity)
+          if (client) {
+            for (const user of users) {
+              const clientIdentity = `${user.first_name}_${user.last_name}_${user.id.slice(0, 8)}`
+              console.log('[Twilio Extension] Calling client to join conference:', clientIdentity)
 
-            twilioClient.calls.create({
-              to: `client:${clientIdentity}`,
-              from: process.env.TWILIO_PHONE_NUMBER!,
-              url: joinConferenceUrl,
-              statusCallback: statusCallbackUrl,
-              statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
-            }).then(call => {
-              console.log('[Twilio Extension] Called client:', clientIdentity, 'CallSid:', call.sid)
-            }).catch(err => {
-              console.error('[Twilio Extension] Error calling client:', err)
-            })
+              client.calls.create({
+                to: `client:${clientIdentity}`,
+                from: process.env.TWILIO_PHONE_NUMBER!,
+                url: joinConferenceUrl,
+                statusCallback: statusCallbackUrl,
+                statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
+              }).then(call => {
+                console.log('[Twilio Extension] Called client:', clientIdentity, 'CallSid:', call.sid)
+              }).catch(err => {
+                console.error('[Twilio Extension] Error calling client:', err)
+              })
+            }
           }
         } else {
           // No users available, go to voicemail
