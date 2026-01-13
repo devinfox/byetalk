@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useTurboMode } from '@/lib/turbo-mode-context'
 import { useTwilioDeviceContext } from '@/lib/twilio-device-context'
 import { Button } from '@/components/ui/button'
-import { Zap, ZapOff, Loader2, Phone, PhoneOff, User } from 'lucide-react'
+import { Zap, ZapOff, Loader2, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export function TurboModeToggle() {
@@ -25,8 +25,6 @@ export function TurboModeToggle() {
   const [isReconnecting, setIsReconnecting] = useState(false)
   const reconnectAttemptRef = useRef(false)
   const lastStatusRef = useRef(status)
-
-  const isInConference = status === 'connected' && isInTurboMode
 
   // Auto-reconnect when call ends but turbo mode is still active
   useEffect(() => {
@@ -172,35 +170,6 @@ export function TurboModeToggle() {
           <span className="absolute inset-0 rounded-md animate-pulse bg-white/10" />
         )}
       </Button>
-
-      {/* Connection status indicator */}
-      {isInTurboMode && (
-        <div className="flex items-center justify-center gap-2 text-xs">
-          {isInConference ? (
-            <>
-              <Phone className="h-3 w-3 text-green-500" />
-              <span className="text-green-500">Connected to conference</span>
-            </>
-          ) : (
-            <>
-              <PhoneOff className="h-3 w-3 text-yellow-500" />
-              <span className="text-yellow-500">Reconnecting...</span>
-            </>
-          )}
-        </div>
-      )}
-
-      {/* Stats when in turbo mode */}
-      {isInTurboMode && session && (
-        <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
-          <span>
-            <span className="font-medium text-foreground">{session.calls_made}</span> dialed
-          </span>
-          <span>
-            <span className="font-medium text-green-500">{session.calls_connected}</span> connected
-          </span>
-        </div>
-      )}
 
       {/* Show other active reps */}
       {activeSessions.length > 0 && (
