@@ -56,13 +56,13 @@ export async function GET(
     // For non-admins, first get lead IDs they've connected with (have calls)
     let allowedLeadIds: string[] | null = null
     if (!isAdmin) {
-      // Get leads this user owns that have at least one connected call
+      // Get leads this user owns (including new ones they manually created)
       let connectedLeadsQuery = getSupabaseAdmin()
         .from('leads')
         .select('id')
         .eq('owner_id', userData.id)
         .eq('is_deleted', false)
-        .in('status', ['contacted', 'qualified', 'converted', 'lost'])
+        .in('status', ['new', 'contacted', 'qualified', 'converted', 'lost'])
 
       // Handle special groups
       if (id === 'all') {

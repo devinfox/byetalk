@@ -50,11 +50,13 @@ export default async function LeadsPage() {
       converted: convertedResult.count || 0,
     }
   } else {
-    // Non-admin users only see stats for leads they've connected with
-    const [totalResult, contactedResult, qualifiedResult, convertedResult] = await Promise.all([
+    // Non-admin users see stats for leads they own (including new ones they manually created)
+    const [totalResult, newResult, contactedResult, qualifiedResult, convertedResult] = await Promise.all([
       supabase.from('leads').select('*', { count: 'exact', head: true })
         .eq('is_deleted', false).eq('owner_id', user?.id)
-        .in('status', ['contacted', 'qualified', 'converted', 'lost']),
+        .in('status', ['new', 'contacted', 'qualified', 'converted', 'lost']),
+      supabase.from('leads').select('*', { count: 'exact', head: true })
+        .eq('is_deleted', false).eq('owner_id', user?.id).eq('status', 'new'),
       supabase.from('leads').select('*', { count: 'exact', head: true })
         .eq('is_deleted', false).eq('owner_id', user?.id).eq('status', 'contacted'),
       supabase.from('leads').select('*', { count: 'exact', head: true })
@@ -65,7 +67,7 @@ export default async function LeadsPage() {
 
     leadStats = {
       total: totalResult.count || 0,
-      new: 0, // Non-admins don't see new leads
+      new: newResult.count || 0,
       contacted: contactedResult.count || 0,
       qualified: qualifiedResult.count || 0,
       converted: convertedResult.count || 0,
