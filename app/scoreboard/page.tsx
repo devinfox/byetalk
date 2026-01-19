@@ -1,4 +1,5 @@
 import SalesScoreboard from "@/components/scoreboard/SalesScoreboard";
+import RokuWrapper from "@/components/RokuWrapper";
 import { SalesRep } from "@/data/salesReps";
 
 async function getSalesReps(): Promise<SalesRep[]> {
@@ -42,8 +43,10 @@ export default async function ScoreboardPage() {
   const salesReps = await getSalesReps();
 
   return (
-    <main>
-      <SalesScoreboard salesReps={salesReps} />
-    </main>
+    <RokuWrapper>
+      <main>
+        <SalesScoreboard salesReps={salesReps} />
+      </main>
+    </RokuWrapper>
   );
 }
