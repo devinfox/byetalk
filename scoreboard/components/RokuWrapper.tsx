@@ -65,32 +65,34 @@ export default function RokuWrapper({ children }: RokuWrapperProps) {
   // Determine if we should actually rotate based on force mode
   const isRotating = forceMode === "on" || (forceMode === "auto" && shouldRotate);
 
-  // Debug overlay (add ?debug to URL to show)
-  const debugOverlay = showDebug && (
+  // Safe aspect ratio calculation (avoid NaN)
+  const aspectRatio = viewportSize.height > 0
+    ? (viewportSize.width / viewportSize.height).toFixed(3)
+    : "...";
+
+  // Debug overlay - always rendered when showDebug is true
+  const debugOverlay = showDebug ? (
     <div
       style={{
         position: "fixed",
-        bottom: "10px",
-        left: "10px",
-        background: "rgba(0,0,0,0.8)",
-        color: "#0f0",
-        padding: "10px",
+        bottom: 10,
+        left: 10,
+        background: "rgba(0,0,0,0.9)",
+        color: "#00ff00",
+        padding: 15,
         fontFamily: "monospace",
-        fontSize: "14px",
-        zIndex: 10000,
-        borderRadius: "4px",
+        fontSize: 18,
+        zIndex: 99999,
+        borderRadius: 8,
+        border: "2px solid #00ff00",
       }}
     >
-      <div>Viewport: {viewportSize.width} × {viewportSize.height}</div>
-      <div>Aspect: {(viewportSize.width / viewportSize.height).toFixed(3)}</div>
-      <div>16:9 Landscape: {shouldRotate ? "YES" : "NO"}</div>
-      <div>Force Mode: {forceMode}</div>
+      <div>Viewport: {viewportSize.width} x {viewportSize.height}</div>
+      <div>Aspect: {aspectRatio}</div>
+      <div>Detect: {shouldRotate ? "YES" : "NO"}</div>
       <div>Rotating: {isRotating ? "YES" : "NO"}</div>
-      <div style={{ marginTop: "5px", fontSize: "11px", color: "#888" }}>
-        ?rotate=on / ?rotate=off to force
-      </div>
     </div>
-  );
+  ) : null;
 
   // If not rotating, render children normally
   if (!isRotating) {
