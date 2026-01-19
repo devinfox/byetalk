@@ -6,35 +6,48 @@ type RokuWrapperProps = {
   children: ReactNode;
 };
 
-// Known Roku browser viewport resolutions (always reports landscape)
-const ROKU_RESOLUTIONS = [
-  { width: 1920, height: 1080 }, // 1080p Roku UI mode
-  { width: 3840, height: 2160 }, // 4K Roku UI mode
-];
+// Check if viewport is 16:9 landscape (width > height) with minimum 1080p
+// This catches Roku TVs that may report slightly different dimensions
+function isLandscape16by9(width: number, height: number): boolean {
+  if (width <= height) return false; // Must be landscape
+  if (width < 1920) return false; // At least 1080p width
 
-function isRokuViewport(width: number, height: number): boolean {
-  return ROKU_RESOLUTIONS.some(
-    (res) => res.width === width && res.height === height
-  );
+  const aspectRatio = width / height;
+  const target = 16 / 9; // ~1.777
+  const tolerance = 0.05; // Allow 5% tolerance
+
+  return Math.abs(aspectRatio - target) < tolerance;
 }
 
 export default function RokuWrapper({ children }: RokuWrapperProps) {
-  const [isRoku, setIsRoku] = useState(false);
+  const [shouldRotate, setShouldRotate] = useState(false);
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
+  const [showDebug, setShowDebug] = useState(false);
+  const [forceMode, setForceMode] = useState<"auto" | "on" | "off">("auto");
 
   useEffect(() => {
+    // Check URL params for debug and force modes
+    const params = new URLSearchParams(window.location.search);
+    setShowDebug(params.has("debug"));
+
+    if (params.get("rotate") === "on") {
+      setForceMode("on");
+    } else if (params.get("rotate") === "off") {
+      setForceMode("off");
+    }
+
     function checkViewport() {
       const width = window.innerWidth;
       const height = window.innerHeight;
 
       setViewportSize({ width, height });
-      setIsRoku(isRokuViewport(width, height));
+      setShouldRotate(isLandscape16by9(width, height));
     }
 
     // Check on mount
     checkViewport();
 
-    // Re-check on resize (in case of Roku mode changes)
+    // Re-check on resize
     window.addEventListener("resize", checkViewport);
 
     return () => {
@@ -42,9 +55,44 @@ export default function RokuWrapper({ children }: RokuWrapperProps) {
     };
   }, []);
 
-  // If not Roku, render children normally
-  if (!isRoku) {
-    return <>{children}</>;
+  // Determine if we should actually rotate based on force mode
+  const isRotating = forceMode === "on" || (forceMode === "auto" && shouldRotate);
+
+  // Debug overlay (add ?debug to URL to show)
+  const debugOverlay = showDebug && (
+    <div
+      style={{
+        position: "fixed",
+        bottom: "10px",
+        left: "10px",
+        background: "rgba(0,0,0,0.8)",
+        color: "#0f0",
+        padding: "10px",
+        fontFamily: "monospace",
+        fontSize: "14px",
+        zIndex: 10000,
+        borderRadius: "4px",
+      }}
+    >
+      <div>Viewport: {viewportSize.width} × {viewportSize.height}</div>
+      <div>Aspect: {(viewportSize.width / viewportSize.height).toFixed(3)}</div>
+      <div>16:9 Landscape: {shouldRotate ? "YES" : "NO"}</div>
+      <div>Force Mode: {forceMode}</div>
+      <div>Rotating: {isRotating ? "YES" : "NO"}</div>
+      <div style={{ marginTop: "5px", fontSize: "11px", color: "#888" }}>
+        ?rotate=on / ?rotate=off to force
+      </div>
+    </div>
+  );
+
+  // If not rotating, render children normally
+  if (!isRotating) {
+    return (
+      <>
+        {children}
+        {debugOverlay}
+      </>
+    );
   }
 
   // For Roku: rotate 90deg and size to 1080x1920 portrait
@@ -81,6 +129,7 @@ export default function RokuWrapper({ children }: RokuWrapperProps) {
       >
         {children}
       </div>
+      {debugOverlay}
     </div>
   );
 }
