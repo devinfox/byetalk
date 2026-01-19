@@ -22,16 +22,16 @@ function isLandscape16by9(width: number, height: number): boolean {
 export default function RokuWrapper({ children }: RokuWrapperProps) {
   const [shouldRotate, setShouldRotate] = useState(false);
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
-  // Always show debug for now to diagnose
-  const [showDebug, setShowDebug] = useState(true);
+  // Debug overlay disabled by default (add ?debug to URL to show)
+  const [showDebug, setShowDebug] = useState(false);
   const [forceMode, setForceMode] = useState<"auto" | "on" | "off">("auto");
 
   useEffect(() => {
-    // Check URL params for force mode
+    // Check URL params for debug and force mode
     try {
       const params = new URLSearchParams(window.location.search);
-      if (params.get("debug") === "off") {
-        setShowDebug(false);
+      if (params.has("debug")) {
+        setShowDebug(true);
       }
       if (params.get("rotate") === "on") {
         setForceMode("on");
