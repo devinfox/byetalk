@@ -22,18 +22,25 @@ function isLandscape16by9(width: number, height: number): boolean {
 export default function RokuWrapper({ children }: RokuWrapperProps) {
   const [shouldRotate, setShouldRotate] = useState(false);
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
-  const [showDebug, setShowDebug] = useState(false);
+  // Always show debug for now to diagnose
+  const [showDebug, setShowDebug] = useState(true);
   const [forceMode, setForceMode] = useState<"auto" | "on" | "off">("auto");
 
   useEffect(() => {
-    // Check URL params for debug and force modes
-    const params = new URLSearchParams(window.location.search);
-    setShowDebug(params.has("debug"));
-
-    if (params.get("rotate") === "on") {
-      setForceMode("on");
-    } else if (params.get("rotate") === "off") {
-      setForceMode("off");
+    // Check URL params for force mode
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("debug") === "off") {
+        setShowDebug(false);
+      }
+      if (params.get("rotate") === "on") {
+        setForceMode("on");
+      } else if (params.get("rotate") === "off") {
+        setForceMode("off");
+      }
+    } catch (e) {
+      // URLSearchParams might not be supported on Roku
+      console.error("URL params error:", e);
     }
 
     function checkViewport() {
