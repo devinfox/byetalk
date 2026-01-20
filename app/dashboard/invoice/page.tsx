@@ -355,8 +355,10 @@ export default function InvoicePage() {
           const checkboxes = clonedDoc.querySelectorAll('[class*="bdlCheckBox"]');
           checkboxes.forEach((el) => {
             const elem = el as HTMLElement;
-            elem.style.lineHeight = '12px';
-            elem.style.paddingTop = '0';
+            elem.style.lineHeight = '11px';
+            elem.style.verticalAlign = 'middle';
+            elem.style.position = 'relative';
+            elem.style.top = '2px';
           });
         },
       });
