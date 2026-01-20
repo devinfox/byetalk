@@ -2,11 +2,24 @@
    INVOICE PAGE - GLASSMORPHIC UI
    ========================================== */
 
-/* Page Container */
+/* Page Container - Same background as dashboard */
 .pageContainer {
   min-height: 100vh;
-  background: #0a0a0a;
   padding: 2rem;
+  background-image: url('/background.png');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  position: relative;
+}
+
+.pageContainer::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+  z-index: 0;
 }
 
 /* Form Section - Glass Card */
@@ -22,6 +35,8 @@
   box-shadow:
     0 4px 30px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  position: relative;
+  z-index: 1;
 }
 
 .pageTitle {
