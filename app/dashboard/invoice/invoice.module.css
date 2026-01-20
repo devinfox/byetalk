@@ -1204,30 +1204,30 @@
   display: flex;
   align-items: center;
   background: #959595;
-  padding: 10px 15px 10px 45px;
+  padding: 8px 15px 8px 50px;
   margin-bottom: 8px;
-  min-height: 36px;
+  min-height: 32px;
   position: relative;
-  border-radius: 0;
+  border-radius: 3px;
 }
 
-/* Number badge - white bg, black text, rounded rectangle, separate from bar */
+/* Number badge - white bg, black text, TALLER than header bar, centered on it */
 .bdlSectionNum {
   position: absolute;
   left: 0;
   top: 50%;
   transform: translateY(-50%);
-  width: 30px;
-  height: 28px;
+  width: 36px;
+  height: 42px;
   background: #fff;
-  border: 1.5px solid #333;
-  border-radius: 4px;
+  border: 1.5px solid #666;
+  border-radius: 5px;
   color: #000;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 16pt;
+  font-size: 18pt;
   line-height: 1;
 }
 
