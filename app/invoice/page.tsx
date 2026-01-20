@@ -10,7 +10,6 @@ type LineItem = {
   productName: string;
   qty: string;
   listPrice: string;
-  total: string;
 };
 
 type InvoiceData = {
@@ -23,7 +22,6 @@ type InvoiceData = {
   billTo: string;
   shipTo: string;
   lineItems: LineItem[];
-  grandTotal: string;
 };
 
 const initialLineItem = (): LineItem => ({
@@ -31,8 +29,23 @@ const initialLineItem = (): LineItem => ({
   productName: "",
   qty: "",
   listPrice: "",
-  total: "",
 });
+
+// Calculate line item total from qty and price
+const calculateLineTotal = (qty: string, listPrice: string): number => {
+  const qtyNum = parseFloat(qty) || 0;
+  // Remove currency symbols and commas from price
+  const priceNum = parseFloat(listPrice.replace(/[^0-9.-]/g, "")) || 0;
+  return qtyNum * priceNum;
+};
+
+// Format currency
+const formatCurrency = (amount: number): string => {
+  return amount.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+  });
+};
 
 const initialInvoiceData: InvoiceData = {
   date: new Date().toLocaleDateString("en-US", {
@@ -48,7 +61,6 @@ const initialInvoiceData: InvoiceData = {
   billTo: "",
   shipTo: "",
   lineItems: [initialLineItem()],
-  grandTotal: "",
 };
 
 export default function InvoicePage() {
@@ -86,15 +98,10 @@ export default function InvoicePage() {
     }
   };
 
-  const calculateGrandTotal = () => {
-    const total = invoiceData.lineItems.reduce((sum, item) => {
-      const itemTotal = parseFloat(item.total.replace(/[^0-9.-]/g, "")) || 0;
-      return sum + itemTotal;
+  const calculateGrandTotal = (): number => {
+    return invoiceData.lineItems.reduce((sum, item) => {
+      return sum + calculateLineTotal(item.qty, item.listPrice);
     }, 0);
-    return total.toLocaleString("en-US", {
-      style: "currency",
-      currency: "USD",
-    });
   };
 
   const generatePDF = async () => {
@@ -131,17 +138,8 @@ export default function InvoicePage() {
     }
   };
 
-  // Fill remaining rows to always show 5 rows minimum in preview
-  const displayItems = [...invoiceData.lineItems];
-  while (displayItems.length < 5) {
-    displayItems.push({
-      id: `empty-${displayItems.length}`,
-      productName: "",
-      qty: "",
-      listPrice: "",
-      total: "",
-    });
-  }
+  // Only show rows that have data
+  const displayItems = invoiceData.lineItems;
 
   return (
     <div className={styles.pageContainer}>
@@ -268,13 +266,9 @@ export default function InvoicePage() {
                 onChange={(e) => updateLineItem(item.id, "listPrice", e.target.value)}
                 placeholder="$0.00"
               />
-              <input
-                type="text"
-                className={styles.colTotal}
-                value={item.total}
-                onChange={(e) => updateLineItem(item.id, "total", e.target.value)}
-                placeholder="$0.00"
-              />
+              <span className={styles.colTotal}>
+                {formatCurrency(calculateLineTotal(item.qty, item.listPrice))}
+              </span>
               <button
                 type="button"
                 className={styles.removeBtn}
@@ -293,12 +287,9 @@ export default function InvoicePage() {
         {/* Grand Total */}
         <div className={styles.grandTotalSection}>
           <label>Grand Total</label>
-          <input
-            type="text"
-            value={invoiceData.grandTotal || calculateGrandTotal()}
-            onChange={(e) => updateField("grandTotal", e.target.value)}
-            placeholder="$0.00"
-          />
+          <span className={styles.grandTotalDisplay}>
+            {formatCurrency(calculateGrandTotal())}
+          </span>
         </div>
 
         {/* Actions */}
@@ -384,8 +375,8 @@ export default function InvoicePage() {
                     >
                       <span className={styles.tdProduct}>{item.productName}</span>
                       <span className={styles.tdQty}>{item.qty}</span>
-                      <span className={styles.tdPrice}>{item.listPrice}</span>
-                      <span className={styles.tdTotal}>{item.total}</span>
+                      <span className={styles.tdPrice}>{item.listPrice ? formatCurrency(parseFloat(item.listPrice.replace(/[^0-9.-]/g, "")) || 0) : ""}</span>
+                      <span className={styles.tdTotal}>{item.qty && item.listPrice ? formatCurrency(calculateLineTotal(item.qty, item.listPrice)) : ""}</span>
                     </div>
                   ))}
                 </div>
@@ -394,7 +385,7 @@ export default function InvoicePage() {
                 <div className={styles.grandTotalRow}>
                   <div className={styles.grandTotalBox}>
                     <span>GRAND TOTAL : </span>
-                    <span>{invoiceData.grandTotal || calculateGrandTotal()}</span>
+                    <span>{formatCurrency(calculateGrandTotal())}</span>
                   </div>
                 </div>
 

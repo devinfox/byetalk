@@ -63,13 +63,13 @@
   border-radius: 6px;
   font-size: 0.95rem;
   transition: border-color 0.2s;
-  color: #1e3a5f;
-  font-weight: 500;
+  color: #000000;
+  font-weight: 600;
 }
 
 .formGroup input::placeholder,
 .formGroup textarea::placeholder {
-  color: #999;
+  color: #aaa;
   font-weight: 400;
 }
 
@@ -143,13 +143,13 @@
   border-radius: 4px;
   font-size: 0.9rem;
   width: 100%;
-  background: transparent;
-  color: #1e3a5f;
-  font-weight: 500;
+  background: rgba(255,255,255,0.8);
+  color: #000000;
+  font-weight: 600;
 }
 
 .lineItemRow input::placeholder {
-  color: #999;
+  color: #aaa;
   font-weight: 400;
 }
 
@@ -217,7 +217,27 @@
   font-weight: 700;
   width: 180px;
   text-align: right;
-  color: #1e3a5f;
+  color: #000000;
+}
+
+.grandTotalDisplay {
+  padding: 0.6rem 1rem;
+  border: 2px solid #c9a227;
+  border-radius: 6px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  min-width: 180px;
+  text-align: right;
+  color: #000000;
+  background: #f9f9f9;
+}
+
+.lineItemRow span.colTotal {
+  padding: 0.5rem;
+  font-size: 0.9rem;
+  color: #000000;
+  font-weight: 600;
+  text-align: right;
 }
 
 /* Actions */
