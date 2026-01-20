@@ -1199,14 +1199,14 @@
   position: relative;
 }
 
-/* Section header bar - #959595 bg, white text */
+/* Section header bar - #959595 bg, white text, THINNER than number box */
 .bdlSectionHeader {
   display: flex;
   align-items: center;
   background: #959595;
-  padding: 8px 15px 8px 50px;
+  padding: 6px 15px 6px 50px;
   margin-bottom: 8px;
-  min-height: 32px;
+  min-height: 26px;
   position: relative;
   border-radius: 3px;
 }
@@ -1217,18 +1217,19 @@
   left: 0;
   top: 50%;
   transform: translateY(-50%);
-  width: 36px;
-  height: 42px;
+  width: 34px;
+  height: 38px;
   background: #fff;
-  border: 1.5px solid #666;
-  border-radius: 5px;
+  border: 1.5px solid #333;
+  border-radius: 4px;
   color: #000;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 18pt;
+  font-size: 17pt;
   line-height: 1;
+  text-align: center;
 }
 
 .bdlSectionTitle {
@@ -1245,22 +1246,22 @@
   margin-left: 5px;
 }
 
-/* Form table - TALLER CELLS to match original */
+/* Form table - field boxes with #808181 border */
 .bdlFormTable {
   width: 100%;
   border-collapse: collapse;
-  border: 1px solid #000;
+  border: 1px solid #808181;
 }
 
 .bdlFormTable td {
-  border: 1px solid #000;
+  border: 1px solid #808181;
   padding: 4px 8px;
   vertical-align: top;
-  height: 48px;
+  height: 45px;
 }
 
 .bdlCell {
-  height: 48px;
+  height: 45px;
 }
 
 .bdlCellLabel {
@@ -1305,27 +1306,26 @@
 }
 
 .bdlInitialBox {
-  width: 90px;
+  width: 85px;
+  height: 55px;
   border: 1px solid #000;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  background: white;
 }
 
 .bdlInitialLabel {
-  background: #959595;
-  color: #fff;
+  background: transparent;
+  color: #000;
   text-align: center;
-  padding: 5px 2px;
-  font-size: 8pt;
+  padding: 4px 2px 0 2px;
+  font-size: 7pt;
   font-weight: 700;
-  border-bottom: 1px solid #000;
 }
 
 .bdlInitialSpace {
   flex: 1;
-  min-height: 45px;
-  background: white;
 }
 
 /* Payment section - WITH BORDER around the whole section */
