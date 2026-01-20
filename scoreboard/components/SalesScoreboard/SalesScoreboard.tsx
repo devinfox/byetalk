@@ -129,12 +129,6 @@ export default function SalesScoreboard({ salesReps: initialSalesReps }: SalesSc
           </h1>
           <div className={styles.subtitleRow}>
             <h2 className={styles.subtitle}>SALES PERFORMANCE SCOREBOARD</h2>
-            <div className={styles.jackpotContainer}>
-              <div className={styles.jackpotInner}>
-                <span className={styles.jackpotLabel}>WEEKLY CHAMPION PRIZE</span>
-                <span className={styles.jackpotAmount}>$500</span>
-              </div>
-            </div>
           </div>
         </header>
 
