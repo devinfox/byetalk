@@ -1220,8 +1220,8 @@
   width: 26px;
   height: 26px;
   background: white;
-  border: 1px solid #666;
-  border-radius: 3px;
+  border: 1.5px solid #555;
+  border-radius: 4px;
   color: #000;
   display: flex;
   align-items: center;
@@ -1229,6 +1229,7 @@
   font-weight: 700;
   font-size: 14pt;
   padding-bottom: 1px;
+  box-shadow: 1px 1px 2px rgba(0,0,0,0.15);
 }
 
 .bdlSectionTitle {
@@ -1287,6 +1288,10 @@
   font-size: 9pt;
   color: #000;
   padding-top: 2px;
+  border-bottom: 1px solid #000;
+  display: inline-block;
+  min-width: 80%;
+  margin-top: 2px;
 }
 
 /* Authorization row for section 2 */
@@ -1300,20 +1305,24 @@
 
 .bdlAuthText {
   flex: 1;
-  padding: 6px 8px;
+  padding: 8px 10px;
+  font-size: 7.5pt;
+  line-height: 1.5;
 }
 
 .bdlInitialBox {
-  width: 75px;
+  width: 80px;
   border-left: 1px solid #000;
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
 }
 
 .bdlInitialLabel {
-  background: white;
+  background: #333;
+  color: white;
   text-align: center;
-  padding: 2px;
+  padding: 4px 2px;
   font-size: 7pt;
   font-weight: 700;
   border-bottom: 1px solid #000;
@@ -1321,50 +1330,54 @@
 
 .bdlInitialSpace {
   flex: 1;
-  min-height: 35px;
+  min-height: 40px;
+  background: white;
 }
 
 /* Payment section - WITH BORDER around the whole section */
 .bdlPaymentGrid {
   display: flex;
   font-size: 8pt;
-  line-height: 1.5;
+  line-height: 1.6;
   border: 1px solid #000;
   border-top: none;
-  min-height: 100px;
+  min-height: 110px;
 }
 
 .bdlPaymentLeft {
-  width: 40%;
-  padding: 10px 12px;
+  width: 35%;
+  padding: 12px 15px;
   border-right: 1px solid #000;
+  display: flex;
+  align-items: flex-start;
 }
 
 .bdlPaymentRight {
-  width: 60%;
-  padding: 10px 12px;
+  width: 65%;
+  padding: 12px 15px;
 }
 
 .bdlCheckItem {
   display: flex;
   align-items: flex-start;
-  margin-bottom: 5px;
+  margin-bottom: 8px;
 }
 
 /* Checkbox - perfect square, thin stroke, no rounding */
 .bdlCheckBox {
-  width: 11px;
-  height: 11px;
-  border: 1px solid #000;
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid #000;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-right: 5px;
-  font-size: 9pt;
+  margin-right: 6px;
+  font-size: 10pt;
   font-weight: 700;
   flex-shrink: 0;
   border-radius: 0;
   background: white;
+  line-height: 1;
 }
 
 .bdlCheckNote {
@@ -1374,9 +1387,10 @@
 
 .bdlUpsLine {
   border-bottom: 1px solid #000;
-  min-width: 120px;
+  min-width: 130px;
   display: inline-block;
-  margin-left: 3px;
+  margin-left: 5px;
+  padding-bottom: 1px;
 }
 
 /* Purchase intro text */

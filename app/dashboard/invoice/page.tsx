@@ -1029,25 +1029,25 @@ export default function InvoicePage() {
             <table className={styles.bdlFormTable}>
               <tbody>
                 <tr>
-                  <td className={styles.bdlCell} style={{width: '35%'}}>
+                  <td className={styles.bdlCell} style={{width: '25%'}}>
                     <div className={styles.bdlCellLabel}>DEALER NAME</div>
                     <div className={styles.bdlCellValue}>Citadel Gold</div>
                   </td>
-                  <td className={styles.bdlCell} style={{width: '65%'}}>
+                  <td className={styles.bdlCell} colSpan={2} style={{width: '75%'}}>
                     <div className={styles.bdlCellLabel}>DEALER ADDRESS</div>
                     <div className={styles.bdlCellValue}>10433 Wilshire Blvd #1002 Los Angeles, California 90024</div>
                   </td>
                 </tr>
                 <tr>
-                  <td className={styles.bdlCell}>
+                  <td className={styles.bdlCell} style={{width: '25%'}}>
                     <div className={styles.bdlCellLabel}>PHONE NUMBER</div>
                     <div className={styles.bdlCellValue}>310-209-8166</div>
                   </td>
-                  <td className={styles.bdlCell}>
+                  <td className={styles.bdlCell} style={{width: '35%'}}>
                     <div className={styles.bdlCellLabel}>FAX</div>
                     <div className={styles.bdlCellValue}>310-209-8255</div>
                   </td>
-                  <td className={styles.bdlCell}>
+                  <td className={styles.bdlCell} style={{width: '40%'}}>
                     <div className={styles.bdlCellLabel}>REPRESENTATIVE</div>
                     <div className={styles.bdlCellValue}>Shaun Bina</div>
                   </td>
@@ -1056,7 +1056,7 @@ export default function InvoicePage() {
             </table>
             <div className={styles.bdlAuthRow}>
               <div className={styles.bdlAuthText}>
-                <strong>By initialing, I authorize the administrator to accept completion of transaction details for the sections below from the dealer listed in Section 2, without my verification. I understand that Entrust will advise the dealer of this authorization and the funds in the IRA, and will await confirmation from the dealer.</strong>
+                By initialing, I authorize the administrator to accept completion of transaction details for the sections below from the dealer listed in Section 2, without my verification. I understand that Entrust will advise the dealer of this authorization and the funds in the IRA, and will await confirmation from the dealer.
               </div>
               <div className={styles.bdlInitialBox}>
                 <div className={styles.bdlInitialLabel}>INITIAL HERE</div>
