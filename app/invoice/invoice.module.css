@@ -63,6 +63,14 @@
   border-radius: 6px;
   font-size: 0.95rem;
   transition: border-color 0.2s;
+  color: #1e3a5f;
+  font-weight: 500;
+}
+
+.formGroup input::placeholder,
+.formGroup textarea::placeholder {
+  color: #999;
+  font-weight: 400;
 }
 
 .formGroup input:focus,
@@ -136,6 +144,13 @@
   font-size: 0.9rem;
   width: 100%;
   background: transparent;
+  color: #1e3a5f;
+  font-weight: 500;
+}
+
+.lineItemRow input::placeholder {
+  color: #999;
+  font-weight: 400;
 }
 
 .lineItemRow input:focus {
@@ -202,6 +217,7 @@
   font-weight: 700;
   width: 180px;
   text-align: right;
+  color: #1e3a5f;
 }
 
 /* Actions */
