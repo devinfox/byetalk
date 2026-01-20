@@ -1040,3 +1040,345 @@
     margin-bottom: -550px;
   }
 }
+
+/* ==========================================
+   PAYMENT SECTION - Form Checkboxes
+   ========================================== */
+
+.paymentSection {
+  margin-bottom: 1.5rem;
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+}
+
+.checkboxGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem 1.5rem;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.9rem;
+}
+
+.checkboxLabel input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #fde047;
+  cursor: pointer;
+}
+
+.upsOption {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.upsAccountInput {
+  padding: 0.4rem 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: white;
+  width: 150px;
+}
+
+.upsAccountInput:focus {
+  outline: none;
+  border-color: rgba(234, 179, 8, 0.5);
+}
+
+/* Buy Direction Letter Button */
+.buyDirectionBtn {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(59, 130, 246, 0.15) 100%);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  color: #93c5fd;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+}
+
+.buyDirectionBtn:hover {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.4) 0%, rgba(59, 130, 246, 0.2) 100%);
+  border-color: rgba(59, 130, 246, 0.6);
+  box-shadow: 0 0 30px rgba(59, 130, 246, 0.25);
+}
+
+.buyDirectionBtn:disabled {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.3);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* ==========================================
+   BUY DIRECTION LETTER PDF TEMPLATE
+   ========================================== */
+
+.buyDirectionLetter {
+  width: 816px;
+  min-height: 1056px;
+  background: white;
+  margin: 0 auto;
+  font-family: Arial, Helvetica, sans-serif;
+  padding: 30px 40px;
+  color: #333;
+}
+
+/* BDL Header */
+.bdlHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #003366;
+}
+
+.bdlLogoSection {
+  flex-shrink: 0;
+  width: 150px;
+}
+
+.bdlLogo {
+  max-width: 100%;
+  height: auto;
+}
+
+.bdlTitleSection {
+  flex: 1;
+  text-align: center;
+  padding: 0 20px;
+}
+
+.bdlTitle {
+  font-size: 24px;
+  font-weight: 700;
+  color: #003366;
+  margin: 0 0 5px 0;
+}
+
+.bdlSubtitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: #003366;
+  margin: 0;
+}
+
+.bdlAddressSection {
+  text-align: right;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.bdlAddressSection p {
+  margin: 2px 0;
+}
+
+/* BDL Sections */
+.bdlSection {
+  margin-bottom: 18px;
+}
+
+.bdlSectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #003366;
+  color: white;
+  padding: 8px 15px;
+  margin-bottom: 10px;
+}
+
+.bdlSectionNumber {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: white;
+  color: #003366;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.bdlSectionTitle {
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+}
+
+.bdlSectionContent {
+  padding: 0 15px;
+}
+
+.bdlRow {
+  display: flex;
+  gap: 30px;
+  margin-bottom: 8px;
+}
+
+.bdlField {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.bdlFieldLabel {
+  font-weight: 600;
+  color: #333;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.bdlFieldValue {
+  flex: 1;
+  border-bottom: 1px solid #999;
+  padding-bottom: 2px;
+  min-height: 18px;
+  font-size: 12px;
+}
+
+/* BDL Checkboxes */
+.bdlInstructionText {
+  font-size: 12px;
+  margin: 8px 0;
+  color: #333;
+}
+
+.bdlCheckboxRow {
+  display: flex;
+  gap: 30px;
+  margin: 8px 0;
+  flex-wrap: wrap;
+}
+
+.bdlCheckbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.bdlCheckboxBox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: 1px solid #333;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* BDL Table */
+.bdlTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0;
+  font-size: 11px;
+}
+
+.bdlTable th {
+  background: #003366;
+  color: white;
+  padding: 8px 10px;
+  text-align: left;
+  font-weight: 600;
+  border: 1px solid #003366;
+}
+
+.bdlTable th:nth-child(2),
+.bdlTable th:nth-child(3),
+.bdlTable th:nth-child(4) {
+  text-align: center;
+}
+
+.bdlTable td {
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+}
+
+.bdlTable td:nth-child(2),
+.bdlTable td:nth-child(3),
+.bdlTable td:nth-child(4) {
+  text-align: center;
+}
+
+.bdlTable tbody tr:nth-child(even) {
+  background: #f5f5f5;
+}
+
+.bdlTable tfoot td {
+  background: #e8e8e8;
+  font-weight: 600;
+}
+
+/* BDL Depository */
+.bdlDepositoryOptions {
+  margin: 10px 0;
+}
+
+/* BDL Legal Text */
+.bdlLegalText {
+  font-size: 10px;
+  line-height: 1.5;
+  color: #444;
+  margin: 10px 0;
+}
+
+/* BDL Signature */
+.bdlSignatureRow {
+  display: flex;
+  gap: 50px;
+  margin-top: 30px;
+}
+
+.bdlSignatureLine {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.bdlSignatureLine span {
+  font-size: 11px;
+  color: #333;
+}
+
+.bdlSignatureSpace {
+  height: 40px;
+  border-bottom: 1px solid #333;
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: 5px;
+  font-size: 12px;
+}
+
+/* BDL Footer */
+.bdlFooter {
+  margin-top: 20px;
+  padding-top: 10px;
+  border-top: 1px solid #ccc;
+  text-align: center;
+}
+
+.bdlFooter p {
+  font-size: 10px;
+  color: #666;
+  margin: 0;
+}

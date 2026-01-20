@@ -16,12 +16,25 @@ type InvoiceData = {
   date: string;
   clientName: string;
   acctNumber: string;
+  accountType: string;
+  email: string;
+  phone: string;
   acctRep: string;
   acctRep2: string;
   salesInvoiceNo: string;
   billTo: string;
   shipTo: string;
   lineItems: LineItem[];
+};
+
+type PaymentOptions = {
+  wire: boolean;
+  overnightCheck: boolean;
+  chargeEntrustAccount: boolean;
+  thirdPartyBilling: boolean;
+  fedex: boolean;
+  ups: boolean;
+  upsAccountNumber: string;
 };
 
 type SavedInvoice = {
@@ -76,12 +89,25 @@ const initialInvoiceData: InvoiceData = {
   }),
   clientName: "",
   acctNumber: "",
+  accountType: "",
+  email: "",
+  phone: "",
   acctRep: "",
   acctRep2: "",
   salesInvoiceNo: "",
   billTo: "",
   shipTo: "",
   lineItems: [initialLineItem()],
+};
+
+const initialPaymentOptions: PaymentOptions = {
+  wire: false,
+  overnightCheck: false,
+  chargeEntrustAccount: false,
+  thirdPartyBilling: false,
+  fedex: false,
+  ups: false,
+  upsAccountNumber: "",
 };
 
 export default function InvoicePage() {
@@ -93,7 +119,10 @@ export default function InvoicePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showSavedPanel, setShowSavedPanel] = useState(true);
+  const [paymentOptions, setPaymentOptions] = useState<PaymentOptions>(initialPaymentOptions);
+  const [isGeneratingBuyDirection, setIsGeneratingBuyDirection] = useState(false);
   const invoiceRef = useRef<HTMLDivElement>(null);
+  const buyDirectionRef = useRef<HTMLDivElement>(null);
 
   // Fetch saved invoices on mount
   useEffect(() => {
@@ -209,6 +238,9 @@ export default function InvoicePage() {
       date: invoice.date || initialInvoiceData.date,
       clientName: invoice.client_name || "",
       acctNumber: "",
+      accountType: "",
+      email: "",
+      phone: "",
       acctRep: "",
       acctRep2: "",
       salesInvoiceNo: invoice.invoice_number || "",
@@ -223,6 +255,10 @@ export default function InvoicePage() {
           }))
         : [initialLineItem()],
     });
+  };
+
+  const updatePaymentOption = (field: keyof PaymentOptions, value: boolean | string) => {
+    setPaymentOptions((prev) => ({ ...prev, [field]: value }));
   };
 
   const deleteInvoice = async (invoiceId: string) => {
@@ -285,6 +321,41 @@ export default function InvoicePage() {
       alert("Error generating PDF. Please try again.");
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const generateBuyDirectionLetter = async () => {
+    if (!buyDirectionRef.current) {
+      console.error("Buy Direction ref not found");
+      alert("Error: Buy Direction Letter template not ready. Please try again.");
+      return;
+    }
+
+    setIsGeneratingBuyDirection(true);
+
+    try {
+      const canvas = await html2canvas(buyDirectionRef.current, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#ffffff",
+        allowTaint: true,
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "px",
+        format: [canvas.width / 2, canvas.height / 2],
+      });
+
+      pdf.addImage(imgData, "PNG", 0, 0, canvas.width / 2, canvas.height / 2);
+      pdf.save(`buy-direction-letter-${invoiceData.clientName || "draft"}.pdf`);
+    } catch (error) {
+      console.error("Error generating Buy Direction Letter PDF:", error);
+      alert("Error generating Buy Direction Letter. Please try again.");
+    } finally {
+      setIsGeneratingBuyDirection(false);
     }
   };
 
@@ -409,6 +480,33 @@ export default function InvoicePage() {
               />
             </div>
             <div className={styles.formGroup}>
+              <label>Account Type (Optional)</label>
+              <input
+                type="text"
+                value={invoiceData.accountType}
+                onChange={(e) => updateField("accountType", e.target.value)}
+                placeholder="e.g., Traditional IRA, Roth IRA"
+              />
+            </div>
+            <div className={styles.formGroup}>
+              <label>Email</label>
+              <input
+                type="email"
+                value={invoiceData.email}
+                onChange={(e) => updateField("email", e.target.value)}
+                placeholder="Enter email address"
+              />
+            </div>
+            <div className={styles.formGroup}>
+              <label>Daytime Phone</label>
+              <input
+                type="tel"
+                value={invoiceData.phone}
+                onChange={(e) => updateField("phone", e.target.value)}
+                placeholder="Enter phone number"
+              />
+            </div>
+            <div className={styles.formGroup}>
               <label>Acct. Rep</label>
               <input
                 type="text"
@@ -457,6 +555,72 @@ export default function InvoicePage() {
                 placeholder="Enter shipping address"
                 rows={3}
               />
+            </div>
+          </div>
+        </div>
+
+        {/* Payment Instructions for Buy Direction Letter */}
+        <div className={styles.paymentSection}>
+          <h2 className={styles.sectionTitle}>Payment Instructions (Buy Direction Letter)</h2>
+          <div className={styles.checkboxGrid}>
+            <label className={styles.checkboxLabel}>
+              <input
+                type="checkbox"
+                checked={paymentOptions.wire}
+                onChange={(e) => updatePaymentOption("wire", e.target.checked)}
+              />
+              <span>Wire</span>
+            </label>
+            <label className={styles.checkboxLabel}>
+              <input
+                type="checkbox"
+                checked={paymentOptions.overnightCheck}
+                onChange={(e) => updatePaymentOption("overnightCheck", e.target.checked)}
+              />
+              <span>Overnight Check</span>
+            </label>
+            <label className={styles.checkboxLabel}>
+              <input
+                type="checkbox"
+                checked={paymentOptions.chargeEntrustAccount}
+                onChange={(e) => updatePaymentOption("chargeEntrustAccount", e.target.checked)}
+              />
+              <span>Charge Entrust Account</span>
+            </label>
+            <label className={styles.checkboxLabel}>
+              <input
+                type="checkbox"
+                checked={paymentOptions.thirdPartyBilling}
+                onChange={(e) => updatePaymentOption("thirdPartyBilling", e.target.checked)}
+              />
+              <span>Use third-party billing agreement</span>
+            </label>
+            <label className={styles.checkboxLabel}>
+              <input
+                type="checkbox"
+                checked={paymentOptions.fedex}
+                onChange={(e) => updatePaymentOption("fedex", e.target.checked)}
+              />
+              <span>FedEx</span>
+            </label>
+            <div className={styles.upsOption}>
+              <label className={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={paymentOptions.ups}
+                  onChange={(e) => updatePaymentOption("ups", e.target.checked)}
+                />
+                <span>UPS</span>
+              </label>
+              {paymentOptions.ups && (
+                <input
+                  type="text"
+                  className={styles.upsAccountInput}
+                  value={paymentOptions.upsAccountNumber}
+                  onChange={(e) => updatePaymentOption("upsAccountNumber", e.target.value)}
+                  placeholder="UPS Account #"
+                />
+              )}
             </div>
           </div>
         </div>
@@ -538,7 +702,15 @@ export default function InvoicePage() {
             onClick={generatePDF}
             disabled={isGenerating}
           >
-            {isGenerating ? "Generating..." : "Generate PDF"}
+            {isGenerating ? "Generating..." : "Generate Invoice PDF"}
+          </button>
+          <button
+            type="button"
+            className={styles.buyDirectionBtn}
+            onClick={generateBuyDirectionLetter}
+            disabled={isGeneratingBuyDirection}
+          >
+            {isGeneratingBuyDirection ? "Generating..." : "Generate Buy Direction Letter"}
           </button>
         </div>
       </div>
@@ -786,6 +958,248 @@ export default function InvoicePage() {
               <p><strong>Phone:</strong> 310-209.8166 | <strong>Email:</strong> info@citadelgold.com</p>
               <p><strong>Website:</strong> www.citadelgold.com</p>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Hidden Buy Direction Letter for PDF generation */}
+      <div className={styles.hiddenPdfContainer}>
+        <div ref={buyDirectionRef} className={styles.buyDirectionLetter}>
+          {/* Header */}
+          <div className={styles.bdlHeader}>
+            <div className={styles.bdlLogoSection}>
+              <img
+                src="/entrust-logo.png"
+                alt="The Entrust Group"
+                className={styles.bdlLogo}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            </div>
+            <div className={styles.bdlTitleSection}>
+              <h1 className={styles.bdlTitle}>Precious Metals</h1>
+              <h2 className={styles.bdlSubtitle}>Buy Direction Letter</h2>
+            </div>
+            <div className={styles.bdlAddressSection}>
+              <p><strong>The Entrust Group</strong></p>
+              <p>555 12th Street, Suite 900</p>
+              <p>Oakland, CA 94607</p>
+              <p>Phone: 800-392-9653</p>
+              <p>Fax: 510-587-0960</p>
+            </div>
+          </div>
+
+          {/* Section 1: Account Owner Information */}
+          <div className={styles.bdlSection}>
+            <div className={styles.bdlSectionHeader}>
+              <span className={styles.bdlSectionNumber}>1</span>
+              <span className={styles.bdlSectionTitle}>Account Owner Information</span>
+            </div>
+            <div className={styles.bdlSectionContent}>
+              <div className={styles.bdlRow}>
+                <div className={styles.bdlField}>
+                  <span className={styles.bdlFieldLabel}>Name:</span>
+                  <span className={styles.bdlFieldValue}>{invoiceData.clientName}</span>
+                </div>
+              </div>
+              <div className={styles.bdlRow}>
+                <div className={styles.bdlField}>
+                  <span className={styles.bdlFieldLabel}>Account Number:</span>
+                  <span className={styles.bdlFieldValue}>{invoiceData.acctNumber}</span>
+                </div>
+                <div className={styles.bdlField}>
+                  <span className={styles.bdlFieldLabel}>Account Type:</span>
+                  <span className={styles.bdlFieldValue}>{invoiceData.accountType}</span>
+                </div>
+              </div>
+              <div className={styles.bdlRow}>
+                <div className={styles.bdlField}>
+                  <span className={styles.bdlFieldLabel}>Email:</span>
+                  <span className={styles.bdlFieldValue}>{invoiceData.email}</span>
+                </div>
+                <div className={styles.bdlField}>
+                  <span className={styles.bdlFieldLabel}>Daytime Phone:</span>
+                  <span className={styles.bdlFieldValue}>{invoiceData.phone}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 2: Precious Metals Dealer Information */}
+          <div className={styles.bdlSection}>
+            <div className={styles.bdlSectionHeader}>
+              <span className={styles.bdlSectionNumber}>2</span>
+              <span className={styles.bdlSectionTitle}>Precious Metals Dealer Information</span>
+            </div>
+            <div className={styles.bdlSectionContent}>
+              <div className={styles.bdlRow}>
+                <div className={styles.bdlField}>
+                  <span className={styles.bdlFieldLabel}>Company Name:</span>
+                  <span className={styles.bdlFieldValue}>Citadel Gold</span>
+                </div>
+              </div>
+              <div className={styles.bdlRow}>
+                <div className={styles.bdlField}>
+                  <span className={styles.bdlFieldLabel}>Street Address:</span>
+                  <span className={styles.bdlFieldValue}>10433 Wilshire Blvd #1002</span>
+                </div>
+              </div>
+              <div className={styles.bdlRow}>
+                <div className={styles.bdlField}>
+                  <span className={styles.bdlFieldLabel}>City, State, Zip:</span>
+                  <span className={styles.bdlFieldValue}>Los Angeles, California 90024</span>
+                </div>
+              </div>
+              <div className={styles.bdlRow}>
+                <div className={styles.bdlField}>
+                  <span className={styles.bdlFieldLabel}>Phone:</span>
+                  <span className={styles.bdlFieldValue}>310-209-8166</span>
+                </div>
+                <div className={styles.bdlField}>
+                  <span className={styles.bdlFieldLabel}>Fax:</span>
+                  <span className={styles.bdlFieldValue}>310-209-8255</span>
+                </div>
+              </div>
+              <div className={styles.bdlRow}>
+                <div className={styles.bdlField}>
+                  <span className={styles.bdlFieldLabel}>Contact Name:</span>
+                  <span className={styles.bdlFieldValue}>Shaun Bina</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 3: Payment Instructions */}
+          <div className={styles.bdlSection}>
+            <div className={styles.bdlSectionHeader}>
+              <span className={styles.bdlSectionNumber}>3</span>
+              <span className={styles.bdlSectionTitle}>Payment Instructions</span>
+            </div>
+            <div className={styles.bdlSectionContent}>
+              <p className={styles.bdlInstructionText}>Please issue payment via (check all that apply):</p>
+              <div className={styles.bdlCheckboxRow}>
+                <div className={styles.bdlCheckbox}>
+                  <span className={styles.bdlCheckboxBox}>{paymentOptions.wire ? "✓" : ""}</span>
+                  <span>Wire</span>
+                </div>
+                <div className={styles.bdlCheckbox}>
+                  <span className={styles.bdlCheckboxBox}>{paymentOptions.overnightCheck ? "✓" : ""}</span>
+                  <span>Overnight Check</span>
+                </div>
+                <div className={styles.bdlCheckbox}>
+                  <span className={styles.bdlCheckboxBox}>{paymentOptions.chargeEntrustAccount ? "✓" : ""}</span>
+                  <span>Charge Entrust Account</span>
+                </div>
+              </div>
+              <div className={styles.bdlCheckboxRow}>
+                <div className={styles.bdlCheckbox}>
+                  <span className={styles.bdlCheckboxBox}>{paymentOptions.thirdPartyBilling ? "✓" : ""}</span>
+                  <span>Use third-party billing agreement</span>
+                </div>
+              </div>
+              <p className={styles.bdlInstructionText}>Ship metals to Depository via:</p>
+              <div className={styles.bdlCheckboxRow}>
+                <div className={styles.bdlCheckbox}>
+                  <span className={styles.bdlCheckboxBox}>{paymentOptions.fedex ? "✓" : ""}</span>
+                  <span>FedEx</span>
+                </div>
+                <div className={styles.bdlCheckbox}>
+                  <span className={styles.bdlCheckboxBox}>{paymentOptions.ups ? "✓" : ""}</span>
+                  <span>UPS Account #: {paymentOptions.upsAccountNumber}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 4: Purchase Instructions */}
+          <div className={styles.bdlSection}>
+            <div className={styles.bdlSectionHeader}>
+              <span className={styles.bdlSectionNumber}>4</span>
+              <span className={styles.bdlSectionTitle}>Purchase Instructions</span>
+            </div>
+            <div className={styles.bdlSectionContent}>
+              <p className={styles.bdlInstructionText}>
+                Please purchase the following precious metals for my account as outlined below. I understand that the
+                pricing quoted will not be confirmed until my order is locked in with my dealer.
+              </p>
+              <table className={styles.bdlTable}>
+                <thead>
+                  <tr>
+                    <th>Description of Purchase</th>
+                    <th>Quantity</th>
+                    <th>Cost Per Unit</th>
+                    <th>Total Cost</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {displayItems.map((item, index) => (
+                    <tr key={`bdl-${item.id}`}>
+                      <td>{item.productName}</td>
+                      <td>{item.qty}</td>
+                      <td>{item.listPrice ? formatCurrency(parseFloat(String(item.listPrice).replace(/[^0-9.]/g, "")) || 0) : ""}</td>
+                      <td>{item.qty && item.listPrice ? formatCurrency(calculateLineTotal(item.qty, item.listPrice)) : ""}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colSpan={3} style={{ textAlign: "right", fontWeight: "bold" }}>Grand Total:</td>
+                    <td style={{ fontWeight: "bold" }}>{formatCurrency(calculateGrandTotal())}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+
+          {/* Section 5: Depository Information */}
+          <div className={styles.bdlSection}>
+            <div className={styles.bdlSectionHeader}>
+              <span className={styles.bdlSectionNumber}>5</span>
+              <span className={styles.bdlSectionTitle}>Depository Information</span>
+            </div>
+            <div className={styles.bdlSectionContent}>
+              <p className={styles.bdlInstructionText}>
+                Please have the precious metals delivered to the following depository for storage:
+              </p>
+              <div className={styles.bdlDepositoryOptions}>
+                <div className={styles.bdlCheckbox}>
+                  <span className={styles.bdlCheckboxBox}>✓</span>
+                  <span><strong>Delaware Depository</strong> - 3601 N. Market Street, Wilmington, DE 19802</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 6: Signature */}
+          <div className={styles.bdlSection}>
+            <div className={styles.bdlSectionHeader}>
+              <span className={styles.bdlSectionNumber}>6</span>
+              <span className={styles.bdlSectionTitle}>Signature</span>
+            </div>
+            <div className={styles.bdlSectionContent}>
+              <p className={styles.bdlLegalText}>
+                By signing below, I hereby authorize The Entrust Group, Inc. to execute the above precious metals
+                transaction on my behalf. I understand that I am solely responsible for any decision to purchase, sell,
+                or hold assets held in my account. The Entrust Group and its employees do not provide investment,
+                legal, or tax advice.
+              </p>
+              <div className={styles.bdlSignatureRow}>
+                <div className={styles.bdlSignatureLine}>
+                  <div className={styles.bdlSignatureSpace}></div>
+                  <span>Account Owner Signature</span>
+                </div>
+                <div className={styles.bdlSignatureLine}>
+                  <div className={styles.bdlSignatureSpace}>{invoiceData.date}</div>
+                  <span>Date</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className={styles.bdlFooter}>
+            <p>Form Version 2024.1</p>
           </div>
         </div>
       </div>
