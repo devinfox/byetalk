@@ -445,6 +445,15 @@
   overflow-x: auto;
 }
 
+/* Hidden container for PDF generation */
+.hiddenPdfContainer {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  width: 816px;
+  pointer-events: none;
+}
+
 /* ==========================================
    INVOICE PDF TEMPLATE - PIXEL EXACT DESIGN
    (Keep this section unchanged for PDF output)
