@@ -328,6 +328,11 @@
   text-align: left !important;
 }
 
+.toText {
+  font-size: 1.3em;
+  font-weight: 700;
+}
+
 /* Table Body */
 .leaderboardTable tbody {
   position: relative;
