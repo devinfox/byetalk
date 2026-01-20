@@ -213,14 +213,14 @@ export function Sidebar({ user, unreadEmailCount = 0 }: SidebarProps) {
         {/* Invoice - only visible to John Carrington and Shaun Bina */}
         {canAccessInvoice(user) && (
           <Link
-            href="/invoice"
+            href="/dashboard/invoice"
             className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-              pathname === '/invoice'
+              pathname === '/dashboard/invoice'
                 ? 'bg-gradient-to-r from-yellow-500/20 to-yellow-600/10 text-yellow-400 border border-yellow-500/30'
                 : 'text-gray-300 hover:bg-white/5 hover:text-white'
             }`}
           >
-            <Receipt className={`w-5 h-5 ${pathname === '/invoice' ? 'text-yellow-400' : ''}`} />
+            <Receipt className={`w-5 h-5 ${pathname === '/dashboard/invoice' ? 'text-yellow-400' : ''}`} />
             Invoice
           </Link>
         )}
