@@ -321,6 +321,11 @@
   position: relative;
   z-index: 1;
   border-bottom: 2px solid #5a4a3a;
+  line-height: 1.3;
+}
+
+.employeeNameHeader {
+  text-align: left !important;
 }
 
 /* Table Body */

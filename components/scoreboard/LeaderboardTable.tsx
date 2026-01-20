@@ -21,10 +21,10 @@ export default function LeaderboardTable({ reps }: LeaderboardTableProps) {
         <thead>
           <tr className={styles.tableHeader}>
             <th>RANK</th>
-            <th>EMPLOYEE NAME</th>
+            <th className={styles.employeeNameHeader}>EMPLOYEE NAME</th>
             <th>WEEKLY REVENUE ($)</th>
-            <th>DAILY T.O's</th>
-            <th>WEEKLY T.O's</th>
+            <th>DAILY<br />T.O's</th>
+            <th>WEEKLY<br />T.O's</th>
           </tr>
         </thead>
         <tbody>
