@@ -72,12 +72,13 @@ interface SidebarProps {
 function canAccessInvoice(user: User | null): boolean {
   if (!user) return false
 
-  // Shaun Bina (admin@citadelgold.com)
-  if (user.email?.toLowerCase() === 'admin@citadelgold.com') return true
+  const email = user.email?.toLowerCase()
 
-  // John Carrington (check by name)
-  const fullName = `${user.first_name || ''} ${user.last_name || ''}`.toLowerCase().trim()
-  if (fullName === 'john carrington') return true
+  // Shaun Bina (admin@citadelgold.com)
+  if (email === 'admin@citadelgold.com') return true
+
+  // Jonathan Carrington
+  if (email === 'jonathancarrington@citadelgold.com') return true
 
   return false
 }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 
-// Check if user has invoice access (John Carrington or admin@citadelgold.com)
+// Check if user has invoice access (Jonathan Carrington or admin@citadelgold.com)
 async function hasInvoiceAccess(supabase: Awaited<ReturnType<typeof createClient>>, userId: string): Promise<{ hasAccess: boolean; isAdmin: boolean; crmUserId: string | null }> {
   const { data: crmUser, error } = await supabase
     .from('users')
@@ -13,12 +13,12 @@ async function hasInvoiceAccess(supabase: Awaited<ReturnType<typeof createClient
     return { hasAccess: false, isAdmin: false, crmUserId: null }
   }
 
-  const isAdmin = crmUser.email?.toLowerCase() === 'admin@citadelgold.com'
-  const fullName = `${crmUser.first_name || ''} ${crmUser.last_name || ''}`.toLowerCase().trim()
-  const isJohn = fullName === 'john carrington'
+  const email = crmUser.email?.toLowerCase()
+  const isAdmin = email === 'admin@citadelgold.com'
+  const isJonathan = email === 'jonathancarrington@citadelgold.com'
 
   return {
-    hasAccess: isAdmin || isJohn,
+    hasAccess: isAdmin || isJonathan,
     isAdmin,
     crmUserId: crmUser.id
   }
