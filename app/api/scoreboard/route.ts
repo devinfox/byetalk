@@ -4,6 +4,16 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin'
 // Default gladiator avatars
 const DEFAULT_AVATARS = ['/guy-1.png', '/guy-2.png', '/guy-3.png']
 
+// Users to exclude from scoreboard (admins/owners)
+const EXCLUDED_NAMES = [
+  'shaun bina',
+  'devin fox',
+  'johnathan carrington',
+  'jonathan carrington',
+  'john carrington',
+  'jim bryan',
+]
+
 
 export type SalesRepData = {
   id: string
@@ -85,33 +95,38 @@ export async function GET() {
       .eq('disposition', 'answered')
       .gte('started_at', startOfDay.toISOString())
 
-    // Calculate stats for each user
-    const salesReps: SalesRepData[] = (users || []).map(user => {
-      // Calculate weekly revenue from deals where user is owner or secondary owner
-      const userDeals = (deals || []).filter(
-        d => d.owner_id === user.id || d.secondary_owner_id === user.id
-      )
-      const weeklyRevenue = userDeals.reduce(
-        (sum, d) => sum + (d.funded_amount || d.estimated_value || 0),
-        0
-      )
+    // Calculate stats for each user, excluding admins/owners
+    const salesReps: SalesRepData[] = (users || [])
+      .filter(user => {
+        const fullName = `${user.first_name} ${user.last_name}`.toLowerCase()
+        return !EXCLUDED_NAMES.includes(fullName)
+      })
+      .map(user => {
+        // Calculate weekly revenue from deals where user is owner or secondary owner
+        const userDeals = (deals || []).filter(
+          d => d.owner_id === user.id || d.secondary_owner_id === user.id
+        )
+        const weeklyRevenue = userDeals.reduce(
+          (sum, d) => sum + (d.funded_amount || d.estimated_value || 0),
+          0
+        )
 
-      // Calculate transfer overs (calls answered)
-      const userWeeklyCalls = (weeklyCalls || []).filter(c => c.user_id === user.id)
-      const userDailyCalls = (dailyCalls || []).filter(c => c.user_id === user.id)
+        // Calculate transfer overs (calls answered)
+        const userWeeklyCalls = (weeklyCalls || []).filter(c => c.user_id === user.id)
+        const userDailyCalls = (dailyCalls || []).filter(c => c.user_id === user.id)
 
-      // Use custom gladiator avatar or assign a default based on user ID
-      const avatarImage = user.gladiator_avatar || getDefaultAvatar(user.id)
+        // Use custom gladiator avatar or assign a default based on user ID
+        const avatarImage = user.gladiator_avatar || getDefaultAvatar(user.id)
 
-      return {
-        id: user.id,
-        name: `${user.first_name} ${user.last_name}`,
-        weeklyRevenue,
-        dailyTransfers: userDailyCalls.length,
-        weeklyTransfers: userWeeklyCalls.length,
-        avatarImage,
-      }
-    })
+        return {
+          id: user.id,
+          name: `${user.first_name} ${user.last_name}`,
+          weeklyRevenue,
+          dailyTransfers: userDailyCalls.length,
+          weeklyTransfers: userWeeklyCalls.length,
+          avatarImage,
+        }
+      })
 
     // Sort by weekly revenue descending
     salesReps.sort((a, b) => b.weeklyRevenue - a.weeklyRevenue)
