@@ -33,9 +33,10 @@ const initialLineItem = (): LineItem => ({
 
 // Calculate line item total from qty and price
 const calculateLineTotal = (qty: string, listPrice: string): number => {
-  const qtyNum = parseFloat(qty) || 0;
+  const qtyNum = Number(qty) || 0;
   // Remove currency symbols and commas from price
-  const priceNum = parseFloat(listPrice.replace(/[^0-9.-]/g, "")) || 0;
+  const cleanPrice = String(listPrice || "").replace(/[^0-9.]/g, "");
+  const priceNum = Number(cleanPrice) || 0;
   return qtyNum * priceNum;
 };
 
