@@ -1135,7 +1135,7 @@
   background: white;
   margin: 0 auto;
   font-family: Arial, Helvetica, sans-serif;
-  padding: 20px 25px;
+  padding: 20px 16px;
   color: #000;
   box-sizing: border-box;
   font-size: 8pt;
@@ -1195,32 +1195,34 @@
 
 /* Section styling */
 .bdlSection {
-  margin-bottom: 10px;
+  margin-bottom: 15px;
   position: relative;
 }
 
-/* Section header bar - lighter gray, black text */
+/* Section header bar - #959595 bg, white text */
 .bdlSectionHeader {
   display: flex;
   align-items: center;
-  background: #c0c0c0;
-  padding: 8px 12px 8px 42px;
-  margin-bottom: 0;
-  min-height: 32px;
+  background: #959595;
+  padding: 10px 15px 10px 45px;
+  margin-bottom: 8px;
+  min-height: 36px;
   position: relative;
-  border-radius: 3px;
+  border-radius: 0;
 }
 
-/* Number badge - dark bg, white text, rounded square */
+/* Number badge - white bg, black text, rounded rectangle, separate from bar */
 .bdlSectionNum {
   position: absolute;
   left: 0;
-  top: 0;
-  bottom: 0;
-  width: 32px;
-  background: #666;
-  border-radius: 3px 0 0 3px;
-  color: #fff;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 28px;
+  background: #fff;
+  border: 1.5px solid #333;
+  border-radius: 4px;
+  color: #000;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1230,9 +1232,9 @@
 }
 
 .bdlSectionTitle {
-  color: #000;
+  color: #fff;
   font-weight: 700;
-  font-size: 14pt;
+  font-size: 15pt;
   letter-spacing: 0;
 }
 
@@ -1311,10 +1313,10 @@
 }
 
 .bdlInitialLabel {
-  background: #c0c0c0;
-  color: #000;
+  background: #959595;
+  color: #fff;
   text-align: center;
-  padding: 4px 2px;
+  padding: 5px 2px;
   font-size: 8pt;
   font-weight: 700;
   border-bottom: 1px solid #000;
@@ -1407,8 +1409,8 @@
 }
 
 .bdlPurchaseTable th {
-  background: #c0c0c0;
-  color: #000;
+  background: #959595;
+  color: #fff;
   border: 1px solid #000;
   padding: 6px 4px;
   text-align: center;
