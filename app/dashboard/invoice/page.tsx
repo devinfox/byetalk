@@ -343,6 +343,22 @@ export default function InvoicePage() {
         logging: false,
         backgroundColor: "#ffffff",
         allowTaint: true,
+        onclone: (clonedDoc) => {
+          // Fix section numbers positioning for html2canvas
+          const sectionNums = clonedDoc.querySelectorAll('[class*="bdlSectionNum"]');
+          sectionNums.forEach((el) => {
+            const elem = el as HTMLElement;
+            elem.style.paddingTop = '3px';
+            elem.style.lineHeight = '28px';
+          });
+          // Fix checkboxes for html2canvas
+          const checkboxes = clonedDoc.querySelectorAll('[class*="bdlCheckBox"]');
+          checkboxes.forEach((el) => {
+            const elem = el as HTMLElement;
+            elem.style.lineHeight = '11px';
+            elem.style.fontSize = '10px';
+          });
+        },
       });
 
       const imgData = canvas.toDataURL("image/png");
