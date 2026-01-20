@@ -54,7 +54,7 @@ const initialInvoiceData: InvoiceData = {
 export default function InvoicePage() {
   const [invoiceData, setInvoiceData] = useState<InvoiceData>(initialInvoiceData);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
+  const [showPreview, setShowPreview] = useState(true);
   const invoiceRef = useRef<HTMLDivElement>(null);
 
   const updateField = (field: keyof InvoiceData, value: string) => {
