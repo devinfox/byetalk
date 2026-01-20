@@ -1,0 +1,566 @@
+/* Page Container */
+.pageContainer {
+  min-height: 100vh;
+  background: #f5f5f5;
+  padding: 2rem;
+}
+
+/* Form Section */
+.formSection {
+  max-width: 900px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.pageTitle {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1a2744;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #d4a84a;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.formColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sectionTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1a2744;
+  margin-bottom: 0.5rem;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.formGroup label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #555;
+}
+
+.formGroup input,
+.formGroup textarea {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  transition: border-color 0.2s;
+}
+
+.formGroup input:focus,
+.formGroup textarea:focus {
+  outline: none;
+  border-color: #d4a84a;
+}
+
+.formGroup textarea {
+  resize: vertical;
+}
+
+/* Line Items */
+.lineItemsSection {
+  margin-bottom: 1.5rem;
+}
+
+.lineItemsHeader {
+  display: flex;
+  align-items: center;
+  background: #1a2744;
+  color: white;
+  padding: 0.75rem 1rem;
+  border-radius: 6px 6px 0 0;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.lineItemRow {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  gap: 0.5rem;
+}
+
+.rowWhite {
+  background: #ffffff;
+}
+
+.rowGold {
+  background: #f5e6a3;
+}
+
+.colProduct {
+  flex: 3;
+}
+
+.colQty {
+  flex: 0.75;
+  text-align: center;
+}
+
+.colPrice {
+  flex: 1.25;
+  text-align: center;
+}
+
+.colTotal {
+  flex: 1.25;
+  text-align: center;
+}
+
+.colAction {
+  width: 30px;
+}
+
+.lineItemRow input {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  width: 100%;
+  background: transparent;
+}
+
+.lineItemRow input:focus {
+  outline: none;
+  border-color: #d4a84a;
+}
+
+.removeBtn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: #dc3545;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.removeBtn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.addRowBtn {
+  margin-top: 0.75rem;
+  padding: 0.6rem 1.25rem;
+  background: #1a2744;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.addRowBtn:hover {
+  background: #2a3a5a;
+}
+
+/* Grand Total */
+.grandTotalSection {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.grandTotalSection label {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a2744;
+}
+
+.grandTotalSection input {
+  padding: 0.6rem 1rem;
+  border: 2px solid #d4a84a;
+  border-radius: 6px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  width: 180px;
+  text-align: right;
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.previewBtn {
+  padding: 0.75rem 1.5rem;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.previewBtn:hover {
+  background: #5a6268;
+}
+
+.generateBtn {
+  padding: 0.75rem 1.5rem;
+  background: #d4a84a;
+  color: #1a2744;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 700;
+  transition: background 0.2s;
+}
+
+.generateBtn:hover {
+  background: #c49a3a;
+}
+
+.generateBtn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* Preview Section */
+.previewSection {
+  max-width: 900px;
+  margin: 2rem auto 0;
+}
+
+.previewTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a2744;
+  margin-bottom: 1rem;
+}
+
+.previewContainer {
+  background: #e0e0e0;
+  padding: 2rem;
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+/* Invoice Template */
+.invoice {
+  width: 816px; /* Letter size width at 96dpi */
+  min-height: 1056px; /* Letter size height at 96dpi */
+  background: white;
+  margin: 0 auto;
+  font-family: 'Arial', sans-serif;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Invoice Header */
+.invoiceHeader {
+  background: #1a2744;
+  padding: 1.25rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.logoContainer {
+  flex-shrink: 0;
+}
+
+.logo {
+  height: 50px;
+  width: auto;
+}
+
+.invoiceTitle {
+  color: white;
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+/* Gold Bar */
+.goldBar {
+  height: 8px;
+  background: linear-gradient(
+    90deg,
+    #d4a84a 0%,
+    #f5e6a3 50%,
+    #d4a84a 100%
+  );
+}
+
+/* Invoice Body */
+.invoiceBody {
+  flex: 1;
+  padding: 1.5rem 2rem;
+}
+
+/* Date Section */
+.dateSection {
+  text-align: right;
+  margin-bottom: 1rem;
+}
+
+.dateLabel {
+  color: #d4a84a;
+  font-weight: 600;
+  font-size: 1rem;
+  font-style: italic;
+}
+
+/* Info Section */
+.infoSection {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.clientInfo {
+  flex: 1;
+}
+
+.clientInfo p {
+  margin: 0.35rem 0;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.clientInfo strong {
+  color: #1a2744;
+  font-weight: 700;
+  margin-right: 0.5rem;
+}
+
+.companyInfo {
+  text-align: left;
+}
+
+.companyInfo p {
+  margin: 0.25rem 0;
+  font-size: 0.85rem;
+  color: #333;
+}
+
+.companyInfo p:first-child {
+  font-weight: 700;
+  color: #1a2744;
+  margin-bottom: 0.35rem;
+}
+
+/* Table */
+.tableContainer {
+  margin-bottom: 1.25rem;
+}
+
+.tableHeader {
+  display: flex;
+  background: #1a2744;
+  color: white;
+  padding: 0.75rem 1rem;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.thProduct {
+  flex: 3;
+  text-align: left;
+}
+
+.thQty {
+  flex: 1;
+  text-align: center;
+}
+
+.thPrice {
+  flex: 1.5;
+  text-align: center;
+}
+
+.thTotal {
+  flex: 1.5;
+  text-align: right;
+}
+
+.tableRow {
+  display: flex;
+  padding: 0.85rem 1rem;
+  font-size: 0.9rem;
+  min-height: 42px;
+  align-items: center;
+}
+
+.tableRowWhite {
+  background: #ffffff;
+}
+
+.tableRowGold {
+  background: #f5e6a3;
+}
+
+.tdProduct {
+  flex: 3;
+  text-align: left;
+}
+
+.tdQty {
+  flex: 1;
+  text-align: center;
+}
+
+.tdPrice {
+  flex: 1.5;
+  text-align: center;
+}
+
+.tdTotal {
+  flex: 1.5;
+  text-align: right;
+}
+
+/* Grand Total Row */
+.grandTotalRow {
+  display: flex;
+  justify-content: center;
+  margin: 1.5rem 0;
+}
+
+.grandTotalBox {
+  display: inline-flex;
+  align-items: center;
+  gap: 1rem;
+  background: white;
+  border: 3px solid #1a2744;
+  border-left: 8px solid #d4a84a;
+  padding: 0.6rem 2rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a2744;
+}
+
+/* Address Section */
+.addressSection {
+  display: flex;
+  justify-content: center;
+  gap: 6rem;
+  margin: 1.5rem 0;
+}
+
+.addressBlock {
+  text-align: center;
+}
+
+.addressLabel {
+  font-weight: 700;
+  color: #1a2744;
+  margin-bottom: 0.25rem;
+  font-size: 0.95rem;
+}
+
+.addressText {
+  font-size: 0.85rem;
+  color: #333;
+  white-space: pre-line;
+  margin: 0;
+}
+
+/* Shipping Info */
+.shippingInfo {
+  margin: 1.5rem 0;
+  padding: 0 1rem;
+}
+
+.shippingInfo p {
+  font-size: 0.7rem;
+  color: #555;
+  line-height: 1.5;
+  text-align: justify;
+  margin: 0;
+}
+
+/* Tagline */
+.tagline {
+  text-align: center;
+  margin: 1rem 0;
+}
+
+.tagline p {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1a2744;
+  margin: 0;
+}
+
+/* Invoice Footer */
+.invoiceFooter {
+  background: #1a2744;
+  padding: 1rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+}
+
+.footerLogo {
+  flex-shrink: 0;
+}
+
+.footerLogoImg {
+  height: 40px;
+  width: auto;
+}
+
+.footerContact {
+  text-align: right;
+  color: white;
+}
+
+.footerContact p {
+  margin: 0.2rem 0;
+  font-size: 0.85rem;
+}
+
+.footerContact strong {
+  font-weight: 700;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .previewContainer {
+    padding: 1rem;
+  }
+
+  .invoice {
+    transform: scale(0.5);
+    transform-origin: top left;
+  }
+}
