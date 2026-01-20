@@ -348,8 +348,8 @@ export default function InvoicePage() {
           const sectionNums = clonedDoc.querySelectorAll('[class*="bdlSectionNum"]');
           sectionNums.forEach((el) => {
             const elem = el as HTMLElement;
-            elem.style.paddingTop = '4px';
-            elem.style.lineHeight = 'normal';
+            elem.style.paddingTop = '0px';
+            elem.style.lineHeight = '34px';
           });
           // Fix checkboxes for html2canvas
           const checkboxes = clonedDoc.querySelectorAll('[class*="bdlCheckBox"]');
