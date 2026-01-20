@@ -1091,12 +1091,12 @@ export default function InvoicePage() {
                   <span className={styles.bdlCheckBox}>{paymentOptions.thirdPartyBilling ? "X" : ""}</span>
                   <span>Use third-party billing</span>
                 </div>
-                <div className={styles.bdlCheckItem} style={{marginLeft: '20px'}}>
+                <div className={styles.bdlCheckItem} style={{marginLeft: '20px', alignItems: 'baseline'}}>
                   <span className={styles.bdlCheckBox}>{paymentOptions.fedex ? "X" : ""}</span>
                   <span>FedEx</span>
-                  <span className={styles.bdlCheckBox} style={{marginLeft: '15px'}}>{paymentOptions.ups ? "X" : ""}</span>
+                  <span className={styles.bdlCheckBox} style={{marginLeft: '12px'}}>{paymentOptions.ups ? "X" : ""}</span>
                   <span>UPS</span>
-                  <span style={{marginLeft: '10px'}}>Account #:</span>
+                  <span style={{marginLeft: '8px'}}>Account #:</span>
                   <span className={styles.bdlUpsLine}>{paymentOptions.upsAccountNumber}</span>
                 </div>
               </div>
