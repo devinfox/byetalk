@@ -977,7 +977,7 @@ export default function InvoicePage() {
             <div className={styles.bdlHeaderRight}>
               <div>555 12th Street, Suite 900</div>
               <div>Oakland, CA 94607</div>
-              <div>Phone: (800) 392-9653</div>
+              <div>Phone: (877) 545-0544</div>
               <div>Fax: (866) 228-4009</div>
               <div>preciousmetals@theentrustgroup.com</div>
             </div>
@@ -1002,7 +1002,7 @@ export default function InvoicePage() {
                     <div className={styles.bdlCellValue}>{invoiceData.acctNumber}</div>
                   </td>
                   <td className={styles.bdlCell} style={{width: '25%'}}>
-                    <div className={styles.bdlCellLabel}>ACCOUNT TYPE <span className={styles.bdlCellLabelSub}>(Traditional IRA, Roth, etc.)</span></div>
+                    <div className={styles.bdlCellLabel}>ACCOUNT TYPE</div>
                     <div className={styles.bdlCellValue}>{invoiceData.accountType}</div>
                   </td>
                 </tr>
@@ -1040,14 +1040,14 @@ export default function InvoicePage() {
                 </tr>
                 <tr>
                   <td className={styles.bdlCell} style={{width: '30%'}}>
-                    <div className={styles.bdlCellLabel}>DEALER PHONE NUMBER</div>
+                    <div className={styles.bdlCellLabel}>PHONE NUMBER</div>
                     <div className={styles.bdlCellValue}>310-209-8166</div>
                   </td>
-                  <td className={styles.bdlCell} style={{width: '40%'}}>
-                    <div className={styles.bdlCellLabel}>DEALER EMAIL ADDRESS</div>
-                    <div className={styles.bdlCellValue}>info@citadelgold.com</div>
+                  <td className={styles.bdlCell} style={{width: '35%'}}>
+                    <div className={styles.bdlCellLabel}>FAX</div>
+                    <div className={styles.bdlCellValue}>310-209-8255</div>
                   </td>
-                  <td className={styles.bdlCell} style={{width: '30%'}}>
+                  <td className={styles.bdlCell} style={{width: '35%'}}>
                     <div className={styles.bdlCellLabel}>REPRESENTATIVE</div>
                     <div className={styles.bdlCellValue}>Shaun Bina</div>
                   </td>
@@ -1059,7 +1059,7 @@ export default function InvoicePage() {
           {/* Authorization Text - Outside table */}
           <div className={styles.bdlAuthSection}>
             <div className={styles.bdlAuthText}>
-              By initialing, I authorize the administrator to accept completion of transaction details for the sections below from the dealer listed in Section 2, without my verification. I understand that Entrust will advise the dealer of this authorization and the funds in the IRA, and will await confirmation from the dealer.
+              <strong>By initialing, I authorize the administrator to accept completion of transaction details for the sections below from the dealer listed in Section 2, without my verification. I understand that Entrust will advise the dealer of this authorization and the funds in the IRA, and will await confirmation from the dealer.</strong>
             </div>
             <div className={styles.bdlInitialBox}>
               <div className={styles.bdlInitialLabel}>INITIAL HERE</div>
@@ -1067,10 +1067,48 @@ export default function InvoicePage() {
             </div>
           </div>
 
-          {/* Section 3: Purchase Instructions */}
+          {/* Section 3: Payment Instructions */}
           <div className={styles.bdlSection}>
             <div className={styles.bdlSectionHeader}>
               <div className={styles.bdlSectionNum}>3</div>
+              <div className={styles.bdlSectionTitle}>Payment Instructions <span className={styles.bdlSelectOne}>(select one)</span></div>
+            </div>
+            <div className={styles.bdlPaymentGrid}>
+              <div className={styles.bdlPaymentLeft}>
+                <div className={styles.bdlCheckItem}>
+                  <span className={styles.bdlCheckBox}>{paymentOptions.wire ? "X" : ""}</span>
+                  <span>WIRE <span className={styles.bdlCheckNote}>(invoice must be attached)</span></span>
+                </div>
+              </div>
+              <div className={styles.bdlPaymentRight}>
+                <div className={styles.bdlCheckItem}>
+                  <span className={styles.bdlCheckBox}>{paymentOptions.overnightCheck ? "X" : ""}</span>
+                  <span>OVERNIGHT CHECK <span className={styles.bdlCheckNote}>($30 fee applies; cannot overnight to a PO Box. Also, invoice must be attached)</span></span>
+                </div>
+                <div className={styles.bdlCheckItem}>
+                  <span className={styles.bdlCheckBox}>{paymentOptions.chargeEntrustAccount ? "X" : ""}</span>
+                  <span>Charge my Entrust Account</span>
+                </div>
+                <div className={styles.bdlCheckItem}>
+                  <span className={styles.bdlCheckBox}>{paymentOptions.thirdPartyBilling ? "X" : ""}</span>
+                  <span>Use third-party billing</span>
+                </div>
+                <div className={styles.bdlCheckItem} style={{marginLeft: '20px'}}>
+                  <span className={styles.bdlCheckBox}>{paymentOptions.fedex ? "X" : ""}</span>
+                  <span>FedEx</span>
+                  <span className={styles.bdlCheckBox} style={{marginLeft: '12px'}}>{paymentOptions.ups ? "X" : ""}</span>
+                  <span>UPS</span>
+                  <span style={{marginLeft: '8px'}}>Account #:</span>
+                  <span className={styles.bdlUpsLine}>{paymentOptions.upsAccountNumber}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 4: Purchase Instructions */}
+          <div className={styles.bdlSection}>
+            <div className={styles.bdlSectionHeader}>
+              <div className={styles.bdlSectionNum}>4</div>
               <div className={styles.bdlSectionTitle}>Purchase Instructions</div>
             </div>
             <div className={styles.bdlPurchaseIntro}>
@@ -1100,8 +1138,8 @@ export default function InvoicePage() {
                     <td>$ {item.qty && item.listPrice ? calculateLineTotal(item.qty, item.listPrice).toFixed(2) : ''}</td>
                   </tr>
                 ))}
-                {/* Add empty rows - 12 total rows */}
-                {Array.from({ length: Math.max(0, 12 - displayItems.length) }).map((_, idx) => (
+                {/* Add empty rows - 5 minimum rows */}
+                {Array.from({ length: Math.max(0, 5 - displayItems.length) }).map((_, idx) => (
                   <tr key={`empty-${idx}`}>
                     <td></td>
                     <td></td>
@@ -1113,8 +1151,9 @@ export default function InvoicePage() {
                   </tr>
                 ))}
                 <tr className={styles.bdlSpecialRow}>
-                  <td colSpan={6}><strong>Special Instructions:</strong></td>
-                  <td><strong>Total $</strong>{calculateGrandTotal() > 0 ? ` ${calculateGrandTotal().toFixed(2)}` : ''}</td>
+                  <td colSpan={5}><strong>Special Instructions:</strong></td>
+                  <td>$<span style={{marginLeft: '20px'}}>Total $</span></td>
+                  <td>Total</td>
                 </tr>
               </tbody>
             </table>
@@ -1122,8 +1161,8 @@ export default function InvoicePage() {
 
           {/* Footer */}
           <div className={styles.bdlFooter}>
-            <div className={styles.bdlFooterLeft}>Page 1 of 3</div>
-            <div className={styles.bdlFooterCenter}>Copyright The Entrust Group - Precious Metals Buy Direction Letter 05-01-2024</div>
+            <div className={styles.bdlFooterLeft}>Page 1 of 2</div>
+            <div className={styles.bdlFooterCenter}>Copyright The Entrust Group - Precious Metals Buy Direction Letter 10-25-2021</div>
           </div>
         </div>
       </div>
