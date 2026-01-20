@@ -22,7 +22,7 @@ export default function LeaderboardTable({ reps }: LeaderboardTableProps) {
           <tr className={styles.tableHeader}>
             <th>RANK</th>
             <th className={styles.employeeNameHeader}>EMPLOYEE NAME</th>
-            <th>MONTHLY REVENUE ($)</th>
+            <th>MONTHLY REVENUE</th>
             <th>DAILY<br /><span className={styles.toText}>T.O's</span></th>
             <th>WEEKLY<br /><span className={styles.toText}>T.O's</span></th>
           </tr>
