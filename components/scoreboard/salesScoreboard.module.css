@@ -205,9 +205,9 @@
 .podiumSection {
   width: 100%;
   max-width: 1100px;
-  margin-top: 4rem;
+  margin-top: 0;
   margin-bottom: 0;
-  padding-top: 15%;
+  padding-top: 2rem;
 }
 
 .podiumContainer {

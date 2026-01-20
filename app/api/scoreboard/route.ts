@@ -50,26 +50,30 @@ export async function GET() {
       return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 })
     }
 
-    // Get current week boundaries (Monday-Friday)
+    // Get current month and day boundaries
     const now = new Date()
 
-    // Start of week = Monday at 00:00:00
+    // Start of month = 1st day at 00:00:00
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+    startOfMonth.setHours(0, 0, 0, 0)
+
+    // Start of week for T.O's (Monday at 00:00:00)
     const startOfWeek = new Date(now)
     const dayOfWeek = now.getDay()
-    const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1 // Sunday = 6 days back, else day - 1
+    const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
     startOfWeek.setDate(now.getDate() - daysFromMonday)
     startOfWeek.setHours(0, 0, 0, 0)
 
     const startOfDay = new Date(now)
     startOfDay.setHours(0, 0, 0, 0)
 
-    // Get all closed_won deals this week (Monday-Friday)
+    // Get all closed_won deals this month
     const { data: deals, error: dealsError } = await getSupabaseAdmin()
       .from('deals')
       .select('id, owner_id, secondary_owner_id, funded_amount, estimated_value, closed_at')
       .eq('stage', 'closed_won')
       .eq('is_deleted', false)
-      .gte('closed_at', startOfWeek.toISOString())
+      .gte('closed_at', startOfMonth.toISOString())
 
     if (dealsError) {
       console.error('Error fetching deals:', dealsError)
