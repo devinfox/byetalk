@@ -67,7 +67,7 @@ const initialInvoiceData: InvoiceData = {
 export default function InvoicePage() {
   const [invoiceData, setInvoiceData] = useState<InvoiceData>(initialInvoiceData);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [showPreview, setShowPreview] = useState(true);
+  const [showPreview, setShowPreview] = useState(false);
   const invoiceRef = useRef<HTMLDivElement>(null);
 
   const updateField = (field: keyof InvoiceData, value: string) => {
@@ -313,12 +313,21 @@ export default function InvoicePage() {
         </div>
       </div>
 
-      {/* Invoice Preview (for PDF generation) */}
+      {/* Invoice Preview Modal */}
       {showPreview && (
-        <div className={styles.previewSection}>
-          <h2 className={styles.previewTitle}>Invoice Preview</h2>
-          <div className={styles.previewContainer}>
-            <div ref={invoiceRef} className={styles.invoice}>
+        <div className={styles.modalOverlay} onClick={() => setShowPreview(false)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2 className={styles.previewTitle}>Invoice Preview</h2>
+              <button
+                className={styles.closeBtn}
+                onClick={() => setShowPreview(false)}
+              >
+                &times;
+              </button>
+            </div>
+            <div className={styles.previewContainer}>
+              <div ref={invoiceRef} className={styles.invoice}>
               {/* Header */}
               <div className={styles.invoiceHeader}>
                 <div className={styles.logoContainer}>
@@ -429,6 +438,7 @@ export default function InvoicePage() {
                   <p><strong>Website:</strong> www.citadelgold.com</p>
                 </div>
               </div>
+            </div>
             </div>
           </div>
         </div>
