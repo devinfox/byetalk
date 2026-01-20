@@ -1283,7 +1283,7 @@
   color: #000;
   font-weight: 700;
   font-size: 17pt;
-  line-height: 35px;
+  line-height: 32px;
   text-align: center;
   padding: 0;
   margin: 0;
@@ -1419,16 +1419,14 @@
   width: 12px;
   height: 12px;
   border: 1px solid #000;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: inline-block;
   margin-right: 5px;
-  font-size: 8pt;
+  font-size: 9px;
   font-weight: 700;
   flex-shrink: 0;
   border-radius: 0;
   background: white;
-  line-height: 0;
+  line-height: 10px;
   vertical-align: middle;
   padding: 0;
   text-align: center;
@@ -1444,9 +1442,11 @@
   min-width: 120px;
   display: inline-block;
   margin-left: 3px;
-  vertical-align: bottom;
-  padding-bottom: 2px;
-  line-height: 1;
+  vertical-align: baseline;
+  padding-bottom: 0;
+  line-height: 1.6;
+  position: relative;
+  top: -2px;
 }
 
 /* Purchase intro text */
