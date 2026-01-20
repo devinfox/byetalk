@@ -348,15 +348,15 @@ export default function InvoicePage() {
           const sectionNums = clonedDoc.querySelectorAll('[class*="bdlSectionNum"]');
           sectionNums.forEach((el) => {
             const elem = el as HTMLElement;
-            elem.style.paddingTop = '3px';
-            elem.style.lineHeight = '28px';
+            elem.style.paddingTop = '4px';
+            elem.style.lineHeight = 'normal';
           });
           // Fix checkboxes for html2canvas
           const checkboxes = clonedDoc.querySelectorAll('[class*="bdlCheckBox"]');
           checkboxes.forEach((el) => {
             const elem = el as HTMLElement;
-            elem.style.lineHeight = '11px';
-            elem.style.fontSize = '10px';
+            elem.style.lineHeight = '12px';
+            elem.style.paddingTop = '0';
           });
         },
       });
