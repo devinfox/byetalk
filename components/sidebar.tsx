@@ -23,6 +23,7 @@ import {
   Filter,
   Presentation,
   MessageCircle,
+  Receipt,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
@@ -65,6 +66,20 @@ const bottomNavigation = [
 interface SidebarProps {
   user: User | null
   unreadEmailCount?: number
+}
+
+// Check if user should have access to invoice page
+function canAccessInvoice(user: User | null): boolean {
+  if (!user) return false
+
+  // Shaun Bina (admin@citadelgold.com)
+  if (user.email?.toLowerCase() === 'admin@citadelgold.com') return true
+
+  // John Carrington (check by name)
+  const fullName = `${user.first_name || ''} ${user.last_name || ''}`.toLowerCase().trim()
+  if (fullName === 'john carrington') return true
+
+  return false
 }
 
 export function Sidebar({ user, unreadEmailCount = 0 }: SidebarProps) {
@@ -194,6 +209,21 @@ export function Sidebar({ user, unreadEmailCount = 0 }: SidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {navigation.map((item) => renderNavItem(item))}
+
+        {/* Invoice - only visible to John Carrington and Shaun Bina */}
+        {canAccessInvoice(user) && (
+          <Link
+            href="/invoice"
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+              pathname === '/invoice'
+                ? 'bg-gradient-to-r from-yellow-500/20 to-yellow-600/10 text-yellow-400 border border-yellow-500/30'
+                : 'text-gray-300 hover:bg-white/5 hover:text-white'
+            }`}
+          >
+            <Receipt className={`w-5 h-5 ${pathname === '/invoice' ? 'text-yellow-400' : ''}`} />
+            Invoice
+          </Link>
+        )}
       </nav>
 
       {/* Bottom Navigation */}
