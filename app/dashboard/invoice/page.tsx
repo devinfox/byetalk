@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import styles from "./invoice.module.css";
@@ -22,6 +22,26 @@ type InvoiceData = {
   billTo: string;
   shipTo: string;
   lineItems: LineItem[];
+};
+
+type SavedInvoice = {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  invoice_number: string | null;
+  client_name: string | null;
+  client_address: string | null;
+  client_city_state_zip: string | null;
+  client_phone: string | null;
+  date: string | null;
+  line_items: LineItem[];
+  grand_total: number;
+  status: string;
+  creator?: {
+    first_name: string | null;
+    last_name: string | null;
+    email: string | null;
+  };
 };
 
 const initialLineItem = (): LineItem => ({
@@ -68,7 +88,31 @@ export default function InvoicePage() {
   const [invoiceData, setInvoiceData] = useState<InvoiceData>(initialInvoiceData);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [savedInvoices, setSavedInvoices] = useState<SavedInvoice[]>([]);
+  const [currentInvoiceId, setCurrentInvoiceId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showSavedPanel, setShowSavedPanel] = useState(true);
   const invoiceRef = useRef<HTMLDivElement>(null);
+
+  // Fetch saved invoices on mount
+  useEffect(() => {
+    fetchInvoices();
+  }, []);
+
+  const fetchInvoices = async () => {
+    try {
+      const response = await fetch("/api/invoices");
+      if (response.ok) {
+        const data = await response.json();
+        setSavedInvoices(data.invoices || []);
+      }
+    } catch (error) {
+      console.error("Error fetching invoices:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const updateField = (field: keyof InvoiceData, value: string) => {
     setInvoiceData((prev) => ({ ...prev, [field]: value }));
@@ -103,6 +147,110 @@ export default function InvoicePage() {
     return invoiceData.lineItems.reduce((sum, item) => {
       return sum + calculateLineTotal(item.qty, item.listPrice);
     }, 0);
+  };
+
+  const saveInvoice = async () => {
+    setIsSaving(true);
+    try {
+      const payload = {
+        invoice_number: invoiceData.salesInvoiceNo,
+        client_name: invoiceData.clientName,
+        client_address: invoiceData.billTo,
+        client_city_state_zip: "",
+        client_phone: "",
+        date: invoiceData.date,
+        line_items: invoiceData.lineItems.map(item => ({
+          id: item.id,
+          productName: item.productName,
+          qty: item.qty,
+          listPrice: item.listPrice,
+        })),
+        grand_total: calculateGrandTotal(),
+        status: "draft",
+      };
+
+      let response;
+      if (currentInvoiceId) {
+        // Update existing invoice
+        response = await fetch(`/api/invoices/${currentInvoiceId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      } else {
+        // Create new invoice
+        response = await fetch("/api/invoices", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      }
+
+      if (response.ok) {
+        const data = await response.json();
+        setCurrentInvoiceId(data.invoice.id);
+        await fetchInvoices();
+        alert("Invoice saved successfully!");
+      } else {
+        const error = await response.json();
+        alert(`Error saving invoice: ${error.error}`);
+      }
+    } catch (error) {
+      console.error("Error saving invoice:", error);
+      alert("Error saving invoice. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const loadInvoice = (invoice: SavedInvoice) => {
+    setCurrentInvoiceId(invoice.id);
+    setInvoiceData({
+      date: invoice.date || initialInvoiceData.date,
+      clientName: invoice.client_name || "",
+      acctNumber: "",
+      acctRep: "",
+      acctRep2: "",
+      salesInvoiceNo: invoice.invoice_number || "",
+      billTo: invoice.client_address || "",
+      shipTo: "",
+      lineItems: invoice.line_items?.length > 0
+        ? invoice.line_items.map(item => ({
+            id: item.id || crypto.randomUUID(),
+            productName: item.productName || "",
+            qty: item.qty || "",
+            listPrice: item.listPrice || "",
+          }))
+        : [initialLineItem()],
+    });
+  };
+
+  const deleteInvoice = async (invoiceId: string) => {
+    if (!confirm("Are you sure you want to delete this invoice?")) return;
+
+    try {
+      const response = await fetch(`/api/invoices/${invoiceId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        if (currentInvoiceId === invoiceId) {
+          newInvoice();
+        }
+        await fetchInvoices();
+      } else {
+        const error = await response.json();
+        alert(`Error deleting invoice: ${error.error}`);
+      }
+    } catch (error) {
+      console.error("Error deleting invoice:", error);
+      alert("Error deleting invoice. Please try again.");
+    }
+  };
+
+  const newInvoice = () => {
+    setCurrentInvoiceId(null);
+    setInvoiceData(initialInvoiceData);
   };
 
   const generatePDF = async () => {
@@ -145,9 +293,90 @@ export default function InvoicePage() {
 
   return (
     <div className={styles.pageContainer}>
+      {/* Saved Invoices Panel */}
+      <div className={`${styles.savedPanel} ${showSavedPanel ? styles.panelOpen : styles.panelClosed}`}>
+        <div className={styles.savedPanelHeader}>
+          <h2>Saved Invoices</h2>
+          <button
+            className={styles.togglePanelBtn}
+            onClick={() => setShowSavedPanel(!showSavedPanel)}
+          >
+            {showSavedPanel ? "«" : "»"}
+          </button>
+        </div>
+        {showSavedPanel && (
+          <div className={styles.savedPanelContent}>
+            <button className={styles.newInvoiceBtn} onClick={newInvoice}>
+              + New Invoice
+            </button>
+            {isLoading ? (
+              <div className={styles.loadingText}>Loading...</div>
+            ) : savedInvoices.length === 0 ? (
+              <div className={styles.emptyText}>No saved invoices</div>
+            ) : (
+              <div className={styles.invoiceList}>
+                {savedInvoices.map((invoice) => (
+                  <div
+                    key={invoice.id}
+                    className={`${styles.invoiceItem} ${currentInvoiceId === invoice.id ? styles.invoiceItemActive : ""}`}
+                  >
+                    <div
+                      className={styles.invoiceItemContent}
+                      onClick={() => loadInvoice(invoice)}
+                    >
+                      <div className={styles.invoiceItemTitle}>
+                        {invoice.invoice_number || "Draft"}
+                      </div>
+                      <div className={styles.invoiceItemClient}>
+                        {invoice.client_name || "No client"}
+                      </div>
+                      <div className={styles.invoiceItemMeta}>
+                        {formatCurrency(invoice.grand_total || 0)}
+                        {invoice.creator && (
+                          <span className={styles.invoiceItemCreator}>
+                            by {invoice.creator.first_name}
+                          </span>
+                        )}
+                      </div>
+                      <div className={styles.invoiceItemDate}>
+                        {new Date(invoice.created_at).toLocaleDateString()}
+                      </div>
+                    </div>
+                    <button
+                      className={styles.deleteInvoiceBtn}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteInvoice(invoice.id);
+                      }}
+                      title="Delete invoice"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Form Section */}
       <div className={styles.formSection}>
-        <h1 className={styles.pageTitle}>Create Invoice</h1>
+        <div className={styles.formHeader}>
+          <h1 className={styles.pageTitle}>
+            {currentInvoiceId ? "Edit Invoice" : "Create Invoice"}
+          </h1>
+          <div className={styles.headerActions}>
+            <button
+              type="button"
+              className={styles.saveBtn}
+              onClick={saveInvoice}
+              disabled={isSaving}
+            >
+              {isSaving ? "Saving..." : currentInvoiceId ? "Update Invoice" : "Save Invoice"}
+            </button>
+          </div>
+        </div>
 
         <div className={styles.formGrid}>
           {/* Left Column - Client Info */}
