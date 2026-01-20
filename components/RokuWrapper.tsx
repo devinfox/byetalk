@@ -104,14 +104,14 @@ export default function RokuWrapper({ children }: RokuWrapperProps) {
     );
   }
 
-  // For TV: rotate 90deg and size to 1080x1920 portrait
+  // For TV: rotate -90deg (counter-clockwise) and size to 1080x1920 portrait
   // The viewport is landscape (e.g., 1920x1080), but TV is mounted portrait
-  // We need to rotate the content 90deg clockwise and fit it
+  // We need to rotate the content 90deg counter-clockwise and fit it
 
   const targetWidth = 1080;
   const targetHeight = 1920;
 
-  // After 90deg rotation:
+  // After -90deg rotation:
   // - What was targetHeight (1920) now spans horizontally -> must fit in viewportWidth
   // - What was targetWidth (1080) now spans vertically -> must fit in viewportHeight
   const scaleX = viewportSize.width / targetHeight;
@@ -140,7 +140,7 @@ export default function RokuWrapper({ children }: RokuWrapperProps) {
           height: targetHeight,
           overflow: "hidden",
           background: "#000",
-          transform: `rotate(90deg) scale(${scale})`,
+          transform: `rotate(-90deg) scale(${scale})`,
           transformOrigin: "center center",
         }}
       >
