@@ -23,8 +23,8 @@ export default function LeaderboardTable({ reps }: LeaderboardTableProps) {
             <th>RANK</th>
             <th>EMPLOYEE NAME</th>
             <th>WEEKLY REVENUE ($)</th>
-            <th>DAILY TRANSFER OVERS</th>
-            <th>WEEKLY TRANSFER OVERS</th>
+            <th>DAILY T.O's</th>
+            <th>WEEKLY T.O's</th>
           </tr>
         </thead>
         <tbody>
