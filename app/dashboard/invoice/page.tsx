@@ -1945,7 +1945,7 @@ export default function InvoicePage() {
 
                     {/* Section 6: Account Owner Signature */}
                     <div className={styles.bdlSection}>
-                      <div className={styles.bdlSectionHeader} style={{marginBottom: '16.33px'}}>
+                      <div className={styles.bdlSectionHeader} style={{marginBottom: '10px'}}>
                         <div className={styles.bdlSectionNum}>6</div>
                         <div className={styles.bdlSectionTitle}>Account Owner Signature and Investment Acknowledgment</div>
                       </div>
@@ -2441,7 +2441,7 @@ export default function InvoicePage() {
 
                     {/* Section 9: Account Owner Signature and Investment Acknowledgment */}
                     <div className={styles.bdlSection}>
-                      <div className={styles.bdlSectionHeader} style={{marginBottom: '16.33px'}}>
+                      <div className={styles.bdlSectionHeader} style={{marginBottom: '10px'}}>
                         <div className={styles.bdlSectionNum}>9</div>
                         <div className={styles.bdlSectionTitle}>Account Owner Signature and Investment Acknowledgment</div>
                       </div>
@@ -2857,7 +2857,7 @@ export default function InvoicePage() {
                         </div>
                       </div>
                       <div className={styles.bdlSection}>
-                        <div className={styles.bdlSectionHeader} style={{marginBottom: '16.33px'}}>
+                        <div className={styles.bdlSectionHeader} style={{marginBottom: '10px'}}>
                           <div className={styles.bdlSectionNum}>6</div>
                           <div className={styles.bdlSectionTitle}>Account Owner Signature and Investment Acknowledgment</div>
                         </div>
@@ -3328,7 +3328,7 @@ export default function InvoicePage() {
                         <div className={styles.bdlHeaderLine}></div>
 
                         <div className={styles.bdlSection}>
-                          <div className={styles.bdlSectionHeader} style={{marginBottom: '16.33px'}}>
+                          <div className={styles.bdlSectionHeader} style={{marginBottom: '10px'}}>
                             <div className={styles.bdlSectionNum}>9</div>
                             <div className={styles.bdlSectionTitle}>Account Owner Signature and Investment Acknowledgment</div>
                           </div>
@@ -3812,7 +3812,7 @@ export default function InvoicePage() {
               </div>
             </div>
             <div className={styles.bdlSection}>
-              <div className={styles.bdlSectionHeader} style={{marginBottom: '16.33px'}}>
+              <div className={styles.bdlSectionHeader} style={{marginBottom: '10px'}}>
                 <div className={styles.bdlSectionNum}>6</div>
                 <div className={styles.bdlSectionTitle}>Account Owner Signature and Investment Acknowledgment</div>
               </div>
