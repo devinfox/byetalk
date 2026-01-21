@@ -460,27 +460,65 @@ export default function InvoicePage() {
     setIsGeneratingBuyDirection(true);
 
     try {
-      // Use dom-to-image-more for more accurate rendering
-      const imgData = await domtoimage.toPng(targetRef, {
-        quality: 1,
-        width: 816,
-        height: 1056,
-        style: {
-          transform: 'none',
-          margin: '0',
-        },
+      // Get all stylesheets
+      const styleSheets = Array.from(document.styleSheets);
+      let cssText = "";
+      styleSheets.forEach((sheet) => {
+        try {
+          const rules = Array.from(sheet.cssRules || []);
+          rules.forEach((rule) => {
+            cssText += rule.cssText + "\n";
+          });
+        } catch (e) {
+          // Skip cross-origin stylesheets
+        }
       });
 
-      // US Letter: 8.5 x 11 inches = 612 x 792 points
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "pt",
-        format: "letter",
+      // Create full HTML document
+      const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body {
+              width: 8.5in;
+              height: 11in;
+              margin: 0;
+              padding: 0;
+              background: white;
+            }
+            ${cssText}
+          </style>
+        </head>
+        <body>
+          ${targetRef.outerHTML}
+        </body>
+        </html>
+      `;
+
+      // Call the API to generate PDF
+      const response = await fetch("/api/generate-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ html }),
       });
 
-      // Scale image to fit letter size (612 x 792 pt)
-      pdf.addImage(imgData, "PNG", 0, 0, 612, 792);
-      pdf.save(`buy-direction-letter-${invoiceData.clientName || "draft"}.pdf`);
+      if (!response.ok) {
+        throw new Error("PDF generation failed");
+      }
+
+      // Download the PDF
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `buy-direction-letter-${invoiceData.clientName || "draft"}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Error generating Buy Direction Letter PDF:", error);
       alert("Error generating Buy Direction Letter. Please try again.");
