@@ -727,6 +727,13 @@
   overflow-x: auto;
 }
 
+/* Ensure preview renders at full size for accurate PDF capture */
+.previewContainer .invoice,
+.previewContainer .bdl {
+  transform: none !important;
+  margin-bottom: 0 !important;
+}
+
 /* Hidden container for PDF generation */
 .hiddenPdfContainer {
   position: absolute;

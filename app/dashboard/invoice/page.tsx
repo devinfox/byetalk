@@ -397,7 +397,9 @@ export default function InvoicePage() {
   };
 
   const generatePDF = async () => {
-    if (!invoiceRef.current) {
+    // Use the visible preview element for pixel-perfect capture
+    const targetRef = previewInvoiceRef.current || invoiceRef.current;
+    if (!targetRef) {
       console.error("Invoice ref not found");
       alert("Error: Invoice template not ready. Please try again.");
       return;
@@ -406,22 +408,36 @@ export default function InvoicePage() {
     setIsGenerating(true);
 
     try {
-      const canvas = await html2canvas(invoiceRef.current, {
+      const canvas = await html2canvas(targetRef, {
         scale: 2,
         useCORS: true,
         logging: false,
         backgroundColor: "#ffffff",
         allowTaint: true,
+        width: 816,
+        height: 1056,
+        scrollX: 0,
+        scrollY: 0,
+        onclone: (clonedDoc, element) => {
+          // Remove any transforms that might affect rendering
+          element.style.transform = 'none';
+          element.style.transformOrigin = 'top left';
+          element.style.margin = '0';
+          element.style.width = '816px';
+          element.style.minHeight = '1056px';
+        },
       });
 
       const imgData = canvas.toDataURL("image/png");
+      // Use fixed letter size for consistent output
       const pdf = new jsPDF({
         orientation: "portrait",
-        unit: "px",
-        format: [canvas.width / 2, canvas.height / 2],
+        unit: "pt",
+        format: "letter",
       });
 
-      pdf.addImage(imgData, "PNG", 0, 0, canvas.width / 2, canvas.height / 2);
+      // Scale to US Letter: 612 x 792 points
+      pdf.addImage(imgData, "PNG", 0, 0, 612, 792);
       pdf.save(`invoice-${invoiceData.salesInvoiceNo || "draft"}.pdf`);
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -432,7 +448,9 @@ export default function InvoicePage() {
   };
 
   const generateBuyDirectionLetter = async () => {
-    if (!buyDirectionRef.current) {
+    // Use the visible preview element for pixel-perfect capture
+    const targetRef = previewBuyDirectionRef.current || buyDirectionRef.current;
+    if (!targetRef) {
       console.error("Buy Direction ref not found");
       alert("Error: Buy Direction Letter template not ready. Please try again.");
       return;
@@ -441,29 +459,23 @@ export default function InvoicePage() {
     setIsGeneratingBuyDirection(true);
 
     try {
-      const canvas = await html2canvas(buyDirectionRef.current, {
+      const canvas = await html2canvas(targetRef, {
         scale: 2,
         useCORS: true,
         logging: false,
         backgroundColor: "#ffffff",
         allowTaint: true,
-        onclone: (clonedDoc) => {
-          // Section numbers: height=38px, border=3px, so inner=35px
-          // Use line-height equal to inner height for centering
-          const sectionNums = clonedDoc.querySelectorAll('[class*="bdlSectionNum"]');
-          sectionNums.forEach((el) => {
-            const elem = el as HTMLElement;
-            elem.style.lineHeight = '35px';
-            elem.style.paddingTop = '0';
-            elem.style.paddingBottom = '0';
-          });
-
-          // Checkboxes: align with text baseline
-          const checkboxes = clonedDoc.querySelectorAll('[class*="bdlCheckBox"]');
-          checkboxes.forEach((el) => {
-            const elem = el as HTMLElement;
-            elem.style.verticalAlign = '-2px';
-          });
+        width: 816,
+        height: 1056,
+        scrollX: 0,
+        scrollY: 0,
+        onclone: (clonedDoc, element) => {
+          // Remove any transforms that might affect rendering
+          element.style.transform = 'none';
+          element.style.transformOrigin = 'top left';
+          element.style.margin = '0';
+          element.style.width = '816px';
+          element.style.minHeight = '1056px';
         },
       });
 
@@ -1028,7 +1040,7 @@ export default function InvoicePage() {
             <div className={styles.previewContainer}>
               {/* Invoice Preview */}
               {previewTab === 'invoice' && (
-                <div className={styles.invoice}>
+                <div ref={previewInvoiceRef} className={styles.invoice}>
                   <div className={styles.invoiceHeader}>
                     <div className={styles.logoContainer}>
                       <img src="/citadel-gold-logo.png" alt="Citadel Gold" className={styles.logo} />
@@ -1109,7 +1121,7 @@ export default function InvoicePage() {
 
               {/* Buy Direction Letter Preview */}
               {previewTab === 'buyDirection' && (
-                <div className={styles.bdl}>
+                <div ref={previewBuyDirectionRef} className={styles.bdl}>
                   <div className={styles.bdlHeader}>
                     <div className={styles.bdlLogo}><img src="/entrust.png" alt="The Entrust Group" /></div>
                     <div className={styles.bdlHeaderCenter}>
