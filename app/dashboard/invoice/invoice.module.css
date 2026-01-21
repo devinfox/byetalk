@@ -1414,17 +1414,17 @@
 
 .bdlFormTable td {
   border: 1px solid #808181;
-  padding: 3px 8px 8px 8px;
+  padding: 3px 8px 5px 8px;
   vertical-align: top;
-  height: 42px;
+  height: 32px;
 }
 
 .bdlCell {
-  height: 42px;
+  height: 32px;
 }
 
 .bdlCellLabel {
-  font-size: 8.1px;
+  font-size: 8.5px;
   color: #000;
   font-weight: 400;
   text-transform: uppercase;
@@ -1447,7 +1447,7 @@
 .bdlCellValue {
   font-size: 11px;
   color: #000;
-  padding-top: 6px;
+  padding-top: 3px;
   line-height: 1.2;
 }
 

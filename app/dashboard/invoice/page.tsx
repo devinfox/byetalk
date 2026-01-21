@@ -1869,47 +1869,42 @@ export default function InvoicePage() {
                       <table className={styles.bdlFormTable}>
                         <tbody>
                           <tr>
-                            <td className={styles.bdlCell} style={{width: '35%'}}>
+                            <td className={styles.bdlCell} style={{width: '40%'}}>
                               <div className={styles.bdlCellLabel}>DEPOSITORY NAME</div>
                               <div className={styles.bdlCellValue}>{depositoryInfo.depositoryName}</div>
                             </td>
-                            <td className={styles.bdlCell} style={{width: '35%'}}>
+                            <td className={styles.bdlCell} style={{width: '20%'}}>
                               <div className={styles.bdlCellLabel}>CONTACT NAME</div>
                               <div className={styles.bdlCellValue}>{depositoryInfo.contactName}</div>
                             </td>
-                            <td className={styles.bdlCell} style={{width: '30%'}}>
+                            <td className={styles.bdlCell} colSpan={2} style={{width: '40%'}}>
                               <div className={styles.bdlCellLabel}>CONTACT PHONE NUMBER</div>
                               <div className={styles.bdlCellValue}>{depositoryInfo.contactPhone}</div>
                             </td>
                           </tr>
                           <tr>
-                            <td className={styles.bdlCell} colSpan={2}>
+                            <td className={styles.bdlCell} style={{width: '40%'}}>
                               <div className={styles.bdlCellLabel}>DEPOSITORY STREET ADDRESS</div>
                               <div className={styles.bdlCellValue}>{depositoryInfo.streetAddress}</div>
                             </td>
-                            <td className={styles.bdlCell}>
+                            <td className={styles.bdlCell} style={{width: '20%'}}>
                               <div className={styles.bdlCellLabel}>CITY</div>
                               <div className={styles.bdlCellValue}>{depositoryInfo.city}</div>
                             </td>
-                          </tr>
-                          <tr>
-                            <td className={styles.bdlCell} colSpan={2}></td>
-                            <td className={styles.bdlCell} style={{display: 'flex', gap: '0'}}>
-                              <div style={{flex: 1, borderRight: '1px solid #808181', padding: '3px 8px'}}>
-                                <div className={styles.bdlCellLabel}>STATE</div>
-                                <div className={styles.bdlCellValue}>{depositoryInfo.state}</div>
-                              </div>
-                              <div style={{flex: 1, padding: '3px 8px'}}>
-                                <div className={styles.bdlCellLabel}>ZIP CODE</div>
-                                <div className={styles.bdlCellValue}>{depositoryInfo.zipCode}</div>
-                              </div>
+                            <td className={styles.bdlCell} style={{width: '20%'}}>
+                              <div className={styles.bdlCellLabel}>STATE</div>
+                              <div className={styles.bdlCellValue}>{depositoryInfo.state}</div>
+                            </td>
+                            <td className={styles.bdlCell} style={{width: '20%'}}>
+                              <div className={styles.bdlCellLabel}>ZIP CODE</div>
+                              <div className={styles.bdlCellValue}>{depositoryInfo.zipCode}</div>
                             </td>
                           </tr>
                           <tr>
-                            <td className={styles.bdlCell} colSpan={3} style={{padding: '8px'}}>
-                              <div className={styles.bdlCheckItem} style={{margin: 0}}>
-                                <span className={styles.bdlCheckBox}>{depositoryInfo.storageAgreementAttached ? "X" : ""}</span>
-                                <span style={{fontWeight: 700}}>DEPOSITORY STORAGE AGREEMENT ATTACHED</span>
+                            <td className={styles.bdlCell} colSpan={4} style={{padding: '3px 8px', height: 'auto'}}>
+                              <div className={styles.bdlCheckItem} style={{margin: 0, display: 'flex', alignItems: 'center', gap: '6px'}}>
+                                <span className={styles.bdlCheckBox} style={{width: '10px', height: '10px', minWidth: '10px'}}>{depositoryInfo.storageAgreementAttached ? "X" : ""}</span>
+                                <span style={{fontWeight: 700, fontSize: '8px'}}>DEPOSITORY STORAGE AGREEMENT ATTACHED</span>
                               </div>
                             </td>
                           </tr>
@@ -2759,47 +2754,42 @@ export default function InvoicePage() {
                         <table className={styles.bdlFormTable}>
                           <tbody>
                             <tr>
-                              <td className={styles.bdlCell} style={{width: '35%'}}>
+                              <td className={styles.bdlCell} style={{width: '40%'}}>
                                 <div className={styles.bdlCellLabel}>DEPOSITORY NAME</div>
                                 <div className={styles.bdlCellValue}>{depositoryInfo.depositoryName}</div>
                               </td>
-                              <td className={styles.bdlCell} style={{width: '35%'}}>
+                              <td className={styles.bdlCell} style={{width: '20%'}}>
                                 <div className={styles.bdlCellLabel}>CONTACT NAME</div>
                                 <div className={styles.bdlCellValue}>{depositoryInfo.contactName}</div>
                               </td>
-                              <td className={styles.bdlCell} style={{width: '30%'}}>
+                              <td className={styles.bdlCell} colSpan={2} style={{width: '40%'}}>
                                 <div className={styles.bdlCellLabel}>CONTACT PHONE NUMBER</div>
                                 <div className={styles.bdlCellValue}>{depositoryInfo.contactPhone}</div>
                               </td>
                             </tr>
                             <tr>
-                              <td className={styles.bdlCell} colSpan={2}>
+                              <td className={styles.bdlCell} style={{width: '40%'}}>
                                 <div className={styles.bdlCellLabel}>DEPOSITORY STREET ADDRESS</div>
                                 <div className={styles.bdlCellValue}>{depositoryInfo.streetAddress}</div>
                               </td>
-                              <td className={styles.bdlCell}>
+                              <td className={styles.bdlCell} style={{width: '20%'}}>
                                 <div className={styles.bdlCellLabel}>CITY</div>
                                 <div className={styles.bdlCellValue}>{depositoryInfo.city}</div>
                               </td>
-                            </tr>
-                            <tr>
-                              <td className={styles.bdlCell} colSpan={2}></td>
-                              <td className={styles.bdlCell} style={{display: 'flex', gap: '0'}}>
-                                <div style={{flex: 1, borderRight: '1px solid #808181', padding: '3px 8px'}}>
-                                  <div className={styles.bdlCellLabel}>STATE</div>
-                                  <div className={styles.bdlCellValue}>{depositoryInfo.state}</div>
-                                </div>
-                                <div style={{flex: 1, padding: '3px 8px'}}>
-                                  <div className={styles.bdlCellLabel}>ZIP CODE</div>
-                                  <div className={styles.bdlCellValue}>{depositoryInfo.zipCode}</div>
-                                </div>
+                              <td className={styles.bdlCell} style={{width: '20%'}}>
+                                <div className={styles.bdlCellLabel}>STATE</div>
+                                <div className={styles.bdlCellValue}>{depositoryInfo.state}</div>
+                              </td>
+                              <td className={styles.bdlCell} style={{width: '20%'}}>
+                                <div className={styles.bdlCellLabel}>ZIP CODE</div>
+                                <div className={styles.bdlCellValue}>{depositoryInfo.zipCode}</div>
                               </td>
                             </tr>
                             <tr>
-                              <td className={styles.bdlCell} colSpan={3} style={{padding: '8px'}}>
-                                <div className={styles.bdlCheckItem} style={{margin: 0}}>
-                                  <span className={styles.bdlCheckBox}>{depositoryInfo.storageAgreementAttached ? "X" : ""}</span>
-                                  <span style={{fontWeight: 700}}>DEPOSITORY STORAGE AGREEMENT ATTACHED</span>
+                              <td className={styles.bdlCell} colSpan={4} style={{padding: '3px 8px', height: 'auto'}}>
+                                <div className={styles.bdlCheckItem} style={{margin: 0, display: 'flex', alignItems: 'center', gap: '6px'}}>
+                                  <span className={styles.bdlCheckBox} style={{width: '10px', height: '10px', minWidth: '10px'}}>{depositoryInfo.storageAgreementAttached ? "X" : ""}</span>
+                                  <span style={{fontWeight: 700, fontSize: '8px'}}>DEPOSITORY STORAGE AGREEMENT ATTACHED</span>
                                 </div>
                               </td>
                             </tr>
@@ -3690,47 +3680,42 @@ export default function InvoicePage() {
               <table className={styles.bdlFormTable}>
                 <tbody>
                   <tr>
-                    <td className={styles.bdlCell} style={{width: '35%'}}>
+                    <td className={styles.bdlCell} style={{width: '40%'}}>
                       <div className={styles.bdlCellLabel}>DEPOSITORY NAME</div>
                       <div className={styles.bdlCellValue}>{depositoryInfo.depositoryName}</div>
                     </td>
-                    <td className={styles.bdlCell} style={{width: '35%'}}>
+                    <td className={styles.bdlCell} style={{width: '20%'}}>
                       <div className={styles.bdlCellLabel}>CONTACT NAME</div>
                       <div className={styles.bdlCellValue}>{depositoryInfo.contactName}</div>
                     </td>
-                    <td className={styles.bdlCell} style={{width: '30%'}}>
+                    <td className={styles.bdlCell} colSpan={2} style={{width: '40%'}}>
                       <div className={styles.bdlCellLabel}>CONTACT PHONE NUMBER</div>
                       <div className={styles.bdlCellValue}>{depositoryInfo.contactPhone}</div>
                     </td>
                   </tr>
                   <tr>
-                    <td className={styles.bdlCell} colSpan={2}>
+                    <td className={styles.bdlCell} style={{width: '40%'}}>
                       <div className={styles.bdlCellLabel}>DEPOSITORY STREET ADDRESS</div>
                       <div className={styles.bdlCellValue}>{depositoryInfo.streetAddress}</div>
                     </td>
-                    <td className={styles.bdlCell}>
+                    <td className={styles.bdlCell} style={{width: '20%'}}>
                       <div className={styles.bdlCellLabel}>CITY</div>
                       <div className={styles.bdlCellValue}>{depositoryInfo.city}</div>
                     </td>
-                  </tr>
-                  <tr>
-                    <td className={styles.bdlCell} colSpan={2}></td>
-                    <td className={styles.bdlCell} style={{display: 'flex', gap: '0'}}>
-                      <div style={{flex: 1, borderRight: '1px solid #808181', padding: '3px 8px'}}>
-                        <div className={styles.bdlCellLabel}>STATE</div>
-                        <div className={styles.bdlCellValue}>{depositoryInfo.state}</div>
-                      </div>
-                      <div style={{flex: 1, padding: '3px 8px'}}>
-                        <div className={styles.bdlCellLabel}>ZIP CODE</div>
-                        <div className={styles.bdlCellValue}>{depositoryInfo.zipCode}</div>
-                      </div>
+                    <td className={styles.bdlCell} style={{width: '20%'}}>
+                      <div className={styles.bdlCellLabel}>STATE</div>
+                      <div className={styles.bdlCellValue}>{depositoryInfo.state}</div>
+                    </td>
+                    <td className={styles.bdlCell} style={{width: '20%'}}>
+                      <div className={styles.bdlCellLabel}>ZIP CODE</div>
+                      <div className={styles.bdlCellValue}>{depositoryInfo.zipCode}</div>
                     </td>
                   </tr>
                   <tr>
-                    <td className={styles.bdlCell} colSpan={3} style={{padding: '8px'}}>
-                      <div className={styles.bdlCheckItem} style={{margin: 0}}>
-                        <span className={styles.bdlCheckBox}>{depositoryInfo.storageAgreementAttached ? "X" : ""}</span>
-                        <span style={{fontWeight: 700}}>DEPOSITORY STORAGE AGREEMENT ATTACHED</span>
+                    <td className={styles.bdlCell} colSpan={4} style={{padding: '3px 8px', height: 'auto'}}>
+                      <div className={styles.bdlCheckItem} style={{margin: 0, display: 'flex', alignItems: 'center', gap: '6px'}}>
+                        <span className={styles.bdlCheckBox} style={{width: '10px', height: '10px', minWidth: '10px'}}>{depositoryInfo.storageAgreementAttached ? "X" : ""}</span>
+                        <span style={{fontWeight: 700, fontSize: '8px'}}>DEPOSITORY STORAGE AGREEMENT ATTACHED</span>
                       </div>
                     </td>
                   </tr>
