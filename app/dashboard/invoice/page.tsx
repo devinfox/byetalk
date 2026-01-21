@@ -455,58 +455,65 @@ export default function InvoicePage() {
       return;
     }
 
-    setIsGeneratingBuyDirection(true);
-
-    try {
-      const canvas = await html2canvas(targetRef, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: "#ffffff",
-        onclone: (_doc, element) => {
-          // Fix the section headers by converting absolute positioning to inline-flex
-          const sectionHeaders = element.querySelectorAll('div');
-          sectionHeaders.forEach((div) => {
-            const style = window.getComputedStyle(div);
-            // Find section header divs (gray background)
-            if (style.backgroundColor === 'rgb(149, 149, 149)') {
-              div.style.display = 'inline-flex';
-              div.style.alignItems = 'center';
-              div.style.width = '100%';
-              div.style.paddingLeft = '0';
-              div.style.position = 'relative';
-            }
-            // Find number badge divs (absolute positioned, 34px wide)
-            if (style.position === 'absolute' && style.width === '34px') {
-              div.style.position = 'relative';
-              div.style.top = 'auto';
-              div.style.left = 'auto';
-              div.style.marginTop = '0';
-              div.style.marginRight = '8px';
-              div.style.flexShrink = '0';
-            }
-          });
-        },
-      });
-
-      const imgData = canvas.toDataURL("image/png", 1.0);
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "pt",
-        format: "letter",
-      });
-
-      // Scale to fit letter size
-      const imgWidth = 612;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
-      pdf.save(`buy-direction-letter-${invoiceData.clientName || "draft"}.pdf`);
-    } catch (error) {
-      console.error("Error generating Buy Direction Letter PDF:", error);
-      alert("Error generating Buy Direction Letter. Please try again.");
-    } finally {
-      setIsGeneratingBuyDirection(false);
+    // Open a new window with just the Buy Direction Letter content
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert("Please allow popups to print the Buy Direction Letter.");
+      return;
     }
+
+    // Get all stylesheets
+    const styleSheets = Array.from(document.styleSheets);
+    let cssText = "";
+    styleSheets.forEach((sheet) => {
+      try {
+        const rules = Array.from(sheet.cssRules || []);
+        rules.forEach((rule) => {
+          cssText += rule.cssText + "\n";
+        });
+      } catch (e) {
+        // Skip cross-origin stylesheets
+      }
+    });
+
+    // Write the print document
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Buy Direction Letter - ${invoiceData.clientName || "Draft"}</title>
+        <style>
+          ${cssText}
+          @media print {
+            @page {
+              size: letter;
+              margin: 0;
+            }
+            body {
+              margin: 0;
+              padding: 0;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+          }
+          body {
+            margin: 0;
+            padding: 0;
+            background: white;
+          }
+        </style>
+      </head>
+      <body>
+        ${targetRef.outerHTML}
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+
+    // Wait for content to load then print
+    printWindow.onload = () => {
+      printWindow.print();
+    };
   };
 
   // Only show rows that have data
