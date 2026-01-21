@@ -1271,49 +1271,48 @@
   position: relative;
 }
 
-/* Section header bar - #959595 bg, white text */
+/* Section header bar - #959595 bg, white text, THINNER than number box */
 .bdlSectionHeader {
-  display: flex;
-  align-items: center;
-  background: transparent;
-  padding: 0;
+  display: block;
+  background: #959595;
+  padding: 6px 15px 6px 50px;
   margin-bottom: 8px;
-  gap: 0;
+  min-height: 22px;
+  position: relative;
+  border-radius: 0;
   text-decoration: none !important;
+  -webkit-text-decoration: none !important;
+  overflow: visible;
+  line-height: 22px;
 }
 
-/* Number badge - white bg, black text */
+/* Number badge - white bg, black text, TALLER than header bar, centered on it */
 .bdlSectionNum {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  margin-top: -19px;
   width: 34px;
-  height: 34px;
+  height: 38px;
   background: #fff;
   border: 1.5px solid #333;
   border-radius: 4px;
   color: #000;
   font-weight: 700;
-  font-size: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  font-size: 22px;
+  padding-top: 5px;
+  text-align: center;
   box-sizing: border-box;
-  margin-right: -1px;
-  z-index: 2;
 }
 
-/* Gray bar behind title */
 .bdlSectionTitle {
-  background: #959595;
   color: #fff;
   font-weight: 700;
-  font-size: 14pt;
+  font-size: 15pt;
   letter-spacing: 0;
   text-decoration: none !important;
   -webkit-text-decoration: none !important;
   border: none;
-  padding: 8px 15px;
-  flex: 1;
-  line-height: 1.2;
 }
 
 .bdlSelectOne {
