@@ -680,7 +680,9 @@ export default function InvoicePage() {
               print-color-adjust: exact !important;
             }
             .page-break {
-              page-break-after: always;
+              display: none !important;
+              height: 0 !important;
+              page-break-after: auto;
             }
           }
           body {
@@ -689,7 +691,7 @@ export default function InvoicePage() {
             background: white;
           }
           .page-break {
-            page-break-after: always;
+            height: 40px;
           }
         </style>
       </head>

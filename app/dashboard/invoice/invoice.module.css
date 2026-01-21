@@ -1650,6 +1650,18 @@
 
 /* Print-specific rules - disable auto-scaling */
 @media print {
+  .invoice {
+    width: 8.5in !important;
+    min-height: 11in !important;
+    margin: 0 !important;
+    padding: 4px !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    transform: none !important;
+    zoom: 1 !important;
+    page-break-after: always;
+  }
+
   .bdl {
     width: 8.5in !important;
     min-height: 11in !important;
@@ -1659,6 +1671,11 @@
     print-color-adjust: exact !important;
     transform: none !important;
     zoom: 1 !important;
+    page-break-after: always;
+  }
+
+  .bdlPage2 {
+    page-break-after: always;
   }
 
   @page {
