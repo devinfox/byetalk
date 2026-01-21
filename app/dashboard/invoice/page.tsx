@@ -1970,12 +1970,12 @@ export default function InvoicePage() {
                       <table className={styles.bdlFormTable} style={{marginTop: '10px'}}>
                         <tbody>
                           <tr>
-                            <td className={styles.bdlCell} style={{width: '60%', height: '50px'}}>
-                              <div className={styles.bdlCellLabel}>SIGNATURE</div>
+                            <td className={styles.bdlCell} style={{width: '60%', height: '33px'}}>
+                              <div className={styles.bdlCellLabel} style={{fontWeight: 700}}>SIGNATURE</div>
                               <div className={styles.bdlCellValue}></div>
                             </td>
-                            <td className={styles.bdlCell} style={{width: '40%', height: '50px'}}>
-                              <div className={styles.bdlCellLabel}>DATE</div>
+                            <td className={styles.bdlCell} style={{width: '40%', height: '33px'}}>
+                              <div className={styles.bdlCellLabel} style={{fontWeight: 700}}>DATE</div>
                               <div className={styles.bdlCellValue}></div>
                             </td>
                           </tr>
@@ -2467,12 +2467,12 @@ export default function InvoicePage() {
                       <table className={styles.bdlFormTable} style={{marginTop: '10px'}}>
                         <tbody>
                           <tr>
-                            <td className={styles.bdlCell} style={{width: '60%', height: '50px'}}>
-                              <div className={styles.bdlCellLabel}>SIGNATURE</div>
+                            <td className={styles.bdlCell} style={{width: '60%', height: '33px'}}>
+                              <div className={styles.bdlCellLabel} style={{fontWeight: 700}}>SIGNATURE</div>
                               <div className={styles.bdlCellValue}></div>
                             </td>
-                            <td className={styles.bdlCell} style={{width: '40%', height: '50px'}}>
-                              <div className={styles.bdlCellLabel}>DATE</div>
+                            <td className={styles.bdlCell} style={{width: '40%', height: '33px'}}>
+                              <div className={styles.bdlCellLabel} style={{fontWeight: 700}}>DATE</div>
                               <div className={styles.bdlCellValue}></div>
                             </td>
                           </tr>
@@ -2877,12 +2877,12 @@ export default function InvoicePage() {
                         <table className={styles.bdlFormTable} style={{marginTop: '10px'}}>
                           <tbody>
                             <tr>
-                              <td className={styles.bdlCell} style={{width: '60%', height: '50px'}}>
-                                <div className={styles.bdlCellLabel}>SIGNATURE</div>
+                              <td className={styles.bdlCell} style={{width: '60%', height: '33px'}}>
+                                <div className={styles.bdlCellLabel} style={{fontWeight: 700}}>SIGNATURE</div>
                                 <div className={styles.bdlCellValue}></div>
                               </td>
-                              <td className={styles.bdlCell} style={{width: '40%', height: '50px'}}>
-                                <div className={styles.bdlCellLabel}>DATE</div>
+                              <td className={styles.bdlCell} style={{width: '40%', height: '33px'}}>
+                                <div className={styles.bdlCellLabel} style={{fontWeight: 700}}>DATE</div>
                                 <div className={styles.bdlCellValue}></div>
                               </td>
                             </tr>
@@ -3356,12 +3356,12 @@ export default function InvoicePage() {
                           <table className={styles.bdlFormTable} style={{marginTop: '10px'}}>
                             <tbody>
                               <tr>
-                                <td className={styles.bdlCell} style={{width: '60%', height: '50px'}}>
-                                  <div className={styles.bdlCellLabel}>SIGNATURE</div>
+                                <td className={styles.bdlCell} style={{width: '60%', height: '33px'}}>
+                                  <div className={styles.bdlCellLabel} style={{fontWeight: 700}}>SIGNATURE</div>
                                   <div className={styles.bdlCellValue}></div>
                                 </td>
-                                <td className={styles.bdlCell} style={{width: '40%', height: '50px'}}>
-                                  <div className={styles.bdlCellLabel}>DATE</div>
+                                <td className={styles.bdlCell} style={{width: '40%', height: '33px'}}>
+                                  <div className={styles.bdlCellLabel} style={{fontWeight: 700}}>DATE</div>
                                   <div className={styles.bdlCellValue}></div>
                                 </td>
                               </tr>
@@ -3834,12 +3834,12 @@ export default function InvoicePage() {
               <table className={styles.bdlFormTable} style={{marginTop: '10px'}}>
                 <tbody>
                   <tr>
-                    <td className={styles.bdlCell} style={{width: '60%', height: '50px'}}>
-                      <div className={styles.bdlCellLabel}>SIGNATURE</div>
+                    <td className={styles.bdlCell} style={{width: '60%', height: '33px'}}>
+                      <div className={styles.bdlCellLabel} style={{fontWeight: 700}}>SIGNATURE</div>
                       <div className={styles.bdlCellValue}></div>
                     </td>
-                    <td className={styles.bdlCell} style={{width: '40%', height: '50px'}}>
-                      <div className={styles.bdlCellLabel}>DATE</div>
+                    <td className={styles.bdlCell} style={{width: '40%', height: '33px'}}>
+                      <div className={styles.bdlCellLabel} style={{fontWeight: 700}}>DATE</div>
                       <div className={styles.bdlCellValue}></div>
                     </td>
                   </tr>
