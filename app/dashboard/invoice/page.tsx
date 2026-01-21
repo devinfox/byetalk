@@ -476,6 +476,17 @@ export default function InvoicePage() {
           element.style.margin = '0';
           element.style.width = '816px';
           element.style.minHeight = '1056px';
+
+          // Fix ALL text elements to remove potential strikethrough
+          const allElements = element.querySelectorAll('*');
+          allElements.forEach((el) => {
+            const elem = el as HTMLElement;
+            if (elem.style) {
+              elem.style.textDecoration = 'none';
+              elem.style.textDecorationLine = 'none';
+              elem.style.borderRadius = '0';
+            }
+          });
         },
       });
 
