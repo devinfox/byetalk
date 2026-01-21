@@ -1277,6 +1277,15 @@ export default function InvoicePage() {
                       <strong>I hereby direct the administrator and/or custodian to BUY the following asset(s) for my account:</strong>
                     </div>
                     <table className={styles.bdlPurchaseTable}>
+                      <colgroup>
+                        <col style={{width: '60px'}} />
+                        <col style={{width: '70px'}} />
+                        <col style={{width: '180px'}} />
+                        <col style={{width: '60px'}} />
+                        <col style={{width: '70px'}} />
+                        <col style={{width: '90px'}} />
+                        <col style={{width: '100px'}} />
+                      </colgroup>
                       <thead>
                         <tr>
                           <th>Quantity<br/><span className={styles.bdlThSub}>(number of units)</span></th>
@@ -1593,15 +1602,24 @@ export default function InvoicePage() {
               <strong>I hereby direct the administrator and/or custodian to BUY the following asset(s) for my account:</strong>
             </div>
             <table className={styles.bdlPurchaseTable}>
+              <colgroup>
+                <col style={{width: '60px'}} />
+                <col style={{width: '70px'}} />
+                <col style={{width: '180px'}} />
+                <col style={{width: '60px'}} />
+                <col style={{width: '70px'}} />
+                <col style={{width: '90px'}} />
+                <col style={{width: '100px'}} />
+              </colgroup>
               <thead>
                 <tr>
-                  <th style={{width: '10%'}}>Quantity<br/><span className={styles.bdlThSub}>(number of units)</span></th>
-                  <th style={{width: '10%'}}>Metal Type</th>
-                  <th style={{width: '24%'}}>Asset Name or Description<br/><span className={styles.bdlThSub}>(U.S. Silver Eagle, 1oz.)</span></th>
-                  <th style={{width: '10%'}}>Proof Am.<br/>Eagle?</th>
-                  <th style={{width: '12%'}}>Troy OZ. Each</th>
-                  <th style={{width: '14%'}}>Price<br/><span className={styles.bdlThSub}>(per number of units)</span></th>
-                  <th style={{width: '20%'}}>Total Purchase Price<br/><span className={styles.bdlThSub}>(quantity times price)</span></th>
+                  <th>Quantity<br/><span className={styles.bdlThSub}>(number of units)</span></th>
+                  <th>Metal Type</th>
+                  <th>Asset Name or Description<br/><span className={styles.bdlThSub}>(U.S. Silver Eagle, 1oz.)</span></th>
+                  <th>Proof Am.<br/>Eagle?</th>
+                  <th>Troy OZ. Each</th>
+                  <th>Price<br/><span className={styles.bdlThSub}>(per number of units)</span></th>
+                  <th>Total Purchase Price<br/><span className={styles.bdlThSub}>(quantity times price)</span></th>
                 </tr>
               </thead>
               <tbody>
