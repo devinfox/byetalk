@@ -100,6 +100,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const {
+      name,
       invoice_number,
       client_name,
       client_address,
@@ -115,6 +116,7 @@ export async function POST(request: NextRequest) {
       .from('invoices')
       .insert({
         created_by: crmUserId,
+        name,
         invoice_number,
         client_name,
         client_address,

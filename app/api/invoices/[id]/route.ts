@@ -114,6 +114,7 @@ export async function PUT(
 
     const body = await request.json()
     const {
+      name,
       invoice_number,
       client_name,
       client_address,
@@ -128,6 +129,7 @@ export async function PUT(
     const { data: invoice, error: updateError } = await supabase
       .from('invoices')
       .update({
+        name,
         invoice_number,
         client_name,
         client_address,

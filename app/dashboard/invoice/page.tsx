@@ -15,6 +15,7 @@ type LineItem = {
 };
 
 type InvoiceData = {
+  name: string;
   date: string;
   clientName: string;
   acctNumber: string;
@@ -120,6 +121,7 @@ type SavedInvoice = {
   id: string;
   created_at: string;
   updated_at: string;
+  name: string | null;
   invoice_number: string | null;
   client_name: string | null;
   client_address: string | null;
@@ -163,6 +165,7 @@ const formatCurrency = (amount: number): string => {
 };
 
 const initialInvoiceData: InvoiceData = {
+  name: "",
   date: new Date().toLocaleDateString("en-US", {
     month: "2-digit",
     day: "2-digit",
@@ -340,6 +343,7 @@ export default function InvoicePage() {
     setIsSaving(true);
     try {
       const payload = {
+        name: invoiceData.name,
         invoice_number: invoiceData.salesInvoiceNo,
         client_name: invoiceData.clientName,
         client_address: invoiceData.billTo,
@@ -393,6 +397,7 @@ export default function InvoicePage() {
   const loadInvoice = (invoice: SavedInvoice) => {
     setCurrentInvoiceId(invoice.id);
     setInvoiceData({
+      name: invoice.name || "",
       date: invoice.date || initialInvoiceData.date,
       clientName: invoice.client_name || "",
       acctNumber: "",
@@ -744,7 +749,7 @@ export default function InvoicePage() {
                       onClick={() => loadInvoice(invoice)}
                     >
                       <div className={styles.invoiceItemTitle}>
-                        {invoice.invoice_number || "Draft"}
+                        {invoice.name || invoice.invoice_number || "Draft"}
                       </div>
                       <div className={styles.invoiceItemClient}>
                         {invoice.client_name || "No client"}
@@ -786,6 +791,14 @@ export default function InvoicePage() {
             {currentInvoiceId ? "Edit Invoice" : "Create Invoice"}
           </h1>
           <div className={styles.headerActions}>
+            <label className={styles.headerCheckbox}>
+              <input
+                type="checkbox"
+                checked={isBuyAndSell}
+                onChange={(e) => setIsBuyAndSell(e.target.checked)}
+              />
+              <span>Buy and Sell Transaction</span>
+            </label>
             <button
               type="button"
               className={styles.saveBtn}
@@ -794,6 +807,19 @@ export default function InvoicePage() {
             >
               {isSaving ? "Saving..." : currentInvoiceId ? "Update Invoice" : "Save Invoice"}
             </button>
+          </div>
+        </div>
+
+        {/* Invoice Name */}
+        <div className={styles.invoiceNameSection}>
+          <div className={styles.formGroup}>
+            <label>Invoice Name (for saving)</label>
+            <input
+              type="text"
+              value={invoiceData.name}
+              onChange={(e) => updateField("name", e.target.value)}
+              placeholder="e.g., Smith IRA Purchase - January 2025"
+            />
           </div>
         </div>
 
@@ -905,18 +931,6 @@ export default function InvoicePage() {
               />
             </div>
           </div>
-        </div>
-
-        {/* Buy and Sell Toggle */}
-        <div className={styles.paymentSection}>
-          <label className={styles.checkboxLabel} style={{ fontSize: '1rem', fontWeight: 600 }}>
-            <input
-              type="checkbox"
-              checked={isBuyAndSell}
-              onChange={(e) => setIsBuyAndSell(e.target.checked)}
-            />
-            <span>This is a Buy and Sell Transaction</span>
-          </label>
         </div>
 
         {/* Payment Instructions for Buy Direction Letter */}
