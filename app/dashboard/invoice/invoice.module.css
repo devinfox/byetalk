@@ -1204,12 +1204,12 @@
 /* Header */
 .bdlHeader {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   margin-bottom: 5px;
 }
 
 .bdlLogo {
-  width: 140px;
+  width: 23.6%;
   flex-shrink: 0;
 }
 
