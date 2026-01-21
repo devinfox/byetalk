@@ -1176,12 +1176,14 @@ export default function InvoicePage() {
                 >
                   Buy Direction
                 </button>
-                <button
-                  className={`${styles.previewTab} ${previewTab === 'sellDirection' ? styles.previewTabActive : ''}`}
-                  onClick={() => setPreviewTab('sellDirection')}
-                >
-                  Sell Direction
-                </button>
+                {isBuyAndSell && (
+                  <button
+                    className={`${styles.previewTab} ${previewTab === 'sellDirection' ? styles.previewTabActive : ''}`}
+                    onClick={() => setPreviewTab('sellDirection')}
+                  >
+                    Sell Direction
+                  </button>
+                )}
                 <button
                   className={`${styles.previewTab} ${previewTab === 'combined' ? styles.previewTabActive : ''}`}
                   onClick={() => setPreviewTab('combined')}
@@ -1953,189 +1955,193 @@ export default function InvoicePage() {
                     </div>
                   </div>
 
-                  <div className="page-break" style={{height: '40px'}}></div>
+                  {isBuyAndSell && (
+                    <>
+                      <div className="page-break" style={{height: '40px'}}></div>
 
-                  {/* Sell Direction Letter */}
-                  <div className={styles.bdl}>
-                    <div className={styles.bdlHeader}>
-                      <div className={styles.bdlLogo}><img src="/entrust.png" alt="The Entrust Group" /></div>
-                      <div className={styles.bdlHeaderCenter}>
-                        <div className={styles.bdlHeaderTitle}>Precious Metals</div>
-                        <div className={styles.bdlHeaderSubtitle}>Sell Direction Letter</div>
-                      </div>
-                      <div className={styles.bdlHeaderRight}>
-                        <div>555 12th Street, Suite 900</div>
-                        <div>Oakland, CA 94607</div>
-                        <div>Phone: (877) 545-0544</div>
-                        <div>Fax: (866) 228-4009</div>
-                        <div>preciousmetals@theentrustgroup.com</div>
-                      </div>
-                    </div>
-                    <div className={styles.bdlHeaderLine}></div>
-                    <div className={styles.bdlSection}>
-                      <div className={styles.bdlSectionHeader}>
-                        <div className={styles.bdlSectionNum}>1</div>
-                        <div className={styles.bdlSectionTitle}>Account Owner Information</div>
-                      </div>
-                      <table className={styles.bdlFormTable}>
-                        <tbody>
-                          <tr>
-                            <td className={styles.bdlCell} style={{width: '45%'}}>
-                              <div className={styles.bdlCellLabel}>NAME <span className={styles.bdlCellLabelSub}>(as it appears on your account application)</span></div>
-                              <div className={styles.bdlCellValue}>{invoiceData.clientName}</div>
-                            </td>
-                            <td className={styles.bdlCell} style={{width: '30%'}}>
-                              <div className={styles.bdlCellLabel}>ENTRUST ACCOUNT NUMBER</div>
-                              <div className={styles.bdlCellValue}>{invoiceData.acctNumber}</div>
-                            </td>
-                            <td className={styles.bdlCell} style={{width: '25%'}}>
-                              <div className={styles.bdlCellLabel}>ACCOUNT TYPE</div>
-                              <div className={styles.bdlCellValue}>{invoiceData.accountType}</div>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td className={styles.bdlCell} colSpan={2}>
-                              <div className={styles.bdlCellLabel}>EMAIL ADDRESS <span className={styles.bdlCellLabelSub}>(required)</span></div>
-                              <div className={styles.bdlCellValue}>{invoiceData.email}</div>
-                            </td>
-                            <td className={styles.bdlCell}>
-                              <div className={styles.bdlCellLabel}>DAYTIME PHONE NUMBER</div>
-                              <div className={styles.bdlCellValue}>{invoiceData.phone}</div>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                    <div className={styles.bdlSection}>
-                      <div className={styles.bdlSectionHeader}>
-                        <div className={styles.bdlSectionNum}>2</div>
-                        <div className={styles.bdlSectionTitle}>Precious Metals Dealer Information</div>
-                      </div>
-                      <table className={styles.bdlFormTable}>
-                        <tbody>
-                          <tr>
-                            <td className={styles.bdlCell} style={{width: '30%'}}>
-                              <div className={styles.bdlCellLabel}>DEALER NAME</div>
-                              <div className={styles.bdlCellValue}>Citadel Gold</div>
-                            </td>
-                            <td className={styles.bdlCell} colSpan={2}>
-                              <div className={styles.bdlCellLabel}>DEALER ADDRESS</div>
-                              <div className={styles.bdlCellValue}>10433 Wilshire Blvd #1002 Los Angeles, California 90024</div>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td className={styles.bdlCell}>
-                              <div className={styles.bdlCellLabel}>PHONE NUMBER</div>
-                              <div className={styles.bdlCellValue}>310-209-8166</div>
-                            </td>
-                            <td className={styles.bdlCell}>
-                              <div className={styles.bdlCellLabel}>FAX</div>
-                              <div className={styles.bdlCellValue}>310-209-8255</div>
-                            </td>
-                            <td className={styles.bdlCell}>
-                              <div className={styles.bdlCellLabel}>REPRESENTATIVE</div>
-                              <div className={styles.bdlCellValue}>Shaun Bina</div>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                    <div className={styles.bdlAuthSection}>
-                      <div className={styles.bdlAuthText}>
-                        <strong>By initialing, I authorize the administrator to accept completion of transaction details for the sections below from the dealer listed in Section 2, without my verification. I understand that Entrust will advise the dealer of this authorization and the funds in the IRA, and will await confirmation from the dealer.</strong>
-                      </div>
-                      <div className={styles.bdlInitialBox}>
-                        <div className={styles.bdlInitialLabel}>INITIAL HERE</div>
-                        <div className={styles.bdlInitialSpace}></div>
-                      </div>
-                    </div>
-                    <div className={styles.bdlSection}>
-                      <div className={styles.bdlSectionHeader}>
-                        <div className={styles.bdlSectionNum}>3</div>
-                        <div className={styles.bdlSectionTitle}>Deposit Instructions <span className={styles.bdlSelectOne}>(select one)</span></div>
-                      </div>
-                      <div className={styles.bdlPaymentGrid}>
-                        <div className={styles.bdlPaymentLeft}>
-                          <div className={styles.bdlCheckItem}>
-                            <span className={styles.bdlCheckBox}>{sellData.depositMethod.wire ? "X" : ""}</span>
-                            <span>WIRE <span className={styles.bdlCheckNote}>($30 fee)</span></span>
+                      {/* Sell Direction Letter */}
+                      <div className={styles.bdl}>
+                        <div className={styles.bdlHeader}>
+                          <div className={styles.bdlLogo}><img src="/entrust.png" alt="The Entrust Group" /></div>
+                          <div className={styles.bdlHeaderCenter}>
+                            <div className={styles.bdlHeaderTitle}>Precious Metals</div>
+                            <div className={styles.bdlHeaderSubtitle}>Sell Direction Letter</div>
                           </div>
-                          <div className={styles.bdlCheckItem}>
-                            <span className={styles.bdlCheckBox}>{sellData.depositMethod.ach ? "X" : ""}</span>
-                            <span>ACH</span>
+                          <div className={styles.bdlHeaderRight}>
+                            <div>555 12th Street, Suite 900</div>
+                            <div>Oakland, CA 94607</div>
+                            <div>Phone: (877) 545-0544</div>
+                            <div>Fax: (866) 228-4009</div>
+                            <div>preciousmetals@theentrustgroup.com</div>
                           </div>
                         </div>
-                        <div className={styles.bdlPaymentRight}>
-                          <div className={styles.bdlCheckItem}>
-                            <span className={styles.bdlCheckBox}>{sellData.depositMethod.check ? "X" : ""}</span>
-                            <span>CHECK</span>
+                        <div className={styles.bdlHeaderLine}></div>
+                        <div className={styles.bdlSection}>
+                          <div className={styles.bdlSectionHeader}>
+                            <div className={styles.bdlSectionNum}>1</div>
+                            <div className={styles.bdlSectionTitle}>Account Owner Information</div>
                           </div>
-                          <div className={styles.bdlCheckItem}>
-                            <span className={styles.bdlCheckBox}>{sellData.depositMethod.overnightCheck ? "X" : ""}</span>
-                            <span>OVERNIGHT CHECK <span className={styles.bdlCheckNote}>($30 fee)</span></span>
+                          <table className={styles.bdlFormTable}>
+                            <tbody>
+                              <tr>
+                                <td className={styles.bdlCell} style={{width: '45%'}}>
+                                  <div className={styles.bdlCellLabel}>NAME <span className={styles.bdlCellLabelSub}>(as it appears on your account application)</span></div>
+                                  <div className={styles.bdlCellValue}>{invoiceData.clientName}</div>
+                                </td>
+                                <td className={styles.bdlCell} style={{width: '30%'}}>
+                                  <div className={styles.bdlCellLabel}>ENTRUST ACCOUNT NUMBER</div>
+                                  <div className={styles.bdlCellValue}>{invoiceData.acctNumber}</div>
+                                </td>
+                                <td className={styles.bdlCell} style={{width: '25%'}}>
+                                  <div className={styles.bdlCellLabel}>ACCOUNT TYPE</div>
+                                  <div className={styles.bdlCellValue}>{invoiceData.accountType}</div>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td className={styles.bdlCell} colSpan={2}>
+                                  <div className={styles.bdlCellLabel}>EMAIL ADDRESS <span className={styles.bdlCellLabelSub}>(required)</span></div>
+                                  <div className={styles.bdlCellValue}>{invoiceData.email}</div>
+                                </td>
+                                <td className={styles.bdlCell}>
+                                  <div className={styles.bdlCellLabel}>DAYTIME PHONE NUMBER</div>
+                                  <div className={styles.bdlCellValue}>{invoiceData.phone}</div>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        <div className={styles.bdlSection}>
+                          <div className={styles.bdlSectionHeader}>
+                            <div className={styles.bdlSectionNum}>2</div>
+                            <div className={styles.bdlSectionTitle}>Precious Metals Dealer Information</div>
+                          </div>
+                          <table className={styles.bdlFormTable}>
+                            <tbody>
+                              <tr>
+                                <td className={styles.bdlCell} style={{width: '30%'}}>
+                                  <div className={styles.bdlCellLabel}>DEALER NAME</div>
+                                  <div className={styles.bdlCellValue}>Citadel Gold</div>
+                                </td>
+                                <td className={styles.bdlCell} colSpan={2}>
+                                  <div className={styles.bdlCellLabel}>DEALER ADDRESS</div>
+                                  <div className={styles.bdlCellValue}>10433 Wilshire Blvd #1002 Los Angeles, California 90024</div>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td className={styles.bdlCell}>
+                                  <div className={styles.bdlCellLabel}>PHONE NUMBER</div>
+                                  <div className={styles.bdlCellValue}>310-209-8166</div>
+                                </td>
+                                <td className={styles.bdlCell}>
+                                  <div className={styles.bdlCellLabel}>FAX</div>
+                                  <div className={styles.bdlCellValue}>310-209-8255</div>
+                                </td>
+                                <td className={styles.bdlCell}>
+                                  <div className={styles.bdlCellLabel}>REPRESENTATIVE</div>
+                                  <div className={styles.bdlCellValue}>Shaun Bina</div>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        <div className={styles.bdlAuthSection}>
+                          <div className={styles.bdlAuthText}>
+                            <strong>By initialing, I authorize the administrator to accept completion of transaction details for the sections below from the dealer listed in Section 2, without my verification. I understand that Entrust will advise the dealer of this authorization and the funds in the IRA, and will await confirmation from the dealer.</strong>
+                          </div>
+                          <div className={styles.bdlInitialBox}>
+                            <div className={styles.bdlInitialLabel}>INITIAL HERE</div>
+                            <div className={styles.bdlInitialSpace}></div>
                           </div>
                         </div>
+                        <div className={styles.bdlSection}>
+                          <div className={styles.bdlSectionHeader}>
+                            <div className={styles.bdlSectionNum}>3</div>
+                            <div className={styles.bdlSectionTitle}>Deposit Instructions <span className={styles.bdlSelectOne}>(select one)</span></div>
+                          </div>
+                          <div className={styles.bdlPaymentGrid}>
+                            <div className={styles.bdlPaymentLeft}>
+                              <div className={styles.bdlCheckItem}>
+                                <span className={styles.bdlCheckBox}>{sellData.depositMethod.wire ? "X" : ""}</span>
+                                <span>WIRE <span className={styles.bdlCheckNote}>($30 fee)</span></span>
+                              </div>
+                              <div className={styles.bdlCheckItem}>
+                                <span className={styles.bdlCheckBox}>{sellData.depositMethod.ach ? "X" : ""}</span>
+                                <span>ACH</span>
+                              </div>
+                            </div>
+                            <div className={styles.bdlPaymentRight}>
+                              <div className={styles.bdlCheckItem}>
+                                <span className={styles.bdlCheckBox}>{sellData.depositMethod.check ? "X" : ""}</span>
+                                <span>CHECK</span>
+                              </div>
+                              <div className={styles.bdlCheckItem}>
+                                <span className={styles.bdlCheckBox}>{sellData.depositMethod.overnightCheck ? "X" : ""}</span>
+                                <span>OVERNIGHT CHECK <span className={styles.bdlCheckNote}>($30 fee)</span></span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className={styles.bdlSection}>
+                          <div className={styles.bdlSectionHeader}>
+                            <div className={styles.bdlSectionNum}>4</div>
+                            <div className={styles.bdlSectionTitle}>Sell Instructions</div>
+                          </div>
+                          <div className={styles.bdlPurchaseIntro}>
+                            <strong>I hereby direct the administrator and/or custodian to SELL the following asset(s) from my account:</strong>
+                          </div>
+                          <table className={styles.bdlPurchaseTable}>
+                            <colgroup>
+                              <col style={{width: '60px'}} />
+                              <col style={{width: '70px'}} />
+                              <col style={{width: '180px'}} />
+                              <col style={{width: '60px'}} />
+                              <col style={{width: '70px'}} />
+                              <col style={{width: '90px'}} />
+                              <col style={{width: '100px'}} />
+                            </colgroup>
+                            <thead>
+                              <tr>
+                                <th>Quantity<br/><span className={styles.bdlThSub}>(number of units)</span></th>
+                                <th>Metal Type</th>
+                                <th>Asset Name or Description<br/><span className={styles.bdlThSub}>(U.S. Silver Eagle, 1oz.)</span></th>
+                                <th>Proof Am.<br/>Eagle?</th>
+                                <th>Troy OZ. Each</th>
+                                <th>Price<br/><span className={styles.bdlThSub}>(per number of units)</span></th>
+                                <th>Total Sell Price<br/><span className={styles.bdlThSub}>(quantity times price)</span></th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {sellData.lineItems.map((item) => (
+                                <tr key={`combined-sell-${item.id}`}>
+                                  <td>{item.quantity}</td>
+                                  <td>{item.metalType}</td>
+                                  <td>{item.description}</td>
+                                  <td>{item.proofAm}</td>
+                                  <td>{item.troyOz}</td>
+                                  <td>$ {item.price ? parseFloat(String(item.price).replace(/[^0-9.]/g, "")).toFixed(2) : ''}</td>
+                                  <td>$ {item.quantity && item.price ? (parseFloat(item.quantity) * parseFloat(String(item.price).replace(/[^0-9.]/g, ""))).toFixed(2) : ''}</td>
+                                </tr>
+                              ))}
+                              {Array.from({ length: Math.max(0, 5 - sellData.lineItems.length) }).map((_, idx) => (
+                                <tr key={`combined-sell-empty-${idx}`}>
+                                  <td></td><td></td><td></td><td></td><td></td><td>$</td><td>$</td>
+                                </tr>
+                              ))}
+                              <tr className={styles.bdlSpecialRow}>
+                                <td colSpan={5}><strong>Special Instructions:</strong> {sellData.specialInstructions}</td>
+                                <td>$<span style={{marginLeft: '20px'}}>Total $</span></td>
+                                <td>Total</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        <div className={styles.bdlFooter}>
+                          <div className={styles.bdlFooterLeft}>Page 1 of 2</div>
+                          <div className={styles.bdlFooterCenter}>Copyright The Entrust Group - Precious Metals Sell Direction Letter</div>
+                        </div>
                       </div>
-                    </div>
-                    <div className={styles.bdlSection}>
-                      <div className={styles.bdlSectionHeader}>
-                        <div className={styles.bdlSectionNum}>4</div>
-                        <div className={styles.bdlSectionTitle}>Sell Instructions</div>
-                      </div>
-                      <div className={styles.bdlPurchaseIntro}>
-                        <strong>I hereby direct the administrator and/or custodian to SELL the following asset(s) from my account:</strong>
-                      </div>
-                      <table className={styles.bdlPurchaseTable}>
-                        <colgroup>
-                          <col style={{width: '60px'}} />
-                          <col style={{width: '70px'}} />
-                          <col style={{width: '180px'}} />
-                          <col style={{width: '60px'}} />
-                          <col style={{width: '70px'}} />
-                          <col style={{width: '90px'}} />
-                          <col style={{width: '100px'}} />
-                        </colgroup>
-                        <thead>
-                          <tr>
-                            <th>Quantity<br/><span className={styles.bdlThSub}>(number of units)</span></th>
-                            <th>Metal Type</th>
-                            <th>Asset Name or Description<br/><span className={styles.bdlThSub}>(U.S. Silver Eagle, 1oz.)</span></th>
-                            <th>Proof Am.<br/>Eagle?</th>
-                            <th>Troy OZ. Each</th>
-                            <th>Price<br/><span className={styles.bdlThSub}>(per number of units)</span></th>
-                            <th>Total Sell Price<br/><span className={styles.bdlThSub}>(quantity times price)</span></th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {sellData.lineItems.map((item) => (
-                            <tr key={`combined-sell-${item.id}`}>
-                              <td>{item.quantity}</td>
-                              <td>{item.metalType}</td>
-                              <td>{item.description}</td>
-                              <td>{item.proofAm}</td>
-                              <td>{item.troyOz}</td>
-                              <td>$ {item.price ? parseFloat(String(item.price).replace(/[^0-9.]/g, "")).toFixed(2) : ''}</td>
-                              <td>$ {item.quantity && item.price ? (parseFloat(item.quantity) * parseFloat(String(item.price).replace(/[^0-9.]/g, ""))).toFixed(2) : ''}</td>
-                            </tr>
-                          ))}
-                          {Array.from({ length: Math.max(0, 5 - sellData.lineItems.length) }).map((_, idx) => (
-                            <tr key={`combined-sell-empty-${idx}`}>
-                              <td></td><td></td><td></td><td></td><td></td><td>$</td><td>$</td>
-                            </tr>
-                          ))}
-                          <tr className={styles.bdlSpecialRow}>
-                            <td colSpan={5}><strong>Special Instructions:</strong> {sellData.specialInstructions}</td>
-                            <td>$<span style={{marginLeft: '20px'}}>Total $</span></td>
-                            <td>Total</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                    <div className={styles.bdlFooter}>
-                      <div className={styles.bdlFooterLeft}>Page 1 of 2</div>
-                      <div className={styles.bdlFooterCenter}>Copyright The Entrust Group - Precious Metals Sell Direction Letter</div>
-                    </div>
-                  </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>
