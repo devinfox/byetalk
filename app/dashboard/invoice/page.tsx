@@ -1480,7 +1480,6 @@ export default function InvoicePage() {
                     </table>
                   </div>
                   <div className={styles.bdlFooter}>
-                    <div className={styles.bdlFooterLeft}>Page 1 of 2</div>
                     <div className={styles.bdlFooterCenter}>Copyright The Entrust Group - Precious Metals Buy Direction Letter 10-25-2021</div>
                   </div>
                 </div>
@@ -1675,7 +1674,6 @@ export default function InvoicePage() {
                   </div>
 
                   <div className={styles.bdlFooter}>
-                    <div className={styles.bdlFooterLeft}>Page 1 of 2</div>
                     <div className={styles.bdlFooterCenter}>Copyright The Entrust Group - Precious Metals Sell Direction Letter</div>
                   </div>
                 </div>
@@ -1950,7 +1948,6 @@ export default function InvoicePage() {
                       </table>
                     </div>
                     <div className={styles.bdlFooter}>
-                      <div className={styles.bdlFooterLeft}>Page 1 of 2</div>
                       <div className={styles.bdlFooterCenter}>Copyright The Entrust Group - Precious Metals Buy Direction Letter 10-25-2021</div>
                     </div>
                   </div>
@@ -2136,7 +2133,6 @@ export default function InvoicePage() {
                           </table>
                         </div>
                         <div className={styles.bdlFooter}>
-                          <div className={styles.bdlFooterLeft}>Page 1 of 2</div>
                           <div className={styles.bdlFooterCenter}>Copyright The Entrust Group - Precious Metals Sell Direction Letter</div>
                         </div>
                       </div>
@@ -2473,7 +2469,6 @@ export default function InvoicePage() {
 
           {/* Footer */}
           <div className={styles.bdlFooter}>
-            <div className={styles.bdlFooterLeft}>Page 1 of 2</div>
             <div className={styles.bdlFooterCenter}>Copyright The Entrust Group - Precious Metals Buy Direction Letter 10-25-2021</div>
           </div>
         </div>
