@@ -1632,15 +1632,19 @@
 }
 
 .bdlSpecialRow td {
-  text-align: left;
+  text-align: left !important;
   font-size: 9.5px;
   height: 35px;
   vertical-align: top;
   padding-top: 5px;
 }
 
+.bdlSpecialRow td:first-child {
+  text-align: left !important;
+}
+
 .bdlSpecialRow td:last-child {
-  text-align: left;
+  text-align: left !important;
 }
 
 /* Page 2 styling */
