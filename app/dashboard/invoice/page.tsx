@@ -2684,9 +2684,10 @@ export default function InvoicePage() {
                     <div className={styles.bdlFooter}>
                       <div className={styles.bdlFooterCenter}>Copyright The Entrust Group - Precious Metals Buy Direction Letter 10-25-2021</div>
                     </div>
+                  </div>
 
-                    {/* Buy Direction Page 2 */}
-                    <div className={styles.bdlPage2}>
+                  {/* Buy Direction Page 2 */}
+                  <div className={styles.bdlPage2}>
                       <div className={styles.bdlHeader}>
                         <div className={styles.bdlLogo}><img src="/entrust.png" alt="The Entrust Group" /></div>
                         <div className={styles.bdlHeaderCenter}>
@@ -2792,9 +2793,8 @@ export default function InvoicePage() {
                           </tbody>
                         </table>
                       </div>
-                      <div className={styles.bdlFooter}>
-                        <div className={styles.bdlFooterCenter}>Copyright The Entrust Group - Precious Metals Buy Direction Letter 10-25-2021</div>
-                      </div>
+                    <div className={styles.bdlFooter}>
+                      <div className={styles.bdlFooterCenter}>Copyright The Entrust Group - Precious Metals Buy Direction Letter 10-25-2021</div>
                     </div>
                   </div>
 
