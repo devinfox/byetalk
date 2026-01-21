@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import html2canvas from "html2canvas";
+import domtoimage from "dom-to-image-more";
 import jsPDF from "jspdf";
 import styles from "./invoice.module.css";
 
@@ -459,38 +460,17 @@ export default function InvoicePage() {
     setIsGeneratingBuyDirection(true);
 
     try {
-      const canvas = await html2canvas(targetRef, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: "#ffffff",
-        allowTaint: true,
+      // Use dom-to-image-more for more accurate rendering
+      const imgData = await domtoimage.toPng(targetRef, {
+        quality: 1,
         width: 816,
         height: 1056,
-        scrollX: 0,
-        scrollY: 0,
-        onclone: (clonedDoc, element) => {
-          // Remove any transforms that might affect rendering
-          element.style.transform = 'none';
-          element.style.transformOrigin = 'top left';
-          element.style.margin = '0';
-          element.style.width = '816px';
-          element.style.minHeight = '1056px';
-
-          // Fix ALL text elements to remove potential strikethrough
-          const allElements = element.querySelectorAll('*');
-          allElements.forEach((el) => {
-            const elem = el as HTMLElement;
-            if (elem.style) {
-              elem.style.textDecoration = 'none';
-              elem.style.textDecorationLine = 'none';
-              elem.style.borderRadius = '0';
-            }
-          });
+        style: {
+          transform: 'none',
+          margin: '0',
         },
       });
 
-      const imgData = canvas.toDataURL("image/png");
       // US Letter: 8.5 x 11 inches = 612 x 792 points
       const pdf = new jsPDF({
         orientation: "portrait",
