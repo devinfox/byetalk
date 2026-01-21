@@ -1386,12 +1386,12 @@
 .bdlAuthText {
   flex: 1;
   padding: 0 10px 0 0;
-  font-size: 9.5px;
-  line-height: 1.2;
+  font-size: 11px;
+  line-height: 1.3;
 }
 
 .bdlInitialBox {
-  width: 75px;
+  width: 90px;
   height: 50px;
   border: 0.5px solid #808181;
   display: flex;
@@ -1405,7 +1405,7 @@
   color: #000;
   text-align: center;
   padding: 3px 2px 0 2px;
-  font-size: 8px;
+  font-size: 9.5px;
   font-weight: 700;
   line-height: 1.2;
 }
@@ -1420,7 +1420,6 @@
   font-size: 9.5px;
   line-height: 1.2;
   border: 0.5px solid #808181;
-  border-top: none;
   min-height: 100px;
 }
 
@@ -1518,12 +1517,12 @@
   background: #fff;
   color: #000;
   border: 0.5px solid #808181;
-  padding: 4px 3px;
+  padding: 6px 3px;
   text-align: center;
   font-weight: 700;
   font-size: 9.5px;
   vertical-align: middle;
-  line-height: 1.2;
+  line-height: 1.4;
 }
 
 .bdlThSub {
@@ -1535,12 +1534,12 @@
 
 .bdlPurchaseTable td {
   border: 0.5px solid #808181;
-  padding: 3px 4px;
+  padding: 5px 4px;
   text-align: center;
-  height: 20px;
+  height: 24px;
   vertical-align: top;
   font-size: 9.5px;
-  line-height: 1.2;
+  line-height: 1.4;
 }
 
 .bdlPurchaseTable td:first-child {
