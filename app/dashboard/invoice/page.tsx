@@ -1873,7 +1873,7 @@ export default function InvoicePage() {
                         <div className={styles.bdlSectionNum}>5</div>
                         <div className={styles.bdlSectionTitle}>Depository Information</div>
                       </div>
-                      <table className={styles.bdlFormTable} style={{tableLayout: 'fixed'}}>
+                      <table className={styles.bdlFormTable} style={{tableLayout: 'fixed', borderBottom: 'none'}}>
                         <colgroup>
                           <col style={{width: '33.33%'}} />
                           <col style={{width: '33.33%'}} />
@@ -1881,15 +1881,15 @@ export default function InvoicePage() {
                         </colgroup>
                         <tbody>
                           <tr>
-                            <td className={styles.bdlCell}>
+                            <td className={styles.bdlCell} style={{borderBottom: 'none'}}>
                               <div className={styles.bdlCellLabel}>DEPOSITORY NAME</div>
                               <div className={styles.bdlCellValue}>{depositoryInfo.depositoryName}</div>
                             </td>
-                            <td className={styles.bdlCell}>
+                            <td className={styles.bdlCell} style={{borderBottom: 'none'}}>
                               <div className={styles.bdlCellLabel}>CONTACT NAME</div>
                               <div className={styles.bdlCellValue}>{depositoryInfo.contactName}</div>
                             </td>
-                            <td className={styles.bdlCell}>
+                            <td className={styles.bdlCell} style={{borderBottom: 'none'}}>
                               <div className={styles.bdlCellLabel}>CONTACT PHONE NUMBER</div>
                               <div className={styles.bdlCellValue}>{depositoryInfo.contactPhone}</div>
                             </td>
@@ -2787,7 +2787,7 @@ export default function InvoicePage() {
                           <div className={styles.bdlSectionNum}>5</div>
                           <div className={styles.bdlSectionTitle}>Depository Information</div>
                         </div>
-                        <table className={styles.bdlFormTable} style={{tableLayout: 'fixed'}}>
+                        <table className={styles.bdlFormTable} style={{tableLayout: 'fixed', borderBottom: 'none'}}>
                           <colgroup>
                             <col style={{width: '33.33%'}} />
                             <col style={{width: '33.33%'}} />
@@ -2795,15 +2795,15 @@ export default function InvoicePage() {
                           </colgroup>
                           <tbody>
                             <tr>
-                              <td className={styles.bdlCell}>
+                              <td className={styles.bdlCell} style={{borderBottom: 'none'}}>
                                 <div className={styles.bdlCellLabel}>DEPOSITORY NAME</div>
                                 <div className={styles.bdlCellValue}>{depositoryInfo.depositoryName}</div>
                               </td>
-                              <td className={styles.bdlCell}>
+                              <td className={styles.bdlCell} style={{borderBottom: 'none'}}>
                                 <div className={styles.bdlCellLabel}>CONTACT NAME</div>
                                 <div className={styles.bdlCellValue}>{depositoryInfo.contactName}</div>
                               </td>
-                              <td className={styles.bdlCell}>
+                              <td className={styles.bdlCell} style={{borderBottom: 'none'}}>
                                 <div className={styles.bdlCellLabel}>CONTACT PHONE NUMBER</div>
                                 <div className={styles.bdlCellValue}>{depositoryInfo.contactPhone}</div>
                               </td>
@@ -3742,7 +3742,7 @@ export default function InvoicePage() {
                 <div className={styles.bdlSectionNum}>5</div>
                 <div className={styles.bdlSectionTitle}>Depository Information</div>
               </div>
-              <table className={styles.bdlFormTable} style={{tableLayout: 'fixed'}}>
+              <table className={styles.bdlFormTable} style={{tableLayout: 'fixed', borderBottom: 'none'}}>
                 <colgroup>
                   <col style={{width: '33.33%'}} />
                   <col style={{width: '33.33%'}} />
@@ -3750,15 +3750,15 @@ export default function InvoicePage() {
                 </colgroup>
                 <tbody>
                   <tr>
-                    <td className={styles.bdlCell}>
+                    <td className={styles.bdlCell} style={{borderBottom: 'none'}}>
                       <div className={styles.bdlCellLabel}>DEPOSITORY NAME</div>
                       <div className={styles.bdlCellValue}>{depositoryInfo.depositoryName}</div>
                     </td>
-                    <td className={styles.bdlCell}>
+                    <td className={styles.bdlCell} style={{borderBottom: 'none'}}>
                       <div className={styles.bdlCellLabel}>CONTACT NAME</div>
                       <div className={styles.bdlCellValue}>{depositoryInfo.contactName}</div>
                     </td>
-                    <td className={styles.bdlCell}>
+                    <td className={styles.bdlCell} style={{borderBottom: 'none'}}>
                       <div className={styles.bdlCellLabel}>CONTACT PHONE NUMBER</div>
                       <div className={styles.bdlCellValue}>{depositoryInfo.contactPhone}</div>
                     </td>
