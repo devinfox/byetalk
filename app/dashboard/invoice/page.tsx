@@ -1828,8 +1828,7 @@ export default function InvoicePage() {
                             {/* Only show totals on the last page */}
                             {chunkIndex === allChunks.length - 1 && (
                               <tr className={styles.bdlSpecialRow}>
-                                <td colSpan={4} style={{textAlign: 'left'}}><strong>Special Instructions:</strong></td>
-                                <td></td>
+                                <td colSpan={5} style={{textAlign: 'left'}}><strong>Special Instructions:</strong></td>
                                 <td style={{textAlign: 'right'}}>Total $</td>
                                 <td style={{textAlign: 'right'}}>Total</td>
                               </tr>
@@ -2142,8 +2141,7 @@ export default function InvoicePage() {
                             </tr>
                           ))}
                           <tr className={styles.bdlSpecialRow}>
-                            <td colSpan={4} style={{textAlign: 'left'}}><strong>Special Instructions:</strong> {sellData.specialInstructions}</td>
-                            <td></td>
+                            <td colSpan={5} style={{textAlign: 'left'}}><strong>Special Instructions:</strong> {sellData.specialInstructions}</td>
                             <td style={{textAlign: 'right'}}>Total $</td>
                             <td style={{textAlign: 'right'}}>Total</td>
                           </tr>
@@ -2748,8 +2746,7 @@ export default function InvoicePage() {
                             </tr>
                           ))}
                           <tr className={styles.bdlSpecialRow}>
-                            <td colSpan={4} style={{textAlign: 'left'}}><strong>Special Instructions:</strong></td>
-                            <td></td>
+                            <td colSpan={5} style={{textAlign: 'left'}}><strong>Special Instructions:</strong></td>
                             <td style={{textAlign: 'right'}}>Total $</td>
                             <td style={{textAlign: 'right'}}>Total</td>
                           </tr>
@@ -3039,8 +3036,7 @@ export default function InvoicePage() {
                                 </tr>
                               ))}
                               <tr className={styles.bdlSpecialRow}>
-                                <td colSpan={4} style={{textAlign: 'left'}}><strong>Special Instructions:</strong> {sellData.specialInstructions}</td>
-                                <td></td>
+                                <td colSpan={5} style={{textAlign: 'left'}}><strong>Special Instructions:</strong> {sellData.specialInstructions}</td>
                                 <td style={{textAlign: 'right'}}>Total $</td>
                                 <td style={{textAlign: 'right'}}>Total</td>
                               </tr>
@@ -3701,8 +3697,7 @@ export default function InvoicePage() {
                     {/* Only show totals on the last page */}
                     {chunkIndex === allChunks.length - 1 && (
                       <tr className={styles.bdlSpecialRow}>
-                        <td colSpan={4} style={{textAlign: 'left'}}><strong>Special Instructions:</strong></td>
-                        <td></td>
+                        <td colSpan={5} style={{textAlign: 'left'}}><strong>Special Instructions:</strong></td>
                         <td style={{textAlign: 'right'}}>Total $</td>
                         <td style={{textAlign: 'right'}}>Total</td>
                       </tr>
