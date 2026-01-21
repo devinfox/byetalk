@@ -380,13 +380,15 @@ export default function InvoicePage() {
       });
 
       const imgData = canvas.toDataURL("image/png");
+      // US Letter: 8.5 x 11 inches = 612 x 792 points
       const pdf = new jsPDF({
         orientation: "portrait",
-        unit: "px",
-        format: [canvas.width / 2, canvas.height / 2],
+        unit: "pt",
+        format: "letter",
       });
 
-      pdf.addImage(imgData, "PNG", 0, 0, canvas.width / 2, canvas.height / 2);
+      // Scale image to fit letter size (612 x 792 pt)
+      pdf.addImage(imgData, "PNG", 0, 0, 612, 792);
       pdf.save(`buy-direction-letter-${invoiceData.clientName || "draft"}.pdf`);
     } catch (error) {
       console.error("Error generating Buy Direction Letter PDF:", error);
