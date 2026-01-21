@@ -1966,7 +1966,7 @@ export default function InvoicePage() {
 
                         <p className={styles.bdlLegalBold}><em>I have read and understand the disclosure above.</em></p>
                       </div>
-                      <table className={styles.bdlFormTable} style={{marginTop: '10px'}}>
+                      <table className={styles.bdlFormTable} style={{marginTop: '36px'}}>
                         <tbody>
                           <tr>
                             <td className={styles.bdlCell} style={{width: '60%', height: '33px'}}>
@@ -2462,7 +2462,7 @@ export default function InvoicePage() {
 
                         <p className={styles.bdlLegalBold}><em>I have read and understand the disclosure above.</em></p>
                       </div>
-                      <table className={styles.bdlFormTable} style={{marginTop: '10px'}}>
+                      <table className={styles.bdlFormTable} style={{marginTop: '36px'}}>
                         <tbody>
                           <tr>
                             <td className={styles.bdlCell} style={{width: '60%', height: '33px'}}>
@@ -2871,7 +2871,7 @@ export default function InvoicePage() {
                           <p className={styles.bdlLegalBold}><em>Transactions with insufficient funds will not be processed until sufficient funds are received. If fees are being deducted from your account, the full amount of the transaction plus fees must be available before your transaction can be processed.</em></p>
                           <p className={styles.bdlLegalBold}><em>I have read and understand the disclosure above.</em></p>
                         </div>
-                        <table className={styles.bdlFormTable} style={{marginTop: '10px'}}>
+                        <table className={styles.bdlFormTable} style={{marginTop: '36px'}}>
                           <tbody>
                             <tr>
                               <td className={styles.bdlCell} style={{width: '60%', height: '33px'}}>
@@ -3349,7 +3349,7 @@ export default function InvoicePage() {
 
                             <p className={styles.bdlLegalBold}><em>I have read and understand the disclosure above.</em></p>
                           </div>
-                          <table className={styles.bdlFormTable} style={{marginTop: '10px'}}>
+                          <table className={styles.bdlFormTable} style={{marginTop: '36px'}}>
                             <tbody>
                               <tr>
                                 <td className={styles.bdlCell} style={{width: '60%', height: '33px'}}>
@@ -3826,7 +3826,7 @@ export default function InvoicePage() {
                 <p className={styles.bdlLegalBold}><em>Transactions with insufficient funds will not be processed until sufficient funds are received. If fees are being deducted from your account, the full amount of the transaction plus fees must be available before your transaction can be processed.</em></p>
                 <p className={styles.bdlLegalBold}><em>I have read and understand the disclosure above.</em></p>
               </div>
-              <table className={styles.bdlFormTable} style={{marginTop: '10px'}}>
+              <table className={styles.bdlFormTable} style={{marginTop: '36px'}}>
                 <tbody>
                   <tr>
                     <td className={styles.bdlCell} style={{width: '60%', height: '33px'}}>
