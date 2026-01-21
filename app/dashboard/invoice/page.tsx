@@ -1927,7 +1927,7 @@ export default function InvoicePage() {
                             <td className={styles.bdlCell} colSpan={4} style={{padding: '3px 8px', height: 'auto'}}>
                               <div className={styles.bdlCheckItem} style={{margin: 0, display: 'flex', alignItems: 'center', gap: '6px'}}>
                                 <span className={styles.bdlCheckBox} style={{width: '10px', height: '10px', minWidth: '10px'}}>{depositoryInfo.storageAgreementAttached ? "X" : ""}</span>
-                                <span style={{fontWeight: 700, fontSize: '8px'}}>DEPOSITORY STORAGE AGREEMENT ATTACHED</span>
+                                <span className={styles.bdlCellLabel}>DEPOSITORY STORAGE AGREEMENT ATTACHED</span>
                               </div>
                             </td>
                           </tr>
@@ -2843,7 +2843,7 @@ export default function InvoicePage() {
                               <td className={styles.bdlCell} colSpan={4} style={{padding: '3px 8px', height: 'auto'}}>
                                 <div className={styles.bdlCheckItem} style={{margin: 0, display: 'flex', alignItems: 'center', gap: '6px'}}>
                                   <span className={styles.bdlCheckBox} style={{width: '10px', height: '10px', minWidth: '10px'}}>{depositoryInfo.storageAgreementAttached ? "X" : ""}</span>
-                                  <span style={{fontWeight: 700, fontSize: '8px'}}>DEPOSITORY STORAGE AGREEMENT ATTACHED</span>
+                                  <span className={styles.bdlCellLabel}>DEPOSITORY STORAGE AGREEMENT ATTACHED</span>
                                 </div>
                               </td>
                             </tr>
@@ -3800,7 +3800,7 @@ export default function InvoicePage() {
                     <td className={styles.bdlCell} colSpan={4} style={{padding: '3px 8px', height: 'auto'}}>
                       <div className={styles.bdlCheckItem} style={{margin: 0, display: 'flex', alignItems: 'center', gap: '6px'}}>
                         <span className={styles.bdlCheckBox} style={{width: '10px', height: '10px', minWidth: '10px'}}>{depositoryInfo.storageAgreementAttached ? "X" : ""}</span>
-                        <span style={{fontWeight: 700, fontSize: '8px'}}>DEPOSITORY STORAGE AGREEMENT ATTACHED</span>
+                        <span className={styles.bdlCellLabel}>DEPOSITORY STORAGE AGREEMENT ATTACHED</span>
                       </div>
                     </td>
                   </tr>
