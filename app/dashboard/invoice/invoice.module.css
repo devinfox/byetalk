@@ -1595,7 +1595,7 @@
   width: 816px;
   min-height: 1056px;
   background: white;
-  margin: 0 auto;
+  margin: 40px auto 0 auto;
   font-family: Arial, Helvetica, sans-serif;
   padding: 20px 16px;
   color: #000;
@@ -1604,6 +1604,13 @@
   line-height: 1.2;
   position: relative;
   page-break-before: always;
+}
+
+/* In print mode, remove the visual margin */
+@media print {
+  .bdlPage2 {
+    margin: 0 auto !important;
+  }
 }
 
 .bdlLegalText {
