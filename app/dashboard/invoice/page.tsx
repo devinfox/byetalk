@@ -1608,8 +1608,10 @@ export default function InvoicePage() {
 
               {/* Buy Direction Letter Preview */}
               {previewTab === 'buyDirection' && (
-                <div ref={previewBuyDirectionRef} className={styles.bdl}>
-                  <div className={styles.bdlHeader}>
+                <div ref={previewBuyDirectionRef}>
+                  {/* Page 1 */}
+                  <div className={styles.bdl}>
+                    <div className={styles.bdlHeader}>
                     <div className={styles.bdlLogo}><img src="/entrust.png" alt="The Entrust Group" /></div>
                     <div className={styles.bdlHeaderCenter}>
                       <div className={styles.bdlHeaderTitle}>Precious Metals</div>
@@ -1791,8 +1793,9 @@ export default function InvoicePage() {
                       </tbody>
                     </table>
                   </div>
-                  <div className={styles.bdlFooter}>
-                    <div className={styles.bdlFooterCenter}>Copyright The Entrust Group - Precious Metals Buy Direction Letter 10-25-2021</div>
+                    <div className={styles.bdlFooter}>
+                      <div className={styles.bdlFooterCenter}>Copyright The Entrust Group - Precious Metals Buy Direction Letter 10-25-2021</div>
+                    </div>
                   </div>
 
                   {/* Page 2 */}
