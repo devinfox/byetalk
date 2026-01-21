@@ -448,7 +448,6 @@ export default function InvoicePage() {
   };
 
   const generateBuyDirectionLetter = async () => {
-    // Use the visible preview element for pixel-perfect capture
     const targetRef = previewBuyDirectionRef.current;
     if (!targetRef) {
       console.error("Buy Direction ref not found");
@@ -459,65 +458,49 @@ export default function InvoicePage() {
     setIsGeneratingBuyDirection(true);
 
     try {
-      // Get all stylesheets
-      const styleSheets = Array.from(document.styleSheets);
-      let cssText = "";
-      styleSheets.forEach((sheet) => {
-        try {
-          const rules = Array.from(sheet.cssRules || []);
-          rules.forEach((rule) => {
-            cssText += rule.cssText + "\n";
-          });
-        } catch (e) {
-          // Skip cross-origin stylesheets
-        }
-      });
-
-      // Create full HTML document
-      const html = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body {
-              width: 8.5in;
-              height: 11in;
-              margin: 0;
-              padding: 0;
-              background: white;
+      const canvas = await html2canvas(targetRef, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#ffffff",
+        onclone: (_doc, element) => {
+          // Fix the section headers by converting absolute positioning to inline-flex
+          const sectionHeaders = element.querySelectorAll('div');
+          sectionHeaders.forEach((div) => {
+            const style = window.getComputedStyle(div);
+            // Find section header divs (gray background)
+            if (style.backgroundColor === 'rgb(149, 149, 149)') {
+              div.style.display = 'inline-flex';
+              div.style.alignItems = 'center';
+              div.style.width = '100%';
+              div.style.paddingLeft = '0';
+              div.style.position = 'relative';
             }
-            ${cssText}
-          </style>
-        </head>
-        <body>
-          ${targetRef.outerHTML}
-        </body>
-        </html>
-      `;
-
-      // Call the API to generate PDF
-      const response = await fetch("/api/generate-pdf", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ html }),
+            // Find number badge divs (absolute positioned, 34px wide)
+            if (style.position === 'absolute' && style.width === '34px') {
+              div.style.position = 'relative';
+              div.style.top = 'auto';
+              div.style.left = 'auto';
+              div.style.marginTop = '0';
+              div.style.marginRight = '8px';
+              div.style.flexShrink = '0';
+            }
+          });
+        },
       });
 
-      if (!response.ok) {
-        throw new Error("PDF generation failed");
-      }
+      const imgData = canvas.toDataURL("image/png", 1.0);
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "pt",
+        format: "letter",
+      });
 
-      // Download the PDF
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `buy-direction-letter-${invoiceData.clientName || "draft"}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      // Scale to fit letter size
+      const imgWidth = 612;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+      pdf.save(`buy-direction-letter-${invoiceData.clientName || "draft"}.pdf`);
     } catch (error) {
       console.error("Error generating Buy Direction Letter PDF:", error);
       alert("Error generating Buy Direction Letter. Please try again.");

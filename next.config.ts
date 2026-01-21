@@ -15,9 +15,6 @@ const nextConfig: NextConfig = {
     'http://localhost:3000',
     'https://*.trycloudflare.com',
   ],
-  experimental: {
-    serverComponentsExternalPackages: ['@sparticuz/chromium'],
-  },
 };
 
 export default nextConfig;
