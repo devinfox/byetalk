@@ -156,6 +156,14 @@ const calculateLineTotal = (qty: string, listPrice: string): number => {
   return qtyNum * priceNum;
 };
 
+// Calculate sell line total (quantity * price)
+const calculateSellLineTotal = (quantity: string, price: string): number => {
+  const qtyNum = Number(quantity) || 0;
+  const cleanPrice = String(price || "").replace(/[^0-9.]/g, "");
+  const priceNum = Number(cleanPrice) || 0;
+  return qtyNum * priceNum;
+};
+
 // Format currency
 const formatCurrency = (amount: number): string => {
   return amount.toLocaleString("en-US", {
@@ -336,6 +344,12 @@ export default function InvoicePage() {
   const calculateGrandTotal = (): number => {
     return invoiceData.lineItems.reduce((sum, item) => {
       return sum + calculateLineTotal(item.qty, item.listPrice);
+    }, 0);
+  };
+
+  const calculateSellGrandTotal = (): number => {
+    return sellData.lineItems.reduce((sum, item) => {
+      return sum + calculateSellLineTotal(item.quantity, item.price);
     }, 0);
   };
 
@@ -1803,8 +1817,8 @@ export default function InvoicePage() {
                         ))}
                         <tr className={styles.bdlSpecialRow}>
                           <td colSpan={5}><strong>Special Instructions:</strong></td>
-                          <td>$<span style={{marginLeft: '20px'}}>Total $</span></td>
-                          <td>Total</td>
+                          <td>$ {calculateGrandTotal().toFixed(2)}</td>
+                          <td>$ {calculateGrandTotal().toFixed(2)}</td>
                         </tr>
                       </tbody>
                     </table>
@@ -2093,8 +2107,8 @@ export default function InvoicePage() {
                           ))}
                           <tr className={styles.bdlSpecialRow}>
                             <td colSpan={5}><strong>Special Instructions:</strong> {sellData.specialInstructions}</td>
-                            <td>$<span style={{marginLeft: '20px'}}>Total $</span></td>
-                            <td>Total</td>
+                            <td>$ {calculateSellGrandTotal().toFixed(2)}</td>
+                            <td>$ {calculateSellGrandTotal().toFixed(2)}</td>
                           </tr>
                         </tbody>
                       </table>
@@ -2691,8 +2705,8 @@ export default function InvoicePage() {
                           ))}
                           <tr className={styles.bdlSpecialRow}>
                             <td colSpan={5}><strong>Special Instructions:</strong></td>
-                            <td>$<span style={{marginLeft: '20px'}}>Total $</span></td>
-                            <td>Total</td>
+                            <td>$ {calculateGrandTotal().toFixed(2)}</td>
+                            <td>$ {calculateGrandTotal().toFixed(2)}</td>
                           </tr>
                         </tbody>
                       </table>
@@ -2960,8 +2974,8 @@ export default function InvoicePage() {
                               ))}
                               <tr className={styles.bdlSpecialRow}>
                                 <td colSpan={5}><strong>Special Instructions:</strong> {sellData.specialInstructions}</td>
-                                <td>$<span style={{marginLeft: '20px'}}>Total $</span></td>
-                                <td>Total</td>
+                                <td>$ {calculateSellGrandTotal().toFixed(2)}</td>
+                                <td>$ {calculateSellGrandTotal().toFixed(2)}</td>
                               </tr>
                             </tbody>
                           </table>
@@ -3609,8 +3623,8 @@ export default function InvoicePage() {
                 ))}
                 <tr className={styles.bdlSpecialRow}>
                   <td colSpan={5}><strong>Special Instructions:</strong></td>
-                  <td>$<span style={{marginLeft: '20px'}}>Total $</span></td>
-                  <td>Total</td>
+                  <td>$ {calculateGrandTotal().toFixed(2)}</td>
+                  <td>$ {calculateGrandTotal().toFixed(2)}</td>
                 </tr>
               </tbody>
             </table>
