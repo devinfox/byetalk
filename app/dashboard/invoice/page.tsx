@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from "react";
 import html2canvas from "html2canvas";
-import domtoimage from "dom-to-image-more";
 import jsPDF from "jspdf";
 import styles from "./invoice.module.css";
 
