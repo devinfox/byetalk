@@ -398,7 +398,7 @@ export default function InvoicePage() {
 
   const generatePDF = async () => {
     // Use the visible preview element for pixel-perfect capture
-    const targetRef = previewInvoiceRef.current || invoiceRef.current;
+    const targetRef = previewInvoiceRef.current;
     if (!targetRef) {
       console.error("Invoice ref not found");
       alert("Error: Invoice template not ready. Please try again.");
@@ -449,7 +449,7 @@ export default function InvoicePage() {
 
   const generateBuyDirectionLetter = async () => {
     // Use the visible preview element for pixel-perfect capture
-    const targetRef = previewBuyDirectionRef.current || buyDirectionRef.current;
+    const targetRef = previewBuyDirectionRef.current;
     if (!targetRef) {
       console.error("Buy Direction ref not found");
       alert("Error: Buy Direction Letter template not ready. Please try again.");
