@@ -10,6 +10,8 @@ type LineItem = {
   productName: string;
   qty: string;
   listPrice: string;
+  proofAmEagle: boolean;
+  troyOzEach: string;
 };
 
 type InvoiceData = {
@@ -116,6 +118,8 @@ const initialLineItem = (): LineItem => ({
   productName: "",
   qty: "",
   listPrice: "",
+  proofAmEagle: false,
+  troyOzEach: "",
 });
 
 // Calculate line item total from qty and price
@@ -256,7 +260,7 @@ export default function InvoicePage() {
     setInvoiceData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const updateLineItem = (id: string, field: keyof LineItem, value: string) => {
+  const updateLineItem = (id: string, field: keyof LineItem, value: string | boolean) => {
     setInvoiceData((prev) => ({
       ...prev,
       lineItems: prev.lineItems.map((item) =>
@@ -940,6 +944,8 @@ export default function InvoicePage() {
             <span className={styles.colQty}>QTY</span>
             <span className={styles.colPrice}>List Price</span>
             <span className={styles.colTotal}>Total</span>
+            <span className={styles.colProof}>Proof Am?</span>
+            <span className={styles.colTroyOz}>Troy Oz</span>
             <span className={styles.colAction}></span>
           </div>
           {invoiceData.lineItems.map((item, index) => (
@@ -971,6 +977,20 @@ export default function InvoicePage() {
               <span className={styles.colTotal}>
                 {formatCurrency(calculateLineTotal(item.qty, item.listPrice))}
               </span>
+              <label className={styles.colProof}>
+                <input
+                  type="checkbox"
+                  checked={item.proofAmEagle || false}
+                  onChange={(e) => updateLineItem(item.id, "proofAmEagle", e.target.checked)}
+                />
+              </label>
+              <input
+                type="text"
+                className={styles.colTroyOz}
+                value={item.troyOzEach || ""}
+                onChange={(e) => updateLineItem(item.id, "troyOzEach", e.target.value)}
+                placeholder="0.00"
+              />
               <button
                 type="button"
                 className={styles.removeBtn}
@@ -1460,8 +1480,8 @@ export default function InvoicePage() {
                             <td>{item.qty}</td>
                             <td>{item.productName?.split(' ')[0] || ''}</td>
                             <td>{item.productName}</td>
-                            <td></td>
-                            <td></td>
+                            <td>{item.proofAmEagle ? 'Yes' : ''}</td>
+                            <td>{item.troyOzEach || ''}</td>
                             <td>$ {item.listPrice ? parseFloat(String(item.listPrice).replace(/[^0-9.]/g, "")).toFixed(2) : ''}</td>
                             <td>$ {item.qty && item.listPrice ? calculateLineTotal(item.qty, item.listPrice).toFixed(2) : ''}</td>
                           </tr>
@@ -1928,8 +1948,8 @@ export default function InvoicePage() {
                               <td>{item.qty}</td>
                               <td>{item.productName?.split(' ')[0] || ''}</td>
                               <td>{item.productName}</td>
-                              <td></td>
-                              <td></td>
+                              <td>{item.proofAmEagle ? 'Yes' : ''}</td>
+                              <td>{item.troyOzEach || ''}</td>
                               <td>$ {item.listPrice ? parseFloat(String(item.listPrice).replace(/[^0-9.]/g, "")).toFixed(2) : ''}</td>
                               <td>$ {item.qty && item.listPrice ? calculateLineTotal(item.qty, item.listPrice).toFixed(2) : ''}</td>
                             </tr>
@@ -2440,8 +2460,8 @@ export default function InvoicePage() {
                     <td>{item.qty}</td>
                     <td>{item.productName?.split(' ')[0] || ''}</td>
                     <td>{item.productName}</td>
-                    <td></td>
-                    <td></td>
+                    <td>{item.proofAmEagle ? 'Yes' : ''}</td>
+                    <td>{item.troyOzEach || ''}</td>
                     <td>$ {item.listPrice ? parseFloat(String(item.listPrice).replace(/[^0-9.]/g, "")).toFixed(2) : ''}</td>
                     <td>$ {item.qty && item.listPrice ? calculateLineTotal(item.qty, item.listPrice).toFixed(2) : ''}</td>
                   </tr>
