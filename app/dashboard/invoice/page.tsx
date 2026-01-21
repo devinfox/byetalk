@@ -344,21 +344,26 @@ export default function InvoicePage() {
         backgroundColor: "#ffffff",
         allowTaint: true,
         onclone: (clonedDoc) => {
-          // Fix section numbers positioning for html2canvas
+          // Fix section numbers positioning for html2canvas - push up from bottom
           const sectionNums = clonedDoc.querySelectorAll('[class*="bdlSectionNum"]');
           sectionNums.forEach((el) => {
             const elem = el as HTMLElement;
-            elem.style.paddingTop = '0px';
-            elem.style.lineHeight = '34px';
+            elem.style.lineHeight = '30px';
+            elem.style.paddingBottom = '4px';
           });
-          // Fix checkboxes for html2canvas
+          // Fix checkboxes for html2canvas - align with text baseline
           const checkboxes = clonedDoc.querySelectorAll('[class*="bdlCheckBox"]');
           checkboxes.forEach((el) => {
             const elem = el as HTMLElement;
-            elem.style.lineHeight = '11px';
-            elem.style.verticalAlign = 'middle';
-            elem.style.position = 'relative';
-            elem.style.top = '2px';
+            elem.style.verticalAlign = 'text-bottom';
+            elem.style.marginBottom = '2px';
+          });
+          // Fix UPS line alignment
+          const upsLines = clonedDoc.querySelectorAll('[class*="bdlUpsLine"]');
+          upsLines.forEach((el) => {
+            const elem = el as HTMLElement;
+            elem.style.verticalAlign = 'baseline';
+            elem.style.top = '0px';
           });
         },
       });

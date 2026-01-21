@@ -1307,11 +1307,11 @@
 .bdlFormTable {
   width: 100%;
   border-collapse: collapse;
-  border: 2px solid #808181;
+  border: 1px solid #808181;
 }
 
 .bdlFormTable td {
-  border: 2px solid #808181;
+  border: 1px solid #808181;
   padding: 4px 8px;
   vertical-align: top;
   height: 45px;
@@ -1365,7 +1365,7 @@
 .bdlInitialBox {
   width: 85px;
   height: 55px;
-  border: 2px solid #808181;
+  border: 1px solid #808181;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -1390,7 +1390,7 @@
   display: flex;
   font-size: 8pt;
   line-height: 1.6;
-  border: 2px solid #808181;
+  border: 1px solid #808181;
   border-top: none;
   min-height: 110px;
 }
@@ -1398,7 +1398,7 @@
 .bdlPaymentLeft {
   width: 35%;
   padding: 12px 15px;
-  border-right: 2px solid #808181;
+  border-right: 1px solid #808181;
   display: flex;
   align-items: flex-start;
 }
@@ -1418,7 +1418,7 @@
 .bdlCheckBox {
   width: 13px;
   height: 13px;
-  border: 2px solid #808181;
+  border: 1px solid #808181;
   display: inline-block;
   margin-right: 5px;
   font-size: 11px;
@@ -1439,7 +1439,7 @@
 }
 
 .bdlUpsLine {
-  border-bottom: 2px solid #808181;
+  border-bottom: 1px solid #808181;
   min-width: 120px;
   display: inline-block;
   margin-left: 3px;
@@ -1452,7 +1452,7 @@
 
 /* Purchase intro text */
 .bdlPurchaseIntro {
-  border: 2px solid #808181;
+  border: 1px solid #808181;
   border-top: none;
   padding: 5px 8px;
   font-size: 8pt;
@@ -1470,7 +1470,7 @@
 .bdlPurchaseTable th {
   background: #fff;
   color: #000;
-  border: 2px solid #808181;
+  border: 1px solid #808181;
   padding: 6px 4px;
   text-align: center;
   font-weight: 700;
@@ -1485,7 +1485,7 @@
 }
 
 .bdlPurchaseTable td {
-  border: 2px solid #808181;
+  border: 1px solid #808181;
   padding: 4px 5px;
   text-align: center;
   height: 22px;
