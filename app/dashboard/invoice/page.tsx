@@ -1891,12 +1891,16 @@ export default function InvoicePage() {
                               </div>
                             </td>
                           </tr>
+                          <tr>
+                            <td className={styles.bdlCell} colSpan={3} style={{padding: '8px'}}>
+                              <div className={styles.bdlCheckItem} style={{margin: 0}}>
+                                <span className={styles.bdlCheckBox}>{depositoryInfo.storageAgreementAttached ? "X" : ""}</span>
+                                <span style={{fontWeight: 700}}>DEPOSITORY STORAGE AGREEMENT ATTACHED</span>
+                              </div>
+                            </td>
+                          </tr>
                         </tbody>
                       </table>
-                      <div className={styles.bdlCheckItem} style={{marginTop: '8px', marginBottom: '8px'}}>
-                        <span className={styles.bdlCheckBox}>{depositoryInfo.storageAgreementAttached ? "X" : ""}</span>
-                        <span style={{fontWeight: 700}}>DEPOSITORY STORAGE AGREEMENT ATTACHED</span>
-                      </div>
                       <div className={styles.bdlAuthSection}>
                         <div className={styles.bdlAuthText}>
                           <strong>By initialing, I acknowledge the following: There are numerous depositories that specialize in storage and safekeeping of precious metals. I understand that the Administrator and/or Custodian is not and cannot be held responsible for the actions of these depositories. I hereby release and hold harmless the Administrator/Custodian from any damages that I may incur with respect to my choice of depository and any activities or lack of activities on the part of said depository.</strong>
@@ -2777,12 +2781,16 @@ export default function InvoicePage() {
                                 </div>
                               </td>
                             </tr>
+                            <tr>
+                              <td className={styles.bdlCell} colSpan={3} style={{padding: '8px'}}>
+                                <div className={styles.bdlCheckItem} style={{margin: 0}}>
+                                  <span className={styles.bdlCheckBox}>{depositoryInfo.storageAgreementAttached ? "X" : ""}</span>
+                                  <span style={{fontWeight: 700}}>DEPOSITORY STORAGE AGREEMENT ATTACHED</span>
+                                </div>
+                              </td>
+                            </tr>
                           </tbody>
                         </table>
-                        <div className={styles.bdlCheckItem} style={{marginTop: '8px', marginBottom: '8px'}}>
-                          <span className={styles.bdlCheckBox}>{depositoryInfo.storageAgreementAttached ? "X" : ""}</span>
-                          <span style={{fontWeight: 700}}>DEPOSITORY STORAGE AGREEMENT ATTACHED</span>
-                        </div>
                         <div className={styles.bdlAuthSection}>
                           <div className={styles.bdlAuthText}>
                             <strong>By initialing, I acknowledge the following: There are numerous depositories that specialize in storage and safekeeping of precious metals. I understand that the Administrator and/or Custodian is not and cannot be held responsible for the actions of these depositories. I hereby release and hold harmless the Administrator/Custodian from any damages that I may incur with respect to my choice of depository and any activities or lack of activities on the part of said depository.</strong>
@@ -3696,12 +3704,16 @@ export default function InvoicePage() {
                       </div>
                     </td>
                   </tr>
+                  <tr>
+                    <td className={styles.bdlCell} colSpan={3} style={{padding: '8px'}}>
+                      <div className={styles.bdlCheckItem} style={{margin: 0}}>
+                        <span className={styles.bdlCheckBox}>{depositoryInfo.storageAgreementAttached ? "X" : ""}</span>
+                        <span style={{fontWeight: 700}}>DEPOSITORY STORAGE AGREEMENT ATTACHED</span>
+                      </div>
+                    </td>
+                  </tr>
                 </tbody>
               </table>
-              <div className={styles.bdlCheckItem} style={{marginTop: '8px', marginBottom: '8px'}}>
-                <span className={styles.bdlCheckBox}>{depositoryInfo.storageAgreementAttached ? "X" : ""}</span>
-                <span style={{fontWeight: 700}}>DEPOSITORY STORAGE AGREEMENT ATTACHED</span>
-              </div>
               <div className={styles.bdlAuthSection}>
                 <div className={styles.bdlAuthText}>
                   <strong>By initialing, I acknowledge the following: There are numerous depositories that specialize in storage and safekeeping of precious metals. I understand that the Administrator and/or Custodian is not and cannot be held responsible for the actions of these depositories. I hereby release and hold harmless the Administrator/Custodian from any damages that I may incur with respect to my choice of depository and any activities or lack of activities on the part of said depository.</strong>
