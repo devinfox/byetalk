@@ -344,8 +344,8 @@ export default function InvoicePage() {
         backgroundColor: "#ffffff",
         allowTaint: true,
         onclone: (clonedDoc) => {
-          // Section numbers: height=38px, border=3px, so inner=35px.
-          // For 22px font centered: line-height=35px, no padding
+          // Section numbers: height=38px, border=3px, so inner=35px
+          // Use line-height equal to inner height for centering
           const sectionNums = clonedDoc.querySelectorAll('[class*="bdlSectionNum"]');
           sectionNums.forEach((el) => {
             const elem = el as HTMLElement;
@@ -354,16 +354,7 @@ export default function InvoicePage() {
             elem.style.paddingBottom = '0';
           });
 
-          // Section headers: min-height=22px + 8px padding = 30px total
-          // Title needs line-height matching for vertical center
-          const sectionHeaders = clonedDoc.querySelectorAll('[class*="bdlSectionHeader"]');
-          sectionHeaders.forEach((el) => {
-            const elem = el as HTMLElement;
-            elem.style.lineHeight = '22px';
-          });
-
-          // Checkboxes: 13px box, need to align baseline with text
-          // Use negative margin to pull down slightly
+          // Checkboxes: align with text baseline
           const checkboxes = clonedDoc.querySelectorAll('[class*="bdlCheckBox"]');
           checkboxes.forEach((el) => {
             const elem = el as HTMLElement;
