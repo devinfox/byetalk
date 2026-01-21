@@ -1500,7 +1500,7 @@
 }
 
 .bdlPaymentLeft {
-  width: 35%;
+  width: 50%;
   padding: 10px 12px;
   border-right: 1px solid #808181;
   display: flex;
@@ -1508,7 +1508,7 @@
 }
 
 .bdlPaymentRight {
-  width: 65%;
+  width: 50%;
   padding: 10px 12px;
 }
 
