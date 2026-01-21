@@ -39,6 +39,17 @@ type PaymentOptions = {
   upsAccountNumber: string;
 };
 
+type DepositoryInfo = {
+  depositoryName: string;
+  contactName: string;
+  contactPhone: string;
+  streetAddress: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  storageAgreementAttached: boolean;
+};
+
 type SellLineItem = {
   id: string;
   quantity: string;
@@ -168,6 +179,17 @@ const initialPaymentOptions: PaymentOptions = {
   upsAccountNumber: "",
 };
 
+const initialDepositoryInfo: DepositoryInfo = {
+  depositoryName: "",
+  contactName: "",
+  contactPhone: "",
+  streetAddress: "",
+  city: "",
+  state: "",
+  zipCode: "",
+  storageAgreementAttached: false,
+};
+
 const initialSellLineItem = (): SellLineItem => ({
   id: crypto.randomUUID(),
   quantity: "",
@@ -226,6 +248,7 @@ export default function InvoicePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [showSavedPanel, setShowSavedPanel] = useState(true);
   const [paymentOptions, setPaymentOptions] = useState<PaymentOptions>(initialPaymentOptions);
+  const [depositoryInfo, setDepositoryInfo] = useState<DepositoryInfo>(initialDepositoryInfo);
   const [isGeneratingBuyDirection, setIsGeneratingBuyDirection] = useState(false);
   const [previewTab, setPreviewTab] = useState<'invoice' | 'buyDirection' | 'sellDirection' | 'combined'>('invoice');
   const [isBuyAndSell, setIsBuyAndSell] = useState(false);
@@ -936,6 +959,84 @@ export default function InvoicePage() {
           </div>
         </div>
 
+        {/* Depository Information for Buy Direction Letter Page 2 */}
+        <div className={styles.paymentSection}>
+          <h2 className={styles.sectionTitle}>Depository Information (Buy Direction Page 2)</h2>
+          <div className={styles.formGrid}>
+            <div className={styles.formField}>
+              <label>Depository Name</label>
+              <input
+                type="text"
+                value={depositoryInfo.depositoryName}
+                onChange={(e) => setDepositoryInfo({ ...depositoryInfo, depositoryName: e.target.value })}
+                placeholder="Depository Name"
+              />
+            </div>
+            <div className={styles.formField}>
+              <label>Contact Name</label>
+              <input
+                type="text"
+                value={depositoryInfo.contactName}
+                onChange={(e) => setDepositoryInfo({ ...depositoryInfo, contactName: e.target.value })}
+                placeholder="Contact Name"
+              />
+            </div>
+            <div className={styles.formField}>
+              <label>Contact Phone</label>
+              <input
+                type="text"
+                value={depositoryInfo.contactPhone}
+                onChange={(e) => setDepositoryInfo({ ...depositoryInfo, contactPhone: e.target.value })}
+                placeholder="Contact Phone Number"
+              />
+            </div>
+            <div className={styles.formField} style={{ gridColumn: 'span 2' }}>
+              <label>Depository Street Address</label>
+              <input
+                type="text"
+                value={depositoryInfo.streetAddress}
+                onChange={(e) => setDepositoryInfo({ ...depositoryInfo, streetAddress: e.target.value })}
+                placeholder="Street Address"
+              />
+            </div>
+            <div className={styles.formField}>
+              <label>City</label>
+              <input
+                type="text"
+                value={depositoryInfo.city}
+                onChange={(e) => setDepositoryInfo({ ...depositoryInfo, city: e.target.value })}
+                placeholder="City"
+              />
+            </div>
+            <div className={styles.formField}>
+              <label>State</label>
+              <input
+                type="text"
+                value={depositoryInfo.state}
+                onChange={(e) => setDepositoryInfo({ ...depositoryInfo, state: e.target.value })}
+                placeholder="State"
+              />
+            </div>
+            <div className={styles.formField}>
+              <label>Zip Code</label>
+              <input
+                type="text"
+                value={depositoryInfo.zipCode}
+                onChange={(e) => setDepositoryInfo({ ...depositoryInfo, zipCode: e.target.value })}
+                placeholder="Zip Code"
+              />
+            </div>
+          </div>
+          <label className={styles.checkboxLabel} style={{ marginTop: '1rem' }}>
+            <input
+              type="checkbox"
+              checked={depositoryInfo.storageAgreementAttached}
+              onChange={(e) => setDepositoryInfo({ ...depositoryInfo, storageAgreementAttached: e.target.checked })}
+            />
+            <span>Depository Storage Agreement Attached</span>
+          </label>
+        </div>
+
         {/* Line Items */}
         <div className={styles.lineItemsSection}>
           <h2 className={styles.sectionTitle}>Line Items</h2>
@@ -1502,6 +1603,130 @@ export default function InvoicePage() {
                   <div className={styles.bdlFooter}>
                     <div className={styles.bdlFooterCenter}>Copyright The Entrust Group - Precious Metals Buy Direction Letter 10-25-2021</div>
                   </div>
+
+                  {/* Page 2 */}
+                  <div className={styles.bdlPage2}>
+                    <div className={styles.bdlHeader}>
+                      <div className={styles.bdlLogo}><img src="/entrust.png" alt="The Entrust Group" /></div>
+                      <div className={styles.bdlHeaderCenter}>
+                        <div className={styles.bdlHeaderTitle}>Precious Metals</div>
+                        <div className={styles.bdlHeaderSubtitle}>Buy Direction Letter</div>
+                      </div>
+                      <div className={styles.bdlHeaderRight}>
+                        <div>555 12th Street, Suite 900</div>
+                        <div>Oakland, CA 94607</div>
+                        <div>Phone: (877) 545-0544</div>
+                        <div>Fax: (866) 228-4009</div>
+                        <div>preciousmetals@theentrustgroup.com</div>
+                      </div>
+                    </div>
+                    <div className={styles.bdlHeaderLine}></div>
+
+                    {/* Section 5: Depository Information */}
+                    <div className={styles.bdlSection}>
+                      <div className={styles.bdlSectionHeader}>
+                        <div className={styles.bdlSectionNum}>5</div>
+                        <div className={styles.bdlSectionTitle}>Depository Information</div>
+                      </div>
+                      <table className={styles.bdlFormTable}>
+                        <tbody>
+                          <tr>
+                            <td className={styles.bdlCell} style={{width: '35%'}}>
+                              <div className={styles.bdlCellLabel}>DEPOSITORY NAME</div>
+                              <div className={styles.bdlCellValue}>{depositoryInfo.depositoryName}</div>
+                            </td>
+                            <td className={styles.bdlCell} style={{width: '35%'}}>
+                              <div className={styles.bdlCellLabel}>CONTACT NAME</div>
+                              <div className={styles.bdlCellValue}>{depositoryInfo.contactName}</div>
+                            </td>
+                            <td className={styles.bdlCell} style={{width: '30%'}}>
+                              <div className={styles.bdlCellLabel}>CONTACT PHONE NUMBER</div>
+                              <div className={styles.bdlCellValue}>{depositoryInfo.contactPhone}</div>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td className={styles.bdlCell} colSpan={2}>
+                              <div className={styles.bdlCellLabel}>DEPOSITORY STREET ADDRESS</div>
+                              <div className={styles.bdlCellValue}>{depositoryInfo.streetAddress}</div>
+                            </td>
+                            <td className={styles.bdlCell}>
+                              <div className={styles.bdlCellLabel}>CITY</div>
+                              <div className={styles.bdlCellValue}>{depositoryInfo.city}</div>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td className={styles.bdlCell} colSpan={2}></td>
+                            <td className={styles.bdlCell} style={{display: 'flex', gap: '0'}}>
+                              <div style={{flex: 1, borderRight: '1px solid #808181', padding: '3px 8px'}}>
+                                <div className={styles.bdlCellLabel}>STATE</div>
+                                <div className={styles.bdlCellValue}>{depositoryInfo.state}</div>
+                              </div>
+                              <div style={{flex: 1, padding: '3px 8px'}}>
+                                <div className={styles.bdlCellLabel}>ZIP CODE</div>
+                                <div className={styles.bdlCellValue}>{depositoryInfo.zipCode}</div>
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                      <div className={styles.bdlCheckItem} style={{marginTop: '8px', marginBottom: '8px'}}>
+                        <span className={styles.bdlCheckBox}>{depositoryInfo.storageAgreementAttached ? "X" : ""}</span>
+                        <span style={{fontWeight: 700}}>DEPOSITORY STORAGE AGREEMENT ATTACHED</span>
+                      </div>
+                      <div className={styles.bdlAuthSection}>
+                        <div className={styles.bdlAuthText}>
+                          <strong>By initialing, I acknowledge the following: There are numerous depositories that specialize in storage and safekeeping of precious metals. I understand that the Administrator and/or Custodian is not and cannot be held responsible for the actions of these depositories. I hereby release and hold harmless the Administrator/Custodian from any damages that I may incur with respect to my choice of depository and any activities or lack of activities on the part of said depository.</strong>
+                        </div>
+                        <div className={styles.bdlInitialBox}>
+                          <div className={styles.bdlInitialLabel}>INITIAL HERE</div>
+                          <div className={styles.bdlInitialSpace}></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Section 6: Account Owner Signature */}
+                    <div className={styles.bdlSection}>
+                      <div className={styles.bdlSectionHeader}>
+                        <div className={styles.bdlSectionNum}>6</div>
+                        <div className={styles.bdlSectionTitle}>Account Owner Signature and Investment Acknowledgment</div>
+                      </div>
+                      <div className={styles.bdlLegalText}>
+                        <p className={styles.bdlLegalBold}><em>Prior to funding, all transaction documents must be notated "read and approved" with your signature and date</em> (for example, precious metals invoice).</p>
+
+                        <p>I understand that my account is self-directed and that the Administrator and Custodian named in the disclosure statement received when the account was established will not review the merits, legitimacy, appropriateness and/or suitability of any investment in general, including, but not limited to, any investigation and/or due diligence prior to making any investment, or in connection with my account in particular. I acknowledge that I have not requested that the Administrator and/or Custodian provide, and the Administrator and/or Custodian have not provided, any advice with respect to the investment directive set forth in this Buy Direction Letter. I understand that it is my responsibility to conduct all due diligence, but not limited to, search concerning the validity of title, and all other investigation that a reasonably prudent investor would undertake prior to making any investment. I understand that neither the Administrator nor the Custodian determine whether this investment is acceptable under the Employee Retirement Income Securities Act (ERISA), the Internal Revenue Code (IRC), or any applicable federal, state, or local laws, including securities laws. I understand that it is my responsibility to review any investments to ensure compliance with these requirements, including but not limited to investments that engage in Marijuana-related business activities.</p>
+
+                        <p>I understand that neither the Administrator nor the Custodian is a "fiduciary" for my account and/or my investment as such terms are defined in the IRC, ERISA, and/or any applicable federal, state or local laws. I agree to release, indemnify, defend and hold the Administrator and/or Custodian harmless from any claims, including, but not limited to, actions, liabilities, losses, penalties, fines and/or claims by others, arising out of this Buy Direction Letter and/or this investment, including, but not limited to, claims that an investment is not prudent, proper, diversified or otherwise in compliance with ERISA, the IRC and/or any other applicable federal, state or local laws. In the event of claims by others related to my account and/or investment wherein Administrator and/or Custodian are named as a party, Administrator and/or Custodian shall have the full and unequivocal right at their sole discretion to select their own attorneys to represent them in such litigation and deduct from my account any amounts to pay for any costs and expenses, including, but not limited to, all attorneys' fees, and costs and internal costs (collectively "Litigation Costs"), incurred by Administrator and/or Custodian in the defense of such claims and/or litigation. If there are insufficient funds in my account to cover the Litigation Costs incurred by Administrator and/or Custodian, on demand by Administrator and/ or Custodian, I will promptly reimburse Administrator and/or Custodian the outstanding balance of the Litigation Costs. If I fail to promptly reimburse the Litigation Costs, Administrator and/or Custodian shall have the full and unequivocal right to freeze my assets, liquidate my assets, and/or initiate legal action in order to obtain full reimbursement of the Litigation Costs. I also understand and agree that the Administrator and/or Custodian will not be responsible to take any action should there be any default with regard to this investment.</p>
+
+                        <p>I am directing you to complete this transaction as specified above. I confirm that the decision to buy this asset is in accordance with the rules of my account, and I agree to hold harmless and without liability the Administrator and/or Custodian of my account under the foregoing hold harmless provision. I understand that no one at the Administrator and/or Custodian has authority to agree to anything different than my foregoing understandings of Administrator's and/or Custodian's policy. If any provision of this Buy Direction Letter is found to be illegal, invalid, void or unenforceable, such provision shall be severed and such illegality or invalidity shall not affect the remaining provisions, which shall remain in full force and effect. For purposes of this Buy-Direction Letter, the terms Administrator and Custodian include The Entrust Group, its agents, assigns, joint ventures, affiliates and/or business associates, former and present. I declare that I have examined this document, including accompanying information, and to the best of my knowledge and belief, it is true, correct and complete.</p>
+
+                        <p><strong>Not responsible for Market Condition Variances:</strong> I understand that I have agreed and instructed the Custodian to follow the investment direction which I provide to Administrator in investing the principal, as confirmed by written direction letters or instructions to Administrator from the undersigned for the above-referenced Account or other Custodial account for which Administrator serves as record keeper. I further understand that for any transaction that I may direct or instruct Administrator to complete, especially precious metals, that may be dependent upon the operation of global markets and entities, there could be fluctuations in price and condition of said investments from the time that I issue a direction letter to Administrator and the time when the transaction can actually be completed and recorded in my Account. I hereby agree to release, indemnify, defend and hold Administrator and Custodian harmless from any claims regarding the fluctuation in prices and/or conditions of any transaction I direct or instruct Administrator to make on my behalf. I further agree to waive any claims that I have, past, present or future, known or unknown, anticipated or unanticipated, with respect to the fluctuation or change in the price or condition of any investment that I direct or instruct Administrator to make from the time I deliver my direction or instruction letter to Administrator until the time the transaction is actually completed and recorded to my Account. I understand that this hold harmless and release shall apply equally to the Administrator and Custodian.</p>
+
+                        <p><strong>I understand that my account is subject to the provisions of Internal Revenue Code (IRC) §4975, which defines certain prohibited transactions.</strong> I acknowledge that neither the Administrator nor the Custodian has made or will make any determination as to whether this investment is prohibited under IRC §4975 or under any other federal, state or local law. I certify that making this investment will not constitute a prohibited transaction and that it complies with all applicable federal, state, and local laws, regulations and requirements.</p>
+
+                        <p className={styles.bdlLegalBold}><em>Transactions with insufficient funds will not be processed until sufficient funds are received. If fees are being deducted from your account, the full amount of the transaction plus fees must be available before your transaction can be processed.</em></p>
+
+                        <p className={styles.bdlLegalBold}><em>I have read and understand the disclosure above.</em></p>
+                      </div>
+                      <table className={styles.bdlFormTable} style={{marginTop: '10px'}}>
+                        <tbody>
+                          <tr>
+                            <td className={styles.bdlCell} style={{width: '60%', height: '50px'}}>
+                              <div className={styles.bdlCellLabel}>SIGNATURE</div>
+                              <div className={styles.bdlCellValue}></div>
+                            </td>
+                            <td className={styles.bdlCell} style={{width: '40%', height: '50px'}}>
+                              <div className={styles.bdlCellLabel}>DATE</div>
+                              <div className={styles.bdlCellValue}></div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div className={styles.bdlFooter}>
+                      <div className={styles.bdlFooterCenter}>Copyright The Entrust Group - Precious Metals Buy Direction Letter 10-25-2021</div>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -1969,6 +2194,118 @@ export default function InvoicePage() {
                     </div>
                     <div className={styles.bdlFooter}>
                       <div className={styles.bdlFooterCenter}>Copyright The Entrust Group - Precious Metals Buy Direction Letter 10-25-2021</div>
+                    </div>
+
+                    {/* Buy Direction Page 2 */}
+                    <div className={styles.bdlPage2}>
+                      <div className={styles.bdlHeader}>
+                        <div className={styles.bdlLogo}><img src="/entrust.png" alt="The Entrust Group" /></div>
+                        <div className={styles.bdlHeaderCenter}>
+                          <div className={styles.bdlHeaderTitle}>Precious Metals</div>
+                          <div className={styles.bdlHeaderSubtitle}>Buy Direction Letter</div>
+                        </div>
+                        <div className={styles.bdlHeaderRight}>
+                          <div>555 12th Street, Suite 900</div>
+                          <div>Oakland, CA 94607</div>
+                          <div>Phone: (877) 545-0544</div>
+                          <div>Fax: (866) 228-4009</div>
+                          <div>preciousmetals@theentrustgroup.com</div>
+                        </div>
+                      </div>
+                      <div className={styles.bdlHeaderLine}></div>
+                      <div className={styles.bdlSection}>
+                        <div className={styles.bdlSectionHeader}>
+                          <div className={styles.bdlSectionNum}>5</div>
+                          <div className={styles.bdlSectionTitle}>Depository Information</div>
+                        </div>
+                        <table className={styles.bdlFormTable}>
+                          <tbody>
+                            <tr>
+                              <td className={styles.bdlCell} style={{width: '35%'}}>
+                                <div className={styles.bdlCellLabel}>DEPOSITORY NAME</div>
+                                <div className={styles.bdlCellValue}>{depositoryInfo.depositoryName}</div>
+                              </td>
+                              <td className={styles.bdlCell} style={{width: '35%'}}>
+                                <div className={styles.bdlCellLabel}>CONTACT NAME</div>
+                                <div className={styles.bdlCellValue}>{depositoryInfo.contactName}</div>
+                              </td>
+                              <td className={styles.bdlCell} style={{width: '30%'}}>
+                                <div className={styles.bdlCellLabel}>CONTACT PHONE NUMBER</div>
+                                <div className={styles.bdlCellValue}>{depositoryInfo.contactPhone}</div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td className={styles.bdlCell} colSpan={2}>
+                                <div className={styles.bdlCellLabel}>DEPOSITORY STREET ADDRESS</div>
+                                <div className={styles.bdlCellValue}>{depositoryInfo.streetAddress}</div>
+                              </td>
+                              <td className={styles.bdlCell}>
+                                <div className={styles.bdlCellLabel}>CITY</div>
+                                <div className={styles.bdlCellValue}>{depositoryInfo.city}</div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td className={styles.bdlCell} colSpan={2}></td>
+                              <td className={styles.bdlCell} style={{display: 'flex', gap: '0'}}>
+                                <div style={{flex: 1, borderRight: '1px solid #808181', padding: '3px 8px'}}>
+                                  <div className={styles.bdlCellLabel}>STATE</div>
+                                  <div className={styles.bdlCellValue}>{depositoryInfo.state}</div>
+                                </div>
+                                <div style={{flex: 1, padding: '3px 8px'}}>
+                                  <div className={styles.bdlCellLabel}>ZIP CODE</div>
+                                  <div className={styles.bdlCellValue}>{depositoryInfo.zipCode}</div>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                        <div className={styles.bdlCheckItem} style={{marginTop: '8px', marginBottom: '8px'}}>
+                          <span className={styles.bdlCheckBox}>{depositoryInfo.storageAgreementAttached ? "X" : ""}</span>
+                          <span style={{fontWeight: 700}}>DEPOSITORY STORAGE AGREEMENT ATTACHED</span>
+                        </div>
+                        <div className={styles.bdlAuthSection}>
+                          <div className={styles.bdlAuthText}>
+                            <strong>By initialing, I acknowledge the following: There are numerous depositories that specialize in storage and safekeeping of precious metals. I understand that the Administrator and/or Custodian is not and cannot be held responsible for the actions of these depositories. I hereby release and hold harmless the Administrator/Custodian from any damages that I may incur with respect to my choice of depository and any activities or lack of activities on the part of said depository.</strong>
+                          </div>
+                          <div className={styles.bdlInitialBox}>
+                            <div className={styles.bdlInitialLabel}>INITIAL HERE</div>
+                            <div className={styles.bdlInitialSpace}></div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className={styles.bdlSection}>
+                        <div className={styles.bdlSectionHeader}>
+                          <div className={styles.bdlSectionNum}>6</div>
+                          <div className={styles.bdlSectionTitle}>Account Owner Signature and Investment Acknowledgment</div>
+                        </div>
+                        <div className={styles.bdlLegalText}>
+                          <p className={styles.bdlLegalBold}><em>Prior to funding, all transaction documents must be notated "read and approved" with your signature and date</em> (for example, precious metals invoice).</p>
+                          <p>I understand that my account is self-directed and that the Administrator and Custodian named in the disclosure statement received when the account was established will not review the merits, legitimacy, appropriateness and/or suitability of any investment in general, including, but not limited to, any investigation and/or due diligence prior to making any investment, or in connection with my account in particular. I acknowledge that I have not requested that the Administrator and/or Custodian provide, and the Administrator and/or Custodian have not provided, any advice with respect to the investment directive set forth in this Buy Direction Letter. I understand that it is my responsibility to conduct all due diligence, but not limited to, search concerning the validity of title, and all other investigation that a reasonably prudent investor would undertake prior to making any investment. I understand that neither the Administrator nor the Custodian determine whether this investment is acceptable under the Employee Retirement Income Securities Act (ERISA), the Internal Revenue Code (IRC), or any applicable federal, state, or local laws, including securities laws. I understand that it is my responsibility to review any investments to ensure compliance with these requirements, including but not limited to investments that engage in Marijuana-related business activities.</p>
+                          <p>I understand that neither the Administrator nor the Custodian is a "fiduciary" for my account and/or my investment as such terms are defined in the IRC, ERISA, and/or any applicable federal, state or local laws. I agree to release, indemnify, defend and hold the Administrator and/or Custodian harmless from any claims, including, but not limited to, actions, liabilities, losses, penalties, fines and/or claims by others, arising out of this Buy Direction Letter and/or this investment, including, but not limited to, claims that an investment is not prudent, proper, diversified or otherwise in compliance with ERISA, the IRC and/or any other applicable federal, state or local laws. In the event of claims by others related to my account and/or investment wherein Administrator and/or Custodian are named as a party, Administrator and/or Custodian shall have the full and unequivocal right at their sole discretion to select their own attorneys to represent them in such litigation and deduct from my account any amounts to pay for any costs and expenses, including, but not limited to, all attorneys' fees, and costs and internal costs (collectively "Litigation Costs"), incurred by Administrator and/or Custodian in the defense of such claims and/or litigation. If there are insufficient funds in my account to cover the Litigation Costs incurred by Administrator and/or Custodian, on demand by Administrator and/ or Custodian, I will promptly reimburse Administrator and/or Custodian the outstanding balance of the Litigation Costs. If I fail to promptly reimburse the Litigation Costs, Administrator and/or Custodian shall have the full and unequivocal right to freeze my assets, liquidate my assets, and/or initiate legal action in order to obtain full reimbursement of the Litigation Costs. I also understand and agree that the Administrator and/or Custodian will not be responsible to take any action should there be any default with regard to this investment.</p>
+                          <p>I am directing you to complete this transaction as specified above. I confirm that the decision to buy this asset is in accordance with the rules of my account, and I agree to hold harmless and without liability the Administrator and/or Custodian of my account under the foregoing hold harmless provision. I understand that no one at the Administrator and/or Custodian has authority to agree to anything different than my foregoing understandings of Administrator's and/or Custodian's policy. If any provision of this Buy Direction Letter is found to be illegal, invalid, void or unenforceable, such provision shall be severed and such illegality or invalidity shall not affect the remaining provisions, which shall remain in full force and effect. For purposes of this Buy-Direction Letter, the terms Administrator and Custodian include The Entrust Group, its agents, assigns, joint ventures, affiliates and/or business associates, former and present. I declare that I have examined this document, including accompanying information, and to the best of my knowledge and belief, it is true, correct and complete.</p>
+                          <p><strong>Not responsible for Market Condition Variances:</strong> I understand that I have agreed and instructed the Custodian to follow the investment direction which I provide to Administrator in investing the principal, as confirmed by written direction letters or instructions to Administrator from the undersigned for the above-referenced Account or other Custodial account for which Administrator serves as record keeper. I further understand that for any transaction that I may direct or instruct Administrator to complete, especially precious metals, that may be dependent upon the operation of global markets and entities, there could be fluctuations in price and condition of said investments from the time that I issue a direction letter to Administrator and the time when the transaction can actually be completed and recorded in my Account. I hereby agree to release, indemnify, defend and hold Administrator and Custodian harmless from any claims regarding the fluctuation in prices and/or conditions of any transaction I direct or instruct Administrator to make on my behalf. I further agree to waive any claims that I have, past, present or future, known or unknown, anticipated or unanticipated, with respect to the fluctuation or change in the price or condition of any investment that I direct or instruct Administrator to make from the time I deliver my direction or instruction letter to Administrator until the time the transaction is actually completed and recorded to my Account. I understand that this hold harmless and release shall apply equally to the Administrator and Custodian.</p>
+                          <p><strong>I understand that my account is subject to the provisions of Internal Revenue Code (IRC) §4975, which defines certain prohibited transactions.</strong> I acknowledge that neither the Administrator nor the Custodian has made or will make any determination as to whether this investment is prohibited under IRC §4975 or under any other federal, state or local law. I certify that making this investment will not constitute a prohibited transaction and that it complies with all applicable federal, state, and local laws, regulations and requirements.</p>
+                          <p className={styles.bdlLegalBold}><em>Transactions with insufficient funds will not be processed until sufficient funds are received. If fees are being deducted from your account, the full amount of the transaction plus fees must be available before your transaction can be processed.</em></p>
+                          <p className={styles.bdlLegalBold}><em>I have read and understand the disclosure above.</em></p>
+                        </div>
+                        <table className={styles.bdlFormTable} style={{marginTop: '10px'}}>
+                          <tbody>
+                            <tr>
+                              <td className={styles.bdlCell} style={{width: '60%', height: '50px'}}>
+                                <div className={styles.bdlCellLabel}>SIGNATURE</div>
+                                <div className={styles.bdlCellValue}></div>
+                              </td>
+                              <td className={styles.bdlCell} style={{width: '40%', height: '50px'}}>
+                                <div className={styles.bdlCellLabel}>DATE</div>
+                                <div className={styles.bdlCellValue}></div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div className={styles.bdlFooter}>
+                        <div className={styles.bdlFooterCenter}>Copyright The Entrust Group - Precious Metals Buy Direction Letter 10-25-2021</div>
+                      </div>
                     </div>
                   </div>
 
@@ -2490,6 +2827,118 @@ export default function InvoicePage() {
           {/* Footer */}
           <div className={styles.bdlFooter}>
             <div className={styles.bdlFooterCenter}>Copyright The Entrust Group - Precious Metals Buy Direction Letter 10-25-2021</div>
+          </div>
+
+          {/* Page 2 */}
+          <div className={styles.bdlPage2}>
+            <div className={styles.bdlHeader}>
+              <div className={styles.bdlLogo}><img src="/entrust.png" alt="The Entrust Group" /></div>
+              <div className={styles.bdlHeaderCenter}>
+                <div className={styles.bdlHeaderTitle}>Precious Metals</div>
+                <div className={styles.bdlHeaderSubtitle}>Buy Direction Letter</div>
+              </div>
+              <div className={styles.bdlHeaderRight}>
+                <div>555 12th Street, Suite 900</div>
+                <div>Oakland, CA 94607</div>
+                <div>Phone: (877) 545-0544</div>
+                <div>Fax: (866) 228-4009</div>
+                <div>preciousmetals@theentrustgroup.com</div>
+              </div>
+            </div>
+            <div className={styles.bdlHeaderLine}></div>
+            <div className={styles.bdlSection}>
+              <div className={styles.bdlSectionHeader}>
+                <div className={styles.bdlSectionNum}>5</div>
+                <div className={styles.bdlSectionTitle}>Depository Information</div>
+              </div>
+              <table className={styles.bdlFormTable}>
+                <tbody>
+                  <tr>
+                    <td className={styles.bdlCell} style={{width: '35%'}}>
+                      <div className={styles.bdlCellLabel}>DEPOSITORY NAME</div>
+                      <div className={styles.bdlCellValue}>{depositoryInfo.depositoryName}</div>
+                    </td>
+                    <td className={styles.bdlCell} style={{width: '35%'}}>
+                      <div className={styles.bdlCellLabel}>CONTACT NAME</div>
+                      <div className={styles.bdlCellValue}>{depositoryInfo.contactName}</div>
+                    </td>
+                    <td className={styles.bdlCell} style={{width: '30%'}}>
+                      <div className={styles.bdlCellLabel}>CONTACT PHONE NUMBER</div>
+                      <div className={styles.bdlCellValue}>{depositoryInfo.contactPhone}</div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className={styles.bdlCell} colSpan={2}>
+                      <div className={styles.bdlCellLabel}>DEPOSITORY STREET ADDRESS</div>
+                      <div className={styles.bdlCellValue}>{depositoryInfo.streetAddress}</div>
+                    </td>
+                    <td className={styles.bdlCell}>
+                      <div className={styles.bdlCellLabel}>CITY</div>
+                      <div className={styles.bdlCellValue}>{depositoryInfo.city}</div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className={styles.bdlCell} colSpan={2}></td>
+                    <td className={styles.bdlCell} style={{display: 'flex', gap: '0'}}>
+                      <div style={{flex: 1, borderRight: '1px solid #808181', padding: '3px 8px'}}>
+                        <div className={styles.bdlCellLabel}>STATE</div>
+                        <div className={styles.bdlCellValue}>{depositoryInfo.state}</div>
+                      </div>
+                      <div style={{flex: 1, padding: '3px 8px'}}>
+                        <div className={styles.bdlCellLabel}>ZIP CODE</div>
+                        <div className={styles.bdlCellValue}>{depositoryInfo.zipCode}</div>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <div className={styles.bdlCheckItem} style={{marginTop: '8px', marginBottom: '8px'}}>
+                <span className={styles.bdlCheckBox}>{depositoryInfo.storageAgreementAttached ? "X" : ""}</span>
+                <span style={{fontWeight: 700}}>DEPOSITORY STORAGE AGREEMENT ATTACHED</span>
+              </div>
+              <div className={styles.bdlAuthSection}>
+                <div className={styles.bdlAuthText}>
+                  <strong>By initialing, I acknowledge the following: There are numerous depositories that specialize in storage and safekeeping of precious metals. I understand that the Administrator and/or Custodian is not and cannot be held responsible for the actions of these depositories. I hereby release and hold harmless the Administrator/Custodian from any damages that I may incur with respect to my choice of depository and any activities or lack of activities on the part of said depository.</strong>
+                </div>
+                <div className={styles.bdlInitialBox}>
+                  <div className={styles.bdlInitialLabel}>INITIAL HERE</div>
+                  <div className={styles.bdlInitialSpace}></div>
+                </div>
+              </div>
+            </div>
+            <div className={styles.bdlSection}>
+              <div className={styles.bdlSectionHeader}>
+                <div className={styles.bdlSectionNum}>6</div>
+                <div className={styles.bdlSectionTitle}>Account Owner Signature and Investment Acknowledgment</div>
+              </div>
+              <div className={styles.bdlLegalText}>
+                <p className={styles.bdlLegalBold}><em>Prior to funding, all transaction documents must be notated "read and approved" with your signature and date</em> (for example, precious metals invoice).</p>
+                <p>I understand that my account is self-directed and that the Administrator and Custodian named in the disclosure statement received when the account was established will not review the merits, legitimacy, appropriateness and/or suitability of any investment in general, including, but not limited to, any investigation and/or due diligence prior to making any investment, or in connection with my account in particular. I acknowledge that I have not requested that the Administrator and/or Custodian provide, and the Administrator and/or Custodian have not provided, any advice with respect to the investment directive set forth in this Buy Direction Letter. I understand that it is my responsibility to conduct all due diligence, but not limited to, search concerning the validity of title, and all other investigation that a reasonably prudent investor would undertake prior to making any investment. I understand that neither the Administrator nor the Custodian determine whether this investment is acceptable under the Employee Retirement Income Securities Act (ERISA), the Internal Revenue Code (IRC), or any applicable federal, state, or local laws, including securities laws. I understand that it is my responsibility to review any investments to ensure compliance with these requirements, including but not limited to investments that engage in Marijuana-related business activities.</p>
+                <p>I understand that neither the Administrator nor the Custodian is a "fiduciary" for my account and/or my investment as such terms are defined in the IRC, ERISA, and/or any applicable federal, state or local laws. I agree to release, indemnify, defend and hold the Administrator and/or Custodian harmless from any claims, including, but not limited to, actions, liabilities, losses, penalties, fines and/or claims by others, arising out of this Buy Direction Letter and/or this investment, including, but not limited to, claims that an investment is not prudent, proper, diversified or otherwise in compliance with ERISA, the IRC and/or any other applicable federal, state or local laws. In the event of claims by others related to my account and/or investment wherein Administrator and/or Custodian are named as a party, Administrator and/or Custodian shall have the full and unequivocal right at their sole discretion to select their own attorneys to represent them in such litigation and deduct from my account any amounts to pay for any costs and expenses, including, but not limited to, all attorneys' fees, and costs and internal costs (collectively "Litigation Costs"), incurred by Administrator and/or Custodian in the defense of such claims and/or litigation. If there are insufficient funds in my account to cover the Litigation Costs incurred by Administrator and/or Custodian, on demand by Administrator and/ or Custodian, I will promptly reimburse Administrator and/or Custodian the outstanding balance of the Litigation Costs. If I fail to promptly reimburse the Litigation Costs, Administrator and/or Custodian shall have the full and unequivocal right to freeze my assets, liquidate my assets, and/or initiate legal action in order to obtain full reimbursement of the Litigation Costs. I also understand and agree that the Administrator and/or Custodian will not be responsible to take any action should there be any default with regard to this investment.</p>
+                <p>I am directing you to complete this transaction as specified above. I confirm that the decision to buy this asset is in accordance with the rules of my account, and I agree to hold harmless and without liability the Administrator and/or Custodian of my account under the foregoing hold harmless provision. I understand that no one at the Administrator and/or Custodian has authority to agree to anything different than my foregoing understandings of Administrator's and/or Custodian's policy. If any provision of this Buy Direction Letter is found to be illegal, invalid, void or unenforceable, such provision shall be severed and such illegality or invalidity shall not affect the remaining provisions, which shall remain in full force and effect. For purposes of this Buy-Direction Letter, the terms Administrator and Custodian include The Entrust Group, its agents, assigns, joint ventures, affiliates and/or business associates, former and present. I declare that I have examined this document, including accompanying information, and to the best of my knowledge and belief, it is true, correct and complete.</p>
+                <p><strong>Not responsible for Market Condition Variances:</strong> I understand that I have agreed and instructed the Custodian to follow the investment direction which I provide to Administrator in investing the principal, as confirmed by written direction letters or instructions to Administrator from the undersigned for the above-referenced Account or other Custodial account for which Administrator serves as record keeper. I further understand that for any transaction that I may direct or instruct Administrator to complete, especially precious metals, that may be dependent upon the operation of global markets and entities, there could be fluctuations in price and condition of said investments from the time that I issue a direction letter to Administrator and the time when the transaction can actually be completed and recorded in my Account. I hereby agree to release, indemnify, defend and hold Administrator and Custodian harmless from any claims regarding the fluctuation in prices and/or conditions of any transaction I direct or instruct Administrator to make on my behalf. I further agree to waive any claims that I have, past, present or future, known or unknown, anticipated or unanticipated, with respect to the fluctuation or change in the price or condition of any investment that I direct or instruct Administrator to make from the time I deliver my direction or instruction letter to Administrator until the time the transaction is actually completed and recorded to my Account. I understand that this hold harmless and release shall apply equally to the Administrator and Custodian.</p>
+                <p><strong>I understand that my account is subject to the provisions of Internal Revenue Code (IRC) §4975, which defines certain prohibited transactions.</strong> I acknowledge that neither the Administrator nor the Custodian has made or will make any determination as to whether this investment is prohibited under IRC §4975 or under any other federal, state or local law. I certify that making this investment will not constitute a prohibited transaction and that it complies with all applicable federal, state, and local laws, regulations and requirements.</p>
+                <p className={styles.bdlLegalBold}><em>Transactions with insufficient funds will not be processed until sufficient funds are received. If fees are being deducted from your account, the full amount of the transaction plus fees must be available before your transaction can be processed.</em></p>
+                <p className={styles.bdlLegalBold}><em>I have read and understand the disclosure above.</em></p>
+              </div>
+              <table className={styles.bdlFormTable} style={{marginTop: '10px'}}>
+                <tbody>
+                  <tr>
+                    <td className={styles.bdlCell} style={{width: '60%', height: '50px'}}>
+                      <div className={styles.bdlCellLabel}>SIGNATURE</div>
+                      <div className={styles.bdlCellValue}></div>
+                    </td>
+                    <td className={styles.bdlCell} style={{width: '40%', height: '50px'}}>
+                      <div className={styles.bdlCellLabel}>DATE</div>
+                      <div className={styles.bdlCellValue}></div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div className={styles.bdlFooter}>
+              <div className={styles.bdlFooterCenter}>Copyright The Entrust Group - Precious Metals Buy Direction Letter 10-25-2021</div>
+            </div>
           </div>
         </div>
       </div>

@@ -1590,6 +1590,37 @@
   text-align: left;
 }
 
+/* Page 2 styling */
+.bdlPage2 {
+  width: 816px;
+  min-height: 1056px;
+  background: white;
+  margin: 0 auto;
+  font-family: Arial, Helvetica, sans-serif;
+  padding: 20px 16px;
+  color: #000;
+  box-sizing: border-box;
+  font-size: 9.5px;
+  line-height: 1.2;
+  position: relative;
+  page-break-before: always;
+}
+
+.bdlLegalText {
+  font-size: 8px;
+  line-height: 1.35;
+  color: #000;
+  text-align: justify;
+}
+
+.bdlLegalText p {
+  margin: 0 0 8px 0;
+}
+
+.bdlLegalBold {
+  font-weight: 700;
+}
+
 /* Footer */
 .bdlFooter {
   display: flex;
