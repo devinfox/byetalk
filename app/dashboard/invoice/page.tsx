@@ -459,47 +459,29 @@ export default function InvoicePage() {
     setIsGeneratingBuyDirection(true);
 
     try {
+      // Use simpler options - let html2canvas capture exactly what's visible
       const canvas = await html2canvas(targetRef, {
         scale: 2,
         useCORS: true,
-        logging: false,
+        logging: true,
         backgroundColor: "#ffffff",
-        allowTaint: true,
-        width: 816,
-        height: 1056,
-        scrollX: 0,
-        scrollY: 0,
-        onclone: (clonedDoc, element) => {
-          // Remove any transforms that might affect rendering
-          element.style.transform = 'none';
-          element.style.transformOrigin = 'top left';
-          element.style.margin = '0';
-          element.style.width = '816px';
-          element.style.minHeight = '1056px';
-
-          // Fix ALL text elements to remove potential strikethrough
-          const allElements = element.querySelectorAll('*');
-          allElements.forEach((el) => {
-            const elem = el as HTMLElement;
-            if (elem.style) {
-              elem.style.textDecoration = 'none';
-              elem.style.textDecorationLine = 'none';
-              elem.style.borderRadius = '0';
-            }
-          });
-        },
+        foreignObjectRendering: false,
+        removeContainer: true,
       });
 
-      const imgData = canvas.toDataURL("image/png");
-      // US Letter: 8.5 x 11 inches = 612 x 792 points
+      const imgData = canvas.toDataURL("image/png", 1.0);
+
+      // Calculate dimensions to maintain aspect ratio
+      const imgWidth = 612; // Letter width in points
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
       const pdf = new jsPDF({
         orientation: "portrait",
         unit: "pt",
         format: "letter",
       });
 
-      // Scale image to fit letter size (612 x 792 pt)
-      pdf.addImage(imgData, "PNG", 0, 0, 612, 792);
+      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
       pdf.save(`buy-direction-letter-${invoiceData.clientName || "draft"}.pdf`);
     } catch (error) {
       console.error("Error generating Buy Direction Letter PDF:", error);
