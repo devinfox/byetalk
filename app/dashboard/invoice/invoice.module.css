@@ -1481,11 +1481,9 @@
   min-width: 100px;
   display: inline-block;
   margin-left: 3px;
-  vertical-align: baseline;
+  vertical-align: bottom;
   padding-bottom: 0;
-  line-height: 1.2;
-  position: relative;
-  top: -2px;
+  line-height: 1;
 }
 
 /* Purchase intro text */
