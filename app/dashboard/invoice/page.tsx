@@ -344,11 +344,37 @@ export default function InvoicePage() {
         backgroundColor: "#ffffff",
         allowTaint: true,
         onclone: (clonedDoc) => {
-          // Fix section numbers centering
+          // Fix section numbers - use display table-cell for true vertical centering
           const sectionNums = clonedDoc.querySelectorAll('[class*="bdlSectionNum"]');
           sectionNums.forEach((el) => {
             const elem = el as HTMLElement;
-            elem.style.lineHeight = '26px';
+            elem.style.display = 'table-cell';
+            elem.style.verticalAlign = 'middle';
+            elem.style.lineHeight = 'normal';
+            elem.style.paddingTop = '0';
+            elem.style.paddingBottom = '0';
+          });
+          // Fix checkboxes - inline with proper baseline alignment
+          const checkboxes = clonedDoc.querySelectorAll('[class*="bdlCheckBox"]');
+          checkboxes.forEach((el) => {
+            const elem = el as HTMLElement;
+            elem.style.verticalAlign = 'middle';
+            elem.style.position = 'static';
+            elem.style.display = 'inline-block';
+          });
+          // Fix UPS line alignment
+          const upsLines = clonedDoc.querySelectorAll('[class*="bdlUpsLine"]');
+          upsLines.forEach((el) => {
+            const elem = el as HTMLElement;
+            elem.style.verticalAlign = 'middle';
+            elem.style.top = '0';
+            elem.style.position = 'static';
+          });
+          // Fix check items to use proper flex alignment
+          const checkItems = clonedDoc.querySelectorAll('[class*="bdlCheckItem"]');
+          checkItems.forEach((el) => {
+            const elem = el as HTMLElement;
+            elem.style.alignItems = 'center';
           });
         },
       });

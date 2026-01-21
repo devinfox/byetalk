@@ -1189,16 +1189,16 @@
    ========================================== */
 
 .bdl {
-  width: 780px;
+  width: 816px;
   min-height: 1056px;
   background: white;
   margin: 0 auto;
   font-family: Arial, Helvetica, sans-serif;
-  padding: 20px 25px;
+  padding: 20px 16px;
   color: #000;
   box-sizing: border-box;
-  font-size: 7pt;
-  line-height: 1.2;
+  font-size: 8pt;
+  line-height: 1.3;
 }
 
 /* Header */
@@ -1225,15 +1225,15 @@
 }
 
 .bdlHeaderTitle {
-  font-size: 18pt;
+  font-size: 20pt;
   font-weight: 700;
   color: #000;
   margin: 0;
-  line-height: 1.1;
+  line-height: 1.2;
 }
 
 .bdlHeaderSubtitle {
-  font-size: 10pt;
+  font-size: 12pt;
   font-weight: 400;
   color: #000;
   margin: 0;
@@ -1241,8 +1241,8 @@
 
 .bdlHeaderRight {
   text-align: right;
-  font-size: 7pt;
-  line-height: 1.3;
+  font-size: 8pt;
+  line-height: 1.4;
   color: #000;
 }
 
@@ -1254,130 +1254,130 @@
 
 /* Section styling */
 .bdlSection {
-  margin-bottom: 10px;
+  margin-bottom: 15px;
   position: relative;
 }
 
-/* Section header bar - darker gray, thinner */
+/* Section header bar - #959595 bg, white text, THINNER than number box */
 .bdlSectionHeader {
   display: flex;
-  align-items: flex-start;
-  background: #4a4a4a;
-  padding: 3px 12px 4px 42px;
-  margin-bottom: 0;
-  min-height: 18px;
+  align-items: center;
+  background: #959595;
+  padding: 4px 15px 4px 50px;
+  margin-bottom: 8px;
+  min-height: 22px;
   position: relative;
+  border-radius: 3px;
 }
 
-/* Number badge - smaller, centered */
+/* Number badge - white bg, black text, TALLER than header bar, centered on it */
 .bdlSectionNum {
   position: absolute;
   left: 0;
-  top: -2px;
-  width: 28px;
-  height: 28px;
+  top: 50%;
+  margin-top: -19px;
+  width: 34px;
+  height: 38px;
   background: #fff;
-  border: 1px solid #000;
+  border: 1.5px solid #333;
+  border-radius: 4px;
   color: #000;
   font-weight: 700;
-  font-size: 14px;
-  line-height: 26px;
+  font-size: 22px;
+  padding-top: 5px;
   text-align: center;
   box-sizing: border-box;
 }
 
 .bdlSectionTitle {
   color: #fff;
-  font-weight: 600;
-  font-size: 11pt;
+  font-weight: 700;
+  font-size: 15pt;
   letter-spacing: 0;
-  padding-top: 1px;
 }
 
 .bdlSelectOne {
   font-weight: 400;
   font-style: italic;
-  font-size: 9pt;
+  font-size: 11pt;
   margin-left: 5px;
 }
 
-/* Form table - field boxes with lighter border */
+/* Form table - field boxes with #808181 border */
 .bdlFormTable {
   width: 100%;
   border-collapse: collapse;
-  border: 1px solid #999;
+  border: 1px solid #808181;
 }
 
 .bdlFormTable td {
-  border: 1px solid #999;
-  padding: 2px 6px;
+  border: 1px solid #808181;
+  padding: 4px 8px;
   vertical-align: top;
-  height: 32px;
+  height: 45px;
 }
 
 .bdlCell {
-  height: 32px;
+  height: 45px;
 }
 
 .bdlCellLabel {
-  font-size: 6.5pt;
+  font-size: 8pt;
   color: #000;
   font-weight: 400;
   text-transform: uppercase;
-  margin-bottom: 1px;
+  margin-bottom: 2px;
 }
 
 .bdlCellLabelSub {
-  font-size: 6pt;
+  font-size: 7pt;
   font-style: italic;
   text-transform: none;
 }
 
 .bdlCellLabelReq {
-  font-size: 6pt;
+  font-size: 7pt;
   font-style: italic;
   text-transform: none;
 }
 
 .bdlCellValue {
-  font-size: 8pt;
+  font-size: 9pt;
   color: #000;
-  padding-top: 1px;
+  padding-top: 2px;
 }
 
 /* Authorization section - outside table */
 .bdlAuthSection {
   display: flex;
-  margin: 6px 0;
-  font-size: 7pt;
-  line-height: 1.4;
-  align-items: flex-start;
+  margin: 12px 0;
+  font-size: 8pt;
+  line-height: 1.5;
 }
 
 .bdlAuthText {
   flex: 1;
-  padding: 0 8px 0 0;
-  font-size: 7pt;
-  line-height: 1.4;
+  padding: 0 10px 0 0;
+  font-size: 8pt;
+  line-height: 1.5;
 }
 
 .bdlInitialBox {
-  width: 70px;
-  height: 45px;
-  border: 1px solid #999;
+  width: 85px;
+  height: 55px;
+  border: 1px solid #808181;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   background: white;
-  margin-top: 8px;
 }
 
 .bdlInitialLabel {
   background: transparent;
   color: #000;
   text-align: center;
-  padding: 3px 2px 0 2px;
-  font-size: 6pt;
+  padding: 4px 2px 0 2px;
+  font-size: 7pt;
   font-weight: 700;
 }
 
@@ -1388,45 +1388,45 @@
 /* Payment section - WITH BORDER around the whole section */
 .bdlPaymentGrid {
   display: flex;
-  font-size: 7pt;
-  line-height: 1.3;
-  border: 1px solid #999;
+  font-size: 8pt;
+  line-height: 1.6;
+  border: 1px solid #808181;
   border-top: none;
-  min-height: 80px;
+  min-height: 110px;
 }
 
 .bdlPaymentLeft {
   width: 35%;
-  padding: 6px 10px;
-  border-right: 1px solid #999;
+  padding: 12px 15px;
+  border-right: 1px solid #808181;
   display: flex;
   align-items: flex-start;
 }
 
 .bdlPaymentRight {
   width: 65%;
-  padding: 6px 10px;
+  padding: 12px 15px;
 }
 
 .bdlCheckItem {
   display: flex;
   align-items: center;
-  margin-bottom: 3px;
+  margin-bottom: 8px;
 }
 
-/* Checkbox - small square */
+/* Checkbox - perfect square, thin stroke, no rounding */
 .bdlCheckBox {
-  width: 9px;
-  height: 9px;
-  border: 1px solid #000;
+  width: 13px;
+  height: 13px;
+  border: 1px solid #808181;
   display: inline-block;
-  margin-right: 4px;
-  font-size: 8px;
+  margin-right: 5px;
+  font-size: 11px;
   font-weight: 400;
   flex-shrink: 0;
   border-radius: 0;
   background: white;
-  line-height: 8px;
+  line-height: 13px;
   vertical-align: middle;
   padding: 0;
   text-align: center;
@@ -1434,61 +1434,63 @@
 }
 
 .bdlCheckNote {
-  font-size: 6pt;
+  font-size: 6.5pt;
   font-style: italic;
 }
 
 .bdlUpsLine {
-  border-bottom: 1px solid #000;
-  min-width: 100px;
+  border-bottom: 1px solid #808181;
+  min-width: 120px;
   display: inline-block;
   margin-left: 3px;
   vertical-align: baseline;
   padding-bottom: 0;
-  line-height: 1.3;
+  line-height: 1.6;
+  position: relative;
+  top: -2px;
 }
 
 /* Purchase intro text */
 .bdlPurchaseIntro {
-  border: 1px solid #999;
+  border: 1px solid #808181;
   border-top: none;
-  padding: 3px 6px;
-  font-size: 7pt;
-  background: transparent;
+  padding: 5px 8px;
+  font-size: 8pt;
+  background: #c0c0c0;
   color: #000;
 }
 
-/* Purchase table - compact rows */
+/* Purchase table - gray headers, TALLER ROWS */
 .bdlPurchaseTable {
   width: 100%;
   border-collapse: collapse;
-  font-size: 7pt;
+  font-size: 8pt;
 }
 
 .bdlPurchaseTable th {
   background: #fff;
   color: #000;
-  border: 1px solid #999;
-  padding: 2px 3px;
+  border: 1px solid #808181;
+  padding: 6px 4px;
   text-align: center;
   font-weight: 700;
-  font-size: 7pt;
-  vertical-align: top;
+  font-size: 8pt;
+  vertical-align: middle;
 }
 
 .bdlThSub {
   font-weight: 400;
-  font-size: 5.5pt;
+  font-size: 6.5pt;
   display: block;
 }
 
 .bdlPurchaseTable td {
-  border: 1px solid #999;
-  padding: 2px 3px;
+  border: 1px solid #808181;
+  padding: 4px 5px;
   text-align: center;
-  height: 16px;
-  vertical-align: middle;
-  font-size: 7pt;
+  height: 22px;
+  vertical-align: top;
+  font-size: 8pt;
 }
 
 .bdlPurchaseTable td:first-child {
@@ -1503,15 +1505,15 @@
 .bdlPurchaseTable td:nth-child(6),
 .bdlPurchaseTable td:nth-child(7) {
   text-align: left;
-  padding-left: 3px;
+  padding-left: 5px;
 }
 
 .bdlSpecialRow td {
   text-align: left;
-  font-size: 7pt;
-  height: 16px;
-  vertical-align: middle;
-  padding-top: 2px;
+  font-size: 8pt;
+  height: 40px;
+  vertical-align: top;
+  padding-top: 6px;
 }
 
 .bdlSpecialRow td:last-child {
@@ -1523,9 +1525,9 @@
   display: flex;
   justify-content: space-between;
   margin-top: auto;
-  padding-top: 15px;
-  font-size: 6.5pt;
-  color: #666;
+  padding-top: 20px;
+  font-size: 7.5pt;
+  color: #000;
 }
 
 .bdlFooterLeft {
