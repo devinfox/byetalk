@@ -1768,12 +1768,12 @@ export default function InvoicePage() {
                               <span className={styles.bdlCheckBox}>{paymentOptions.thirdPartyBilling ? "X" : ""}</span>
                               <span>Use third-party billing</span>
                             </div>
-                            <div className={styles.bdlCheckItem} style={{marginLeft: '20px'}}>
+                            <div className={styles.bdlCheckItem} style={{marginLeft: '20px', display: 'flex', alignItems: 'baseline'}}>
                               <span className={styles.bdlCheckBox}>{paymentOptions.fedex ? "X" : ""}</span>
                               <span>FedEx</span>
                               <span className={styles.bdlCheckBox} style={{marginLeft: '12px'}}>{paymentOptions.ups ? "X" : ""}</span>
                               <span>UPS</span>
-                              <span style={{marginLeft: '8px'}}>Account #:</span>
+                              <span style={{marginLeft: '8px', whiteSpace: 'nowrap'}}>Account #:</span>
                               <span className={styles.bdlUpsLine}>{paymentOptions.upsAccountNumber}</span>
                             </div>
                           </div>
@@ -1828,9 +1828,17 @@ export default function InvoicePage() {
                             {/* Only show totals on the last page */}
                             {chunkIndex === allChunks.length - 1 && (
                               <tr className={styles.bdlSpecialRow}>
-                                <td colSpan={5}><strong>Special Instructions:</strong></td>
-                                <td>$ {calculateGrandTotal().toFixed(2)}</td>
-                                <td>$ {calculateGrandTotal().toFixed(2)}</td>
+                                <td colSpan={4} style={{textAlign: 'left'}}><strong>Special Instructions:</strong></td>
+                                <td></td>
+                                <td style={{textAlign: 'right'}}>Total $</td>
+                                <td style={{textAlign: 'right'}}>Total</td>
+                              </tr>
+                            )}
+                            {chunkIndex === allChunks.length - 1 && calculateGrandTotal() > 0 && (
+                              <tr>
+                                <td colSpan={5}></td>
+                                <td style={{textAlign: 'right'}}>$ {calculateGrandTotal().toFixed(2)}</td>
+                                <td style={{textAlign: 'right'}}>$ {calculateGrandTotal().toFixed(2)}</td>
                               </tr>
                             )}
                           </tbody>
@@ -2119,10 +2127,18 @@ export default function InvoicePage() {
                             </tr>
                           ))}
                           <tr className={styles.bdlSpecialRow}>
-                            <td colSpan={5}><strong>Special Instructions:</strong> {sellData.specialInstructions}</td>
-                            <td>$ {calculateSellGrandTotal().toFixed(2)}</td>
-                            <td>$ {calculateSellGrandTotal().toFixed(2)}</td>
+                            <td colSpan={4} style={{textAlign: 'left'}}><strong>Special Instructions:</strong> {sellData.specialInstructions}</td>
+                            <td></td>
+                            <td style={{textAlign: 'right'}}>Total $</td>
+                            <td style={{textAlign: 'right'}}>Total</td>
                           </tr>
+                          {calculateSellGrandTotal() > 0 && (
+                            <tr>
+                              <td colSpan={5}></td>
+                              <td style={{textAlign: 'right'}}>$ {calculateSellGrandTotal().toFixed(2)}</td>
+                              <td style={{textAlign: 'right'}}>$ {calculateSellGrandTotal().toFixed(2)}</td>
+                            </tr>
+                          )}
                         </tbody>
                       </table>
                     </div>
@@ -2304,12 +2320,12 @@ export default function InvoicePage() {
                             <span className={styles.bdlCheckBox}>{sellData.feePayment.thirdPartyBilling ? "X" : ""}</span>
                             <span>Use third-party billing</span>
                           </div>
-                          <div className={styles.bdlCheckItem} style={{marginLeft: '20px'}}>
+                          <div className={styles.bdlCheckItem} style={{marginLeft: '20px', display: 'flex', alignItems: 'baseline'}}>
                             <span className={styles.bdlCheckBox}>{sellData.feePayment.fedex ? "X" : ""}</span>
                             <span>FedEx</span>
                             <span className={styles.bdlCheckBox} style={{marginLeft: '12px'}}>{sellData.feePayment.ups ? "X" : ""}</span>
                             <span>UPS</span>
-                            <span style={{marginLeft: '8px'}}>Account #:</span>
+                            <span style={{marginLeft: '8px', whiteSpace: 'nowrap'}}>Account #:</span>
                             <span className={styles.bdlUpsLine}>{sellData.feePayment.accountNumber}</span>
                           </div>
                         </div>
@@ -2659,12 +2675,12 @@ export default function InvoicePage() {
                             <span className={styles.bdlCheckBox}>{paymentOptions.thirdPartyBilling ? "X" : ""}</span>
                             <span>Use third-party billing</span>
                           </div>
-                          <div className={styles.bdlCheckItem} style={{marginLeft: '20px'}}>
+                          <div className={styles.bdlCheckItem} style={{marginLeft: '20px', display: 'flex', alignItems: 'baseline'}}>
                             <span className={styles.bdlCheckBox}>{paymentOptions.fedex ? "X" : ""}</span>
                             <span>FedEx</span>
                             <span className={styles.bdlCheckBox} style={{marginLeft: '12px'}}>{paymentOptions.ups ? "X" : ""}</span>
                             <span>UPS</span>
-                            <span style={{marginLeft: '8px'}}>Account #:</span>
+                            <span style={{marginLeft: '8px', whiteSpace: 'nowrap'}}>Account #:</span>
                             <span className={styles.bdlUpsLine}>{paymentOptions.upsAccountNumber}</span>
                           </div>
                         </div>
@@ -2717,10 +2733,18 @@ export default function InvoicePage() {
                             </tr>
                           ))}
                           <tr className={styles.bdlSpecialRow}>
-                            <td colSpan={5}><strong>Special Instructions:</strong></td>
-                            <td>$ {calculateGrandTotal().toFixed(2)}</td>
-                            <td>$ {calculateGrandTotal().toFixed(2)}</td>
+                            <td colSpan={4} style={{textAlign: 'left'}}><strong>Special Instructions:</strong></td>
+                            <td></td>
+                            <td style={{textAlign: 'right'}}>Total $</td>
+                            <td style={{textAlign: 'right'}}>Total</td>
                           </tr>
+                          {calculateGrandTotal() > 0 && (
+                            <tr>
+                              <td colSpan={5}></td>
+                              <td style={{textAlign: 'right'}}>$ {calculateGrandTotal().toFixed(2)}</td>
+                              <td style={{textAlign: 'right'}}>$ {calculateGrandTotal().toFixed(2)}</td>
+                            </tr>
+                          )}
                         </tbody>
                       </table>
                     </div>
@@ -2985,10 +3009,18 @@ export default function InvoicePage() {
                                 </tr>
                               ))}
                               <tr className={styles.bdlSpecialRow}>
-                                <td colSpan={5}><strong>Special Instructions:</strong> {sellData.specialInstructions}</td>
-                                <td>$ {calculateSellGrandTotal().toFixed(2)}</td>
-                                <td>$ {calculateSellGrandTotal().toFixed(2)}</td>
+                                <td colSpan={4} style={{textAlign: 'left'}}><strong>Special Instructions:</strong> {sellData.specialInstructions}</td>
+                                <td></td>
+                                <td style={{textAlign: 'right'}}>Total $</td>
+                                <td style={{textAlign: 'right'}}>Total</td>
                               </tr>
+                              {calculateSellGrandTotal() > 0 && (
+                                <tr>
+                                  <td colSpan={5}></td>
+                                  <td style={{textAlign: 'right'}}>$ {calculateSellGrandTotal().toFixed(2)}</td>
+                                  <td style={{textAlign: 'right'}}>$ {calculateSellGrandTotal().toFixed(2)}</td>
+                                </tr>
+                              )}
                             </tbody>
                           </table>
                         </div>
@@ -3164,12 +3196,12 @@ export default function InvoicePage() {
                                 <span className={styles.bdlCheckBox}>{sellData.feePayment.thirdPartyBilling ? "X" : ""}</span>
                                 <span>Use third-party billing</span>
                               </div>
-                              <div className={styles.bdlCheckItem} style={{marginLeft: '20px'}}>
+                              <div className={styles.bdlCheckItem} style={{marginLeft: '20px', display: 'flex', alignItems: 'baseline'}}>
                                 <span className={styles.bdlCheckBox}>{sellData.feePayment.fedex ? "X" : ""}</span>
                                 <span>FedEx</span>
                                 <span className={styles.bdlCheckBox} style={{marginLeft: '12px'}}>{sellData.feePayment.ups ? "X" : ""}</span>
                                 <span>UPS</span>
-                                <span style={{marginLeft: '8px'}}>Account #:</span>
+                                <span style={{marginLeft: '8px', whiteSpace: 'nowrap'}}>Account #:</span>
                                 <span className={styles.bdlUpsLine}>{sellData.feePayment.accountNumber}</span>
                               </div>
                             </div>
@@ -3570,12 +3602,12 @@ export default function InvoicePage() {
                       <span className={styles.bdlCheckBox}>{paymentOptions.thirdPartyBilling ? "X" : ""}</span>
                       <span>Use third-party billing</span>
                     </div>
-                    <div className={styles.bdlCheckItem} style={{marginLeft: '20px'}}>
+                    <div className={styles.bdlCheckItem} style={{marginLeft: '20px', display: 'flex', alignItems: 'baseline'}}>
                       <span className={styles.bdlCheckBox}>{paymentOptions.fedex ? "X" : ""}</span>
                       <span>FedEx</span>
                       <span className={styles.bdlCheckBox} style={{marginLeft: '12px'}}>{paymentOptions.ups ? "X" : ""}</span>
                       <span>UPS</span>
-                      <span style={{marginLeft: '8px'}}>Account #:</span>
+                      <span style={{marginLeft: '8px', whiteSpace: 'nowrap'}}>Account #:</span>
                       <span className={styles.bdlUpsLine}>{paymentOptions.upsAccountNumber}</span>
                     </div>
                   </div>
@@ -3639,9 +3671,17 @@ export default function InvoicePage() {
                     {/* Only show totals on the last page */}
                     {chunkIndex === allChunks.length - 1 && (
                       <tr className={styles.bdlSpecialRow}>
-                        <td colSpan={5}><strong>Special Instructions:</strong></td>
-                        <td>$ {calculateGrandTotal().toFixed(2)}</td>
-                        <td>$ {calculateGrandTotal().toFixed(2)}</td>
+                        <td colSpan={4} style={{textAlign: 'left'}}><strong>Special Instructions:</strong></td>
+                        <td></td>
+                        <td style={{textAlign: 'right'}}>Total $</td>
+                        <td style={{textAlign: 'right'}}>Total</td>
+                      </tr>
+                    )}
+                    {chunkIndex === allChunks.length - 1 && calculateGrandTotal() > 0 && (
+                      <tr>
+                        <td colSpan={5}></td>
+                        <td style={{textAlign: 'right'}}>$ {calculateGrandTotal().toFixed(2)}</td>
+                        <td style={{textAlign: 'right'}}>$ {calculateGrandTotal().toFixed(2)}</td>
                       </tr>
                     )}
                   </tbody>
