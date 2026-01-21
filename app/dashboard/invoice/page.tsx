@@ -37,6 +37,60 @@ type PaymentOptions = {
   upsAccountNumber: string;
 };
 
+type SellLineItem = {
+  id: string;
+  quantity: string;
+  metalType: string;
+  description: string;
+  proofAm: string;
+  troyOz: string;
+  price: string;
+};
+
+type DepositoryOptions = {
+  delawareWilmington: boolean;
+  delawareBoulder: boolean;
+  dakota: boolean;
+  milesFranklin: boolean;
+  amglLasVegas: boolean;
+  amglIrving: boolean;
+  idahoArmored: boolean;
+  cnt: boolean;
+  brinksLA: boolean;
+  brinksSaltLake: boolean;
+  brinksJFK: boolean;
+};
+
+type DepositMethod = {
+  wire: boolean;
+  ach: boolean;
+  check: boolean;
+  overnightCheck: boolean;
+};
+
+type FeePaymentMethod = {
+  payWithCash: boolean;
+  creditCard: boolean;
+  thirdPartyBilling: boolean;
+  fedex: boolean;
+  ups: boolean;
+  accountNumber: string;
+};
+
+type SellData = {
+  lineItems: SellLineItem[];
+  specialInstructions: string;
+  deliveryRecipient: string;
+  subAccountNumber: string;
+  shippingStreet: string;
+  shippingCity: string;
+  shippingState: string;
+  shippingZip: string;
+  depository: DepositoryOptions;
+  depositMethod: DepositMethod;
+  feePayment: FeePaymentMethod;
+};
+
 type SavedInvoice = {
   id: string;
   created_at: string;
@@ -110,6 +164,54 @@ const initialPaymentOptions: PaymentOptions = {
   upsAccountNumber: "",
 };
 
+const initialSellLineItem = (): SellLineItem => ({
+  id: crypto.randomUUID(),
+  quantity: "",
+  metalType: "",
+  description: "",
+  proofAm: "",
+  troyOz: "",
+  price: "",
+});
+
+const initialSellData: SellData = {
+  lineItems: [initialSellLineItem()],
+  specialInstructions: "",
+  deliveryRecipient: "",
+  subAccountNumber: "",
+  shippingStreet: "",
+  shippingCity: "",
+  shippingState: "",
+  shippingZip: "",
+  depository: {
+    delawareWilmington: false,
+    delawareBoulder: false,
+    dakota: false,
+    milesFranklin: false,
+    amglLasVegas: false,
+    amglIrving: false,
+    idahoArmored: false,
+    cnt: false,
+    brinksLA: false,
+    brinksSaltLake: false,
+    brinksJFK: false,
+  },
+  depositMethod: {
+    wire: false,
+    ach: false,
+    check: false,
+    overnightCheck: false,
+  },
+  feePayment: {
+    payWithCash: false,
+    creditCard: false,
+    thirdPartyBilling: false,
+    fedex: false,
+    ups: false,
+    accountNumber: "",
+  },
+};
+
 export default function InvoicePage() {
   const [invoiceData, setInvoiceData] = useState<InvoiceData>(initialInvoiceData);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -122,6 +224,8 @@ export default function InvoicePage() {
   const [paymentOptions, setPaymentOptions] = useState<PaymentOptions>(initialPaymentOptions);
   const [isGeneratingBuyDirection, setIsGeneratingBuyDirection] = useState(false);
   const [previewTab, setPreviewTab] = useState<'invoice' | 'buyDirection'>('invoice');
+  const [isBuyAndSell, setIsBuyAndSell] = useState(false);
+  const [sellData, setSellData] = useState<SellData>(initialSellData);
   const invoiceRef = useRef<HTMLDivElement>(null);
   const buyDirectionRef = useRef<HTMLDivElement>(null);
   const previewInvoiceRef = useRef<HTMLDivElement>(null);
@@ -582,6 +686,18 @@ export default function InvoicePage() {
           </div>
         </div>
 
+        {/* Buy and Sell Toggle */}
+        <div className={styles.paymentSection}>
+          <label className={styles.checkboxLabel} style={{ fontSize: '1rem', fontWeight: 600 }}>
+            <input
+              type="checkbox"
+              checked={isBuyAndSell}
+              onChange={(e) => setIsBuyAndSell(e.target.checked)}
+            />
+            <span>This is a Buy and Sell Transaction</span>
+          </label>
+        </div>
+
         {/* Payment Instructions for Buy Direction Letter */}
         <div className={styles.paymentSection}>
           <h2 className={styles.sectionTitle}>Payment Instructions (Buy Direction Letter)</h2>
@@ -709,6 +825,158 @@ export default function InvoicePage() {
             {formatCurrency(calculateGrandTotal())}
           </span>
         </div>
+
+        {/* Sell Section - Only shown when Buy and Sell is enabled */}
+        {isBuyAndSell && (
+          <div className={styles.paymentSection}>
+            <h2 className={styles.sectionTitle}>Sell Information (Sell Direction Letter)</h2>
+
+            {/* Sell Line Items */}
+            <div style={{ marginTop: '1rem' }}>
+              <h3 style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Sell Items</h3>
+              {sellData.lineItems.map((item, index) => (
+                <div key={item.id} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+                  <input
+                    type="text"
+                    placeholder="Qty"
+                    value={item.quantity}
+                    onChange={(e) => {
+                      const newItems = [...sellData.lineItems];
+                      newItems[index].quantity = e.target.value;
+                      setSellData({ ...sellData, lineItems: newItems });
+                    }}
+                    style={{ width: '60px', padding: '0.5rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', color: 'white' }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Metal Type"
+                    value={item.metalType}
+                    onChange={(e) => {
+                      const newItems = [...sellData.lineItems];
+                      newItems[index].metalType = e.target.value;
+                      setSellData({ ...sellData, lineItems: newItems });
+                    }}
+                    style={{ width: '100px', padding: '0.5rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', color: 'white' }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Description"
+                    value={item.description}
+                    onChange={(e) => {
+                      const newItems = [...sellData.lineItems];
+                      newItems[index].description = e.target.value;
+                      setSellData({ ...sellData, lineItems: newItems });
+                    }}
+                    style={{ flex: 1, minWidth: '150px', padding: '0.5rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', color: 'white' }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Price"
+                    value={item.price}
+                    onChange={(e) => {
+                      const newItems = [...sellData.lineItems];
+                      newItems[index].price = e.target.value;
+                      setSellData({ ...sellData, lineItems: newItems });
+                    }}
+                    style={{ width: '100px', padding: '0.5rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', color: 'white' }}
+                  />
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => setSellData({ ...sellData, lineItems: [...sellData.lineItems, initialSellLineItem()] })}
+                style={{ marginTop: '0.5rem', padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', color: 'rgba(255,255,255,0.8)', cursor: 'pointer' }}
+              >
+                + Add Sell Item
+              </button>
+            </div>
+
+            {/* Delivery Instructions */}
+            <div style={{ marginTop: '1rem' }}>
+              <h3 style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Delivery Instructions</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                <input
+                  type="text"
+                  placeholder="Dealer/Depository/Recipient Name"
+                  value={sellData.deliveryRecipient}
+                  onChange={(e) => setSellData({ ...sellData, deliveryRecipient: e.target.value })}
+                  style={{ padding: '0.5rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', color: 'white' }}
+                />
+                <input
+                  type="text"
+                  placeholder="Sub-Account Number"
+                  value={sellData.subAccountNumber}
+                  onChange={(e) => setSellData({ ...sellData, subAccountNumber: e.target.value })}
+                  style={{ padding: '0.5rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', color: 'white' }}
+                />
+                <input
+                  type="text"
+                  placeholder="Street Address"
+                  value={sellData.shippingStreet}
+                  onChange={(e) => setSellData({ ...sellData, shippingStreet: e.target.value })}
+                  style={{ gridColumn: 'span 2', padding: '0.5rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', color: 'white' }}
+                />
+                <input
+                  type="text"
+                  placeholder="City"
+                  value={sellData.shippingCity}
+                  onChange={(e) => setSellData({ ...sellData, shippingCity: e.target.value })}
+                  style={{ padding: '0.5rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', color: 'white' }}
+                />
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <input
+                    type="text"
+                    placeholder="State"
+                    value={sellData.shippingState}
+                    onChange={(e) => setSellData({ ...sellData, shippingState: e.target.value })}
+                    style={{ flex: 1, padding: '0.5rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', color: 'white' }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Zip"
+                    value={sellData.shippingZip}
+                    onChange={(e) => setSellData({ ...sellData, shippingZip: e.target.value })}
+                    style={{ flex: 1, padding: '0.5rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', color: 'white' }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Deposit Method */}
+            <div style={{ marginTop: '1rem' }}>
+              <h3 style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Deposit Method</h3>
+              <div className={styles.checkboxGrid}>
+                <label className={styles.checkboxLabel}>
+                  <input type="checkbox" checked={sellData.depositMethod.wire} onChange={(e) => setSellData({ ...sellData, depositMethod: { ...sellData.depositMethod, wire: e.target.checked } })} />
+                  <span>Wire ($30 fee)</span>
+                </label>
+                <label className={styles.checkboxLabel}>
+                  <input type="checkbox" checked={sellData.depositMethod.ach} onChange={(e) => setSellData({ ...sellData, depositMethod: { ...sellData.depositMethod, ach: e.target.checked } })} />
+                  <span>ACH</span>
+                </label>
+                <label className={styles.checkboxLabel}>
+                  <input type="checkbox" checked={sellData.depositMethod.check} onChange={(e) => setSellData({ ...sellData, depositMethod: { ...sellData.depositMethod, check: e.target.checked } })} />
+                  <span>Check</span>
+                </label>
+                <label className={styles.checkboxLabel}>
+                  <input type="checkbox" checked={sellData.depositMethod.overnightCheck} onChange={(e) => setSellData({ ...sellData, depositMethod: { ...sellData.depositMethod, overnightCheck: e.target.checked } })} />
+                  <span>Overnight Check ($30 fee)</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Special Instructions */}
+            <div style={{ marginTop: '1rem' }}>
+              <h3 style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Special Instructions</h3>
+              <textarea
+                placeholder="Enter special instructions..."
+                value={sellData.specialInstructions}
+                onChange={(e) => setSellData({ ...sellData, specialInstructions: e.target.value })}
+                style={{ width: '100%', padding: '0.5rem', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', color: 'white', minHeight: '60px' }}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Actions */}
         <div className={styles.actions}>
