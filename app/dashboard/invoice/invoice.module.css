@@ -1891,36 +1891,38 @@
 }
 
 .welcomeLetterContent {
-  padding: 40px 70px;
+  padding: 35px 60px 40px 60px;
   position: relative;
   z-index: 1;
   color: #333;
-  font-size: 18px;
-  line-height: 1.7;
-  min-height: calc(11in - 120px - 174px);
+  font-size: 22px;
+  line-height: 1.65;
+  min-height: calc(11in - 100px - 140px);
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .welcomeLetterTextBlock {
-  flex: 0 0 auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .welcomeLetterGreeting {
-  font-size: 20px;
-  margin-bottom: 20px;
+  font-size: 24px;
+  margin-bottom: 22px;
   font-weight: 700;
   color: #1a2744;
 }
 
 .welcomeLetterContent p {
-  margin-bottom: 20px;
+  margin-bottom: 22px;
   text-align: left;
 }
 
 .welcomeLetterClosing {
-  margin-top: 30px !important;
+  margin-top: 35px !important;
   margin-bottom: 5px !important;
 }
 
