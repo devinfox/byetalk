@@ -812,7 +812,7 @@
   position: absolute;
   left: -9999px;
   top: 0;
-  width: 798px;
+  width: 799px;
   pointer-events: none;
 }
 
@@ -1269,12 +1269,12 @@
    ========================================== */
 
 .bdl {
-  width: 798px;
-  min-height: 1052px;
+  width: 799px;
+  min-height: 1007px;
   background: white;
   margin: 0 auto;
   font-family: Arial, Helvetica, sans-serif;
-  padding: 11px 16px 20px 14px;
+  padding: 20px 16px;
   color: #000;
   box-sizing: border-box;
   font-size: 9.5px;
@@ -1294,7 +1294,7 @@
 /* Header */
 .bdlHeader {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   margin-bottom: 5px;
 }
 
@@ -1370,7 +1370,7 @@
 /* Number badge - taller than header bar, extends above and below */
 .bdlSectionNum {
   position: absolute;
-  left: 2px;
+  left: 0;
   top: 50%;
   margin-top: -17px;
   width: 29.5px;
@@ -1725,7 +1725,7 @@
     width: 8.32in !important;
     min-height: 10.487in !important;
     margin: 0 !important;
-    padding: 11px 16px 20px 14px !important;
+    padding: 20px 16px !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     transform: none !important;
