@@ -1835,8 +1835,9 @@
   margin-top: 11px;
   font-size: 24px;
   font-weight: 700;
-  color: #d4af37;
+  color: white;
   letter-spacing: 1px;
+  font-family: 'Georgia', 'Times New Roman', serif;
 }
 
 .welcomeLetterGoldBar {
@@ -1891,7 +1892,7 @@
 }
 
 .welcomeLetterContent {
-  padding: 120px 60px 40px 60px;
+  padding: 70px 60px 40px 60px;
   position: relative;
   z-index: 1;
   color: #333;
