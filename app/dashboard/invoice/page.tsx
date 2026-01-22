@@ -1932,11 +1932,11 @@ export default function InvoicePage() {
                           </tr>
                         </tbody>
                       </table>
-                      <div className={styles.bdlAuthSection}>
+                      <div className={styles.bdlAuthSection} style={{marginTop: '-1px'}}>
                         <div className={styles.bdlAuthText}>
                           <strong>By initialing, I acknowledge the following: There are numerous depositories that specialize in storage and safekeeping of precious metals. I understand that the Administrator and/or Custodian is not and cannot be held responsible for the actions of these depositories. I hereby release and hold harmless the Administrator/Custodian from any damages that I may incur with respect to my choice of depository and any activities or lack of activities on the part of said depository.</strong>
                         </div>
-                        <div className={styles.bdlInitialBox}>
+                        <div className={styles.bdlInitialBox} style={{height: '50.63px', borderTop: 'none'}}>
                           <div className={styles.bdlInitialLabel}>INITIAL HERE</div>
                           <div className={styles.bdlInitialSpace}></div>
                         </div>
@@ -2846,11 +2846,11 @@ export default function InvoicePage() {
                             </tr>
                           </tbody>
                         </table>
-                        <div className={styles.bdlAuthSection}>
+                        <div className={styles.bdlAuthSection} style={{marginTop: '-1px'}}>
                           <div className={styles.bdlAuthText}>
                             <strong>By initialing, I acknowledge the following: There are numerous depositories that specialize in storage and safekeeping of precious metals. I understand that the Administrator and/or Custodian is not and cannot be held responsible for the actions of these depositories. I hereby release and hold harmless the Administrator/Custodian from any damages that I may incur with respect to my choice of depository and any activities or lack of activities on the part of said depository.</strong>
                           </div>
-                          <div className={styles.bdlInitialBox}>
+                          <div className={styles.bdlInitialBox} style={{height: '50.63px', borderTop: 'none'}}>
                             <div className={styles.bdlInitialLabel}>INITIAL HERE</div>
                             <div className={styles.bdlInitialSpace}></div>
                           </div>
@@ -3801,11 +3801,11 @@ export default function InvoicePage() {
                   </tr>
                 </tbody>
               </table>
-              <div className={styles.bdlAuthSection}>
+              <div className={styles.bdlAuthSection} style={{marginTop: '-1px'}}>
                 <div className={styles.bdlAuthText}>
                   <strong>By initialing, I acknowledge the following: There are numerous depositories that specialize in storage and safekeeping of precious metals. I understand that the Administrator and/or Custodian is not and cannot be held responsible for the actions of these depositories. I hereby release and hold harmless the Administrator/Custodian from any damages that I may incur with respect to my choice of depository and any activities or lack of activities on the part of said depository.</strong>
                 </div>
-                <div className={styles.bdlInitialBox}>
+                <div className={styles.bdlInitialBox} style={{height: '50.63px', borderTop: 'none'}}>
                   <div className={styles.bdlInitialLabel}>INITIAL HERE</div>
                   <div className={styles.bdlInitialSpace}></div>
                 </div>
