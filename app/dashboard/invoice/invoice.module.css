@@ -1857,7 +1857,7 @@
   left: 30px;
   top: 0;
   bottom: 30px;
-  width: 4px;
+  width: 8px;
   background: linear-gradient(180deg, #d4af37, #b8942e);
 }
 
@@ -1866,7 +1866,7 @@
   left: 30px;
   right: 30px;
   bottom: 30px;
-  height: 4px;
+  height: 8px;
   background: linear-gradient(90deg, #b8942e, #d4af37, #b8942e);
 }
 
@@ -1875,7 +1875,7 @@
   right: 30px;
   top: 0;
   bottom: 30px;
-  width: 4px;
+  width: 8px;
   background: linear-gradient(180deg, #d4af37, #b8942e);
 }
 
