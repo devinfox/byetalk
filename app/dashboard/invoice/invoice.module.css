@@ -1796,97 +1796,163 @@
   position: relative;
   overflow: hidden;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  font-family: 'Arial', 'Helvetica', sans-serif;
 }
 
 .welcomeLetterWatermark {
   position: absolute;
-  top: 50%;
+  top: 45%;
   left: 50%;
   transform: translate(-50%, -50%);
-  opacity: 0.14;
+  opacity: 0.12;
   pointer-events: none;
   z-index: 0;
 }
 
 .welcomeLetterWatermark img {
-  width: 500px;
+  width: 400px;
   height: auto;
 }
 
 .welcomeLetterHeader {
   background: #1a2744;
-  padding: 30px 50px;
+  padding: 20px 40px 60px 40px;
+  position: relative;
+}
+
+.welcomeLetterHeaderTop {
   display: flex;
   align-items: center;
 }
 
 .welcomeLetterLogo {
-  height: 60px;
+  height: 50px;
   width: auto;
 }
 
-.welcomeLetterGoldBorder {
-  height: 8px;
-  background: linear-gradient(90deg, #d4af37, #f5e5a8, #d4af37);
+.welcomeLetterHeaderTitle {
+  text-align: center;
+  margin-top: 15px;
+  font-size: 32px;
+  font-weight: 700;
+  color: #d4af37;
+  letter-spacing: 1px;
+}
+
+.welcomeLetterGoldBar {
+  height: 10px;
+  background: linear-gradient(90deg, #b8942e, #d4af37, #f5d456, #d4af37, #b8942e);
+}
+
+/* Gold border frame */
+.welcomeLetterFrame {
+  position: relative;
+  margin: 0;
+  min-height: calc(11in - 120px);
+}
+
+.welcomeLetterFrameLeft {
+  position: absolute;
+  left: 30px;
+  top: 0;
+  bottom: 30px;
+  width: 4px;
+  background: linear-gradient(180deg, #d4af37, #b8942e);
+}
+
+.welcomeLetterFrameBottom {
+  position: absolute;
+  left: 30px;
+  right: 30px;
+  bottom: 30px;
+  height: 4px;
+  background: linear-gradient(90deg, #b8942e, #d4af37, #b8942e);
+}
+
+.welcomeLetterFrameRight {
+  position: absolute;
+  right: 30px;
+  top: 0;
+  bottom: 30px;
+  width: 4px;
+  background: linear-gradient(180deg, #d4af37, #b8942e);
+}
+
+/* Blue triangle in bottom left */
+.welcomeLetterTriangle {
+  position: absolute;
+  bottom: 50px;
+  left: 50px;
+  width: 0;
+  height: 0;
+  border-left: 100px solid transparent;
+  border-right: 100px solid transparent;
+  border-bottom: 170px solid #1a2744;
+  transform: rotate(-45deg);
+  transform-origin: bottom left;
+  z-index: 0;
+  opacity: 0.95;
 }
 
 .welcomeLetterContent {
-  padding: 60px 70px;
+  padding: 50px 70px 40px 70px;
   position: relative;
   z-index: 1;
   color: #333;
-  font-family: 'Georgia', serif;
-  font-size: 14px;
-  line-height: 1.8;
+  font-size: 18px;
+  line-height: 1.7;
 }
 
 .welcomeLetterGreeting {
-  font-size: 16px;
-  margin-bottom: 24px;
-  font-weight: 500;
+  font-size: 20px;
+  margin-bottom: 20px;
+  font-weight: 700;
+  color: #1a2744;
 }
 
 .welcomeLetterContent p {
-  margin-bottom: 18px;
-  text-align: justify;
+  margin-bottom: 20px;
+  text-align: left;
 }
 
 .welcomeLetterClosing {
-  margin-top: 32px !important;
-  margin-bottom: 8px !important;
+  margin-top: 30px !important;
+  margin-bottom: 5px !important;
 }
 
 .welcomeLetterSignature {
-  margin-top: 10px;
+  margin-top: 5px;
 }
 
 .welcomeLetterSignatureImg {
-  height: 50px;
+  height: 55px;
   width: auto;
   margin-bottom: 5px;
 }
 
 .welcomeLetterSignatureName {
   font-weight: 600;
-  margin-bottom: 2px !important;
-  font-size: 15px;
+  margin-bottom: 0 !important;
+  font-size: 18px;
+  color: #1a2744;
 }
 
 .welcomeLetterSignatureTitle {
-  color: #666;
-  font-style: italic;
+  color: #555;
   margin-bottom: 0 !important;
+  font-size: 16px;
 }
 
 .welcomeLetterFooter {
   position: absolute;
-  bottom: 40px;
-  right: 50px;
-  z-index: 1;
+  bottom: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
 }
 
 .welcomeLetterBadges {
-  height: 60px;
+  height: 45px;
   width: auto;
 }
 

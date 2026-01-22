@@ -3465,23 +3465,32 @@ export default function InvoicePage() {
                       <img src="/citadel-shield-blur.png" alt="" />
                     </div>
                     <div className={styles.welcomeLetterHeader}>
-                      <img src="/citadel-gold-logo.png" alt="Citadel Gold" className={styles.welcomeLetterLogo} />
-                    </div>
-                    <div className={styles.welcomeLetterGoldBorder}></div>
-                    <div className={styles.welcomeLetterContent}>
-                      <p className={styles.welcomeLetterGreeting}>Dear {welcomeLetterName || '[Name]'},</p>
-                      <p>Thank you for your interest in Citadel Gold Group. As a company, we strive to provide our clients with personalized service and high-quality products that serve to protect and grow your wealth.</p>
-                      <p>In business, we believe that a person's word and a handshake are still the most important bond that can exist between two parties. It is with this in mind that I personally assure you that Citadel Gold Group will always strive to be at the forefront of product knowledge and market expertise in our industry.</p>
-                      <p>I would like to welcome you as a client and look forward to building a lasting relationship with you.</p>
-                      <p className={styles.welcomeLetterClosing}>Warm Regards,</p>
-                      <div className={styles.welcomeLetterSignature}>
-                        <img src="/jim-signature.png" alt="Jim Bryan" className={styles.welcomeLetterSignatureImg} />
-                        <p className={styles.welcomeLetterSignatureName}>Jim Bryan</p>
-                        <p className={styles.welcomeLetterSignatureTitle}>Senior Metals Advisor</p>
+                      <div className={styles.welcomeLetterHeaderTop}>
+                        <img src="/citadel-gold-logo.png" alt="Citadel Gold" className={styles.welcomeLetterLogo} />
                       </div>
+                      <div className={styles.welcomeLetterHeaderTitle}>Citadel Gold</div>
                     </div>
-                    <div className={styles.welcomeLetterFooter}>
-                      <img src="/trust-badges.png" alt="Trust Badges" className={styles.welcomeLetterBadges} />
+                    <div className={styles.welcomeLetterGoldBar}></div>
+                    <div className={styles.welcomeLetterFrame}>
+                      <div className={styles.welcomeLetterFrameLeft}></div>
+                      <div className={styles.welcomeLetterFrameRight}></div>
+                      <div className={styles.welcomeLetterFrameBottom}></div>
+                      <div className={styles.welcomeLetterTriangle}></div>
+                      <div className={styles.welcomeLetterContent}>
+                        <p className={styles.welcomeLetterGreeting}>Dear {welcomeLetterName || '[Name]'},</p>
+                        <p>Congratulations on taking this exciting step!<br />I'm thrilled to welcome you to the Citadel Gold family and look forward to working with you on your gold investments.</p>
+                        <p>This is a powerful move—one that helps secure your future with a time-tested, tangible asset. You're already positioning yourself for long-term success, and this is just the beginning.</p>
+                        <p>I'll be speaking with you soon to finalize the details of your transaction. In the meantime, welcome aboard—and here's to your growth and success!</p>
+                        <p className={styles.welcomeLetterClosing}>Sincerely,</p>
+                        <div className={styles.welcomeLetterSignature}>
+                          <img src="/jim-signature.png" alt="Jim Bryan" className={styles.welcomeLetterSignatureImg} />
+                          <p className={styles.welcomeLetterSignatureName}>Jim Bryan</p>
+                          <p className={styles.welcomeLetterSignatureTitle}>Senior Metals Advisor</p>
+                        </div>
+                      </div>
+                      <div className={styles.welcomeLetterFooter}>
+                        <img src="/trust-badges.png" alt="Trust Badges" className={styles.welcomeLetterBadges} />
+                      </div>
                     </div>
                   </div>
                 </div>
