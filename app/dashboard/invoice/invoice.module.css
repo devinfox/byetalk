@@ -1801,7 +1801,7 @@
 
 .welcomeLetterWatermark {
   position: absolute;
-  top: calc(50% + 40px);
+  top: calc(115px + (11in - 115px - 200px) / 2);
   left: 50%;
   transform: translate(-50%, -50%);
   opacity: 0.12;
@@ -1849,8 +1849,10 @@
 .welcomeLetterFrame {
   position: relative;
   margin: 0;
-  min-height: calc(11in - 120px);
+  height: calc(11in - 115px);
+  max-height: calc(11in - 115px);
   background: white;
+  overflow: hidden;
 }
 
 .welcomeLetterFrameLeft {
@@ -1992,8 +1994,9 @@
   }
 
   .welcomeLetterFrame {
-    min-height: calc(11in - 120px) !important;
-    max-height: calc(11in - 120px) !important;
+    height: calc(11in - 115px) !important;
+    min-height: calc(11in - 115px) !important;
+    max-height: calc(11in - 115px) !important;
     overflow: hidden !important;
   }
 
