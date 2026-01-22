@@ -1850,6 +1850,7 @@
   position: relative;
   margin: 0;
   min-height: calc(11in - 120px);
+  background: white;
 }
 
 .welcomeLetterFrameLeft {
