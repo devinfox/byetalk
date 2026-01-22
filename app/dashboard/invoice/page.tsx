@@ -744,66 +744,77 @@ export default function InvoicePage() {
       return;
     }
 
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-      alert("Please allow popups to print the Welcome Letter.");
-      return;
-    }
+    try {
+      // Capture the preview as an image
+      const canvas = await html2canvas(targetRef, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+      });
 
-    const styleSheets = Array.from(document.styleSheets);
-    let cssText = "";
-    styleSheets.forEach((sheet) => {
-      try {
-        const rules = Array.from(sheet.cssRules || []);
-        rules.forEach((rule) => {
-          cssText += rule.cssText + "\n";
-        });
-      } catch (e) {
-        // Skip cross-origin stylesheets
+      const imgData = canvas.toDataURL('image/png');
+
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        alert("Please allow popups to print the Welcome Letter.");
+        return;
       }
-    });
 
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Welcome Letter - ${invoiceData.clientName?.split(' ')[0] || "Draft"}</title>
-        <style>
-          ${cssText}
-          @page {
-            size: 8.5in 11in;
-            margin: 0 !important;
-            padding: 0 !important;
-          }
-          @media print {
-            html, body {
-              width: 8.5in !important;
-              height: 11in !important;
-              margin: 0 !important;
-              padding: 0 !important;
-              -webkit-print-color-adjust: exact !important;
-              print-color-adjust: exact !important;
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Welcome Letter - ${invoiceData.clientName?.split(' ')[0] || "Draft"}</title>
+          <style>
+            @page {
+              size: 8.5in 11in;
+              margin: 0;
             }
-          }
-          html, body {
-            margin: 0;
-            padding: 0;
-            background: white;
-            width: 8.5in;
-            height: 11in;
-          }
-        </style>
-      </head>
-      <body>
-        ${targetRef.innerHTML}
-      </body>
-      </html>
-    `);
-    printWindow.document.close();
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            html, body {
+              width: 8.5in;
+              height: 11in;
+              margin: 0;
+              padding: 0;
+            }
+            img {
+              width: 8.5in;
+              height: 11in;
+              display: block;
+            }
+            @media print {
+              html, body {
+                width: 8.5in;
+                height: 11in;
+              }
+              img {
+                width: 8.5in;
+                height: 11in;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <img src="${imgData}" />
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
 
-    printWindow.onload = () => {
-      printWindow.print();
-    };
+      printWindow.onload = () => {
+        setTimeout(() => {
+          printWindow.print();
+        }, 100);
+      };
+    } catch (error) {
+      console.error("Error generating welcome letter:", error);
+      alert("Error generating welcome letter. Please try again.");
+    }
   };
 
   // Only show rows that have data

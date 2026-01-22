@@ -1801,12 +1801,12 @@
 
 .welcomeLetterWatermark {
   position: absolute;
-  top: calc(115px + (11in - 115px - 200px) / 2);
+  top: 55%;
   left: 50%;
   transform: translate(-50%, -50%);
   opacity: 0.12;
   pointer-events: none;
-  z-index: 0;
+  z-index: 1;
 }
 
 .welcomeLetterWatermark img {
