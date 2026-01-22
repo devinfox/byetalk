@@ -293,7 +293,6 @@ export default function InvoicePage() {
   const [depositoryInfo, setDepositoryInfo] = useState<DepositoryInfo>(initialDepositoryInfo);
   const [isGeneratingBuyDirection, setIsGeneratingBuyDirection] = useState(false);
   const [previewTab, setPreviewTab] = useState<'invoice' | 'buyDirection' | 'sellDirection' | 'combined' | 'welcomeLetter'>('invoice');
-  const [welcomeLetterName, setWelcomeLetterName] = useState('');
   const [isBuyAndSell, setIsBuyAndSell] = useState(false);
   const [sellData, setSellData] = useState<SellData>(initialSellData);
   const invoiceRef = useRef<HTMLDivElement>(null);
@@ -768,7 +767,7 @@ export default function InvoicePage() {
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Welcome Letter - ${welcomeLetterName || "Draft"}</title>
+        <title>Welcome Letter - ${invoiceData.clientName?.split(' ')[0] || "Draft"}</title>
         <style>
           ${cssText}
           @media print {
@@ -3451,15 +3450,6 @@ export default function InvoicePage() {
               {/* Welcome Letter Preview */}
               {previewTab === 'welcomeLetter' && (
                 <div className={styles.welcomeLetterContainer}>
-                  <div className={styles.welcomeLetterNameInput}>
-                    <label>Recipient Name:</label>
-                    <input
-                      type="text"
-                      value={welcomeLetterName}
-                      onChange={(e) => setWelcomeLetterName(e.target.value)}
-                      placeholder="Enter recipient's name"
-                    />
-                  </div>
                   <div ref={previewWelcomeLetterRef} className={styles.welcomeLetter}>
                     <div className={styles.welcomeLetterWatermark}>
                       <img src="/citadel-shield-blur.png" alt="" />
@@ -3478,7 +3468,7 @@ export default function InvoicePage() {
                       <div className={styles.welcomeLetterTriangle}></div>
                       <div className={styles.welcomeLetterContent}>
                         <div className={styles.welcomeLetterTextBlock}>
-                          <p className={styles.welcomeLetterGreeting}>Dear {welcomeLetterName || '[Name]'},</p>
+                          <p className={styles.welcomeLetterGreeting}>Dear {invoiceData.clientName?.split(' ')[0] || '[Name]'},</p>
                           <p>Congratulations on taking this exciting step!<br />I'm thrilled to welcome you to the Citadel Gold family and look forward to working with you on your gold investments.</p>
                           <p>This is a powerful move—one that helps secure your future with a time-tested, tangible asset. You're already positioning yourself for long-term success, and this is just the beginning.</p>
                           <p>I'll be speaking with you soon to finalize the details of your transaction. In the meantime, welcome aboard—and here's to your growth and success!</p>
