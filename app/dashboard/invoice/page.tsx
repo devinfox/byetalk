@@ -292,7 +292,8 @@ export default function InvoicePage() {
   const [paymentOptions, setPaymentOptions] = useState<PaymentOptions>(initialPaymentOptions);
   const [depositoryInfo, setDepositoryInfo] = useState<DepositoryInfo>(initialDepositoryInfo);
   const [isGeneratingBuyDirection, setIsGeneratingBuyDirection] = useState(false);
-  const [previewTab, setPreviewTab] = useState<'invoice' | 'buyDirection' | 'sellDirection' | 'combined'>('invoice');
+  const [previewTab, setPreviewTab] = useState<'invoice' | 'buyDirection' | 'sellDirection' | 'combined' | 'welcomeLetter'>('invoice');
+  const [welcomeLetterName, setWelcomeLetterName] = useState('');
   const [isBuyAndSell, setIsBuyAndSell] = useState(false);
   const [sellData, setSellData] = useState<SellData>(initialSellData);
   const invoiceRef = useRef<HTMLDivElement>(null);
@@ -301,6 +302,7 @@ export default function InvoicePage() {
   const previewBuyDirectionRef = useRef<HTMLDivElement>(null);
   const previewSellDirectionRef = useRef<HTMLDivElement>(null);
   const previewCombinedRef = useRef<HTMLDivElement>(null);
+  const previewWelcomeLetterRef = useRef<HTMLDivElement>(null);
 
   // Fetch saved invoices on mount
   useEffect(() => {
@@ -720,6 +722,71 @@ export default function InvoicePage() {
           }
           .page-break {
             height: 40px;
+          }
+        </style>
+      </head>
+      <body>
+        ${targetRef.innerHTML}
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+
+    printWindow.onload = () => {
+      printWindow.print();
+    };
+  };
+
+  const generateWelcomeLetter = async () => {
+    const targetRef = previewWelcomeLetterRef.current;
+    if (!targetRef) {
+      console.error("Welcome letter ref not found");
+      alert("Error: Welcome letter template not ready. Please try again.");
+      return;
+    }
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert("Please allow popups to print the Welcome Letter.");
+      return;
+    }
+
+    const styleSheets = Array.from(document.styleSheets);
+    let cssText = "";
+    styleSheets.forEach((sheet) => {
+      try {
+        const rules = Array.from(sheet.cssRules || []);
+        rules.forEach((rule) => {
+          cssText += rule.cssText + "\n";
+        });
+      } catch (e) {
+        // Skip cross-origin stylesheets
+      }
+    });
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Welcome Letter - ${welcomeLetterName || "Draft"}</title>
+        <style>
+          ${cssText}
+          @media print {
+            @page {
+              size: letter;
+              margin: 0;
+            }
+            body {
+              margin: 0;
+              padding: 0;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+          }
+          body {
+            margin: 0;
+            padding: 0;
+            background: white;
           }
         </style>
       </head>
@@ -1541,6 +1608,12 @@ export default function InvoicePage() {
                 >
                   Combined
                 </button>
+                <button
+                  className={`${styles.previewTab} ${previewTab === 'welcomeLetter' ? styles.previewTabActive : ''}`}
+                  onClick={() => setPreviewTab('welcomeLetter')}
+                >
+                  Welcome Letter
+                </button>
               </div>
               <div className={styles.previewActions}>
                 <button
@@ -1549,6 +1622,7 @@ export default function InvoicePage() {
                     previewTab === 'invoice' ? generatePDF :
                     previewTab === 'buyDirection' ? generateBuyDirectionLetter :
                     previewTab === 'sellDirection' ? generateSellDirectionLetter :
+                    previewTab === 'welcomeLetter' ? generateWelcomeLetter :
                     generateCombinedDocument
                   }
                   disabled={isGenerating || isGeneratingBuyDirection}
@@ -3371,6 +3445,45 @@ export default function InvoicePage() {
                       </div>
                     </>
                   )}
+                </div>
+              )}
+
+              {/* Welcome Letter Preview */}
+              {previewTab === 'welcomeLetter' && (
+                <div className={styles.welcomeLetterContainer}>
+                  <div className={styles.welcomeLetterNameInput}>
+                    <label>Recipient Name:</label>
+                    <input
+                      type="text"
+                      value={welcomeLetterName}
+                      onChange={(e) => setWelcomeLetterName(e.target.value)}
+                      placeholder="Enter recipient's name"
+                    />
+                  </div>
+                  <div ref={previewWelcomeLetterRef} className={styles.welcomeLetter}>
+                    <div className={styles.welcomeLetterWatermark}>
+                      <img src="/citadel-shield-blur.png" alt="" />
+                    </div>
+                    <div className={styles.welcomeLetterHeader}>
+                      <img src="/citadel-gold-logo.png" alt="Citadel Gold" className={styles.welcomeLetterLogo} />
+                    </div>
+                    <div className={styles.welcomeLetterGoldBorder}></div>
+                    <div className={styles.welcomeLetterContent}>
+                      <p className={styles.welcomeLetterGreeting}>Dear {welcomeLetterName || '[Name]'},</p>
+                      <p>Thank you for your interest in Citadel Gold Group. As a company, we strive to provide our clients with personalized service and high-quality products that serve to protect and grow your wealth.</p>
+                      <p>In business, we believe that a person's word and a handshake are still the most important bond that can exist between two parties. It is with this in mind that I personally assure you that Citadel Gold Group will always strive to be at the forefront of product knowledge and market expertise in our industry.</p>
+                      <p>I would like to welcome you as a client and look forward to building a lasting relationship with you.</p>
+                      <p className={styles.welcomeLetterClosing}>Warm Regards,</p>
+                      <div className={styles.welcomeLetterSignature}>
+                        <img src="/jim-signature.png" alt="Jim Bryan" className={styles.welcomeLetterSignatureImg} />
+                        <p className={styles.welcomeLetterSignatureName}>Jim Bryan</p>
+                        <p className={styles.welcomeLetterSignatureTitle}>Senior Metals Advisor</p>
+                      </div>
+                    </div>
+                    <div className={styles.welcomeLetterFooter}>
+                      <img src="/trust-badges.png" alt="Trust Badges" className={styles.welcomeLetterBadges} />
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

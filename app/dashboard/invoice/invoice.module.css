@@ -1742,3 +1742,165 @@
     margin: 0;
   }
 }
+
+/* ==========================================
+   WELCOME LETTER STYLES
+   ========================================== */
+
+.welcomeLetterContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.welcomeLetterNameInput {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 12px 20px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.welcomeLetterNameInput label {
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+}
+
+.welcomeLetterNameInput input {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  padding: 8px 14px;
+  color: white;
+  font-size: 14px;
+  min-width: 250px;
+}
+
+.welcomeLetterNameInput input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.welcomeLetterNameInput input:focus {
+  outline: none;
+  border-color: #d4af37;
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
+}
+
+.welcomeLetter {
+  width: 8.5in;
+  min-height: 11in;
+  background: white;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.welcomeLetterWatermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0.14;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.welcomeLetterWatermark img {
+  width: 500px;
+  height: auto;
+}
+
+.welcomeLetterHeader {
+  background: #1a2744;
+  padding: 30px 50px;
+  display: flex;
+  align-items: center;
+}
+
+.welcomeLetterLogo {
+  height: 60px;
+  width: auto;
+}
+
+.welcomeLetterGoldBorder {
+  height: 8px;
+  background: linear-gradient(90deg, #d4af37, #f5e5a8, #d4af37);
+}
+
+.welcomeLetterContent {
+  padding: 60px 70px;
+  position: relative;
+  z-index: 1;
+  color: #333;
+  font-family: 'Georgia', serif;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.welcomeLetterGreeting {
+  font-size: 16px;
+  margin-bottom: 24px;
+  font-weight: 500;
+}
+
+.welcomeLetterContent p {
+  margin-bottom: 18px;
+  text-align: justify;
+}
+
+.welcomeLetterClosing {
+  margin-top: 32px !important;
+  margin-bottom: 8px !important;
+}
+
+.welcomeLetterSignature {
+  margin-top: 10px;
+}
+
+.welcomeLetterSignatureImg {
+  height: 50px;
+  width: auto;
+  margin-bottom: 5px;
+}
+
+.welcomeLetterSignatureName {
+  font-weight: 600;
+  margin-bottom: 2px !important;
+  font-size: 15px;
+}
+
+.welcomeLetterSignatureTitle {
+  color: #666;
+  font-style: italic;
+  margin-bottom: 0 !important;
+}
+
+.welcomeLetterFooter {
+  position: absolute;
+  bottom: 40px;
+  right: 50px;
+  z-index: 1;
+}
+
+.welcomeLetterBadges {
+  height: 60px;
+  width: auto;
+}
+
+@media print {
+  .welcomeLetter {
+    width: 8.5in !important;
+    min-height: 11in !important;
+    margin: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    page-break-after: always;
+  }
+
+  .welcomeLetterNameInput {
+    display: none !important;
+  }
+}
