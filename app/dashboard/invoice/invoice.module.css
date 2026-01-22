@@ -1887,10 +1887,10 @@
   position: absolute;
   bottom: 34px;
   left: 34px;
-  width: 140px;
-  height: 140px;
-  background: #1a2744;
-  clip-path: polygon(0 0, 0 100%, 100% 100%);
+  width: 0;
+  height: 0;
+  border-left: 140px solid #1a2744;
+  border-top: 140px solid transparent;
   z-index: 1;
 }
 
