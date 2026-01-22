@@ -1957,7 +1957,10 @@
 }
 
 .welcomeLetterBadgesContainer {
-  flex: 0 0 auto;
+  position: absolute;
+  bottom: 50px;
+  right: 50px;
+  z-index: 2;
 }
 
 .welcomeLetterFooter {
