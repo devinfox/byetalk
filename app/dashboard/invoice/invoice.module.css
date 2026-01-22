@@ -1354,7 +1354,7 @@
 /* Section header bar - shorter than number box */
 .bdlSectionHeader {
   display: block;
-  background: #808080;
+  background: #959595;
   padding: 0 15px 0 42px;
   margin-bottom: 8px;
   height: 32.604px;
@@ -1377,7 +1377,7 @@
   width: 29.5px;
   height: 34px;
   background: #fff;
-  border: 1px solid #808080;
+  border: 1px solid #808181;
   border-radius: 3px;
   color: #000;
   font-weight: 900;
