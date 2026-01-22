@@ -1829,8 +1829,8 @@ export default function InvoicePage() {
                             {chunkIndex === allChunks.length - 1 && (
                               <tr className={styles.bdlSpecialRow}>
                                 <td colSpan={5} style={{textAlign: 'left'}}><strong>Special Instructions:</strong></td>
-                                <td style={{padding: '4px 8px'}}><div style={{display: 'flex', justifyContent: 'space-between'}}><strong>$</strong><strong>Total</strong></div></td>
-                                <td style={{padding: '4px 8px'}}><div style={{display: 'flex', justifyContent: 'space-between'}}><strong>$</strong><strong>Total</strong></div></td>
+                                <td style={{padding: '4px 8px'}}><div style={{display: 'flex', justifyContent: 'space-between'}}><span>$</span><strong>Total</strong></div></td>
+                                <td style={{padding: '4px 8px'}}><div style={{display: 'flex', justifyContent: 'space-between'}}><span>$</span><strong>Total</strong></div></td>
                               </tr>
                             )}
                             {chunkIndex === allChunks.length - 1 && calculateGrandTotal() > 0 && (
@@ -2142,8 +2142,8 @@ export default function InvoicePage() {
                           ))}
                           <tr className={styles.bdlSpecialRow}>
                             <td colSpan={5} style={{textAlign: 'left'}}><strong>Special Instructions:</strong> {sellData.specialInstructions}</td>
-                            <td style={{padding: '4px 8px'}}><div style={{display: 'flex', justifyContent: 'space-between'}}><strong>$</strong><strong>Total</strong></div></td>
-                            <td style={{padding: '4px 8px'}}><div style={{display: 'flex', justifyContent: 'space-between'}}><strong>$</strong><strong>Total</strong></div></td>
+                            <td style={{padding: '4px 8px'}}><div style={{display: 'flex', justifyContent: 'space-between'}}><span>$</span><strong>Total</strong></div></td>
+                            <td style={{padding: '4px 8px'}}><div style={{display: 'flex', justifyContent: 'space-between'}}><span>$</span><strong>Total</strong></div></td>
                           </tr>
                           {calculateSellGrandTotal() > 0 && (
                             <tr>
@@ -2747,8 +2747,8 @@ export default function InvoicePage() {
                           ))}
                           <tr className={styles.bdlSpecialRow}>
                             <td colSpan={5} style={{textAlign: 'left'}}><strong>Special Instructions:</strong></td>
-                            <td style={{padding: '4px 8px'}}><div style={{display: 'flex', justifyContent: 'space-between'}}><strong>$</strong><strong>Total</strong></div></td>
-                            <td style={{padding: '4px 8px'}}><div style={{display: 'flex', justifyContent: 'space-between'}}><strong>$</strong><strong>Total</strong></div></td>
+                            <td style={{padding: '4px 8px'}}><div style={{display: 'flex', justifyContent: 'space-between'}}><span>$</span><strong>Total</strong></div></td>
+                            <td style={{padding: '4px 8px'}}><div style={{display: 'flex', justifyContent: 'space-between'}}><span>$</span><strong>Total</strong></div></td>
                           </tr>
                           {calculateGrandTotal() > 0 && (
                             <tr>
@@ -3037,8 +3037,8 @@ export default function InvoicePage() {
                               ))}
                               <tr className={styles.bdlSpecialRow}>
                                 <td colSpan={5} style={{textAlign: 'left'}}><strong>Special Instructions:</strong> {sellData.specialInstructions}</td>
-                                <td style={{padding: '4px 8px'}}><div style={{display: 'flex', justifyContent: 'space-between'}}><strong>$</strong><strong>Total</strong></div></td>
-                                <td style={{padding: '4px 8px'}}><div style={{display: 'flex', justifyContent: 'space-between'}}><strong>$</strong><strong>Total</strong></div></td>
+                                <td style={{padding: '4px 8px'}}><div style={{display: 'flex', justifyContent: 'space-between'}}><span>$</span><strong>Total</strong></div></td>
+                                <td style={{padding: '4px 8px'}}><div style={{display: 'flex', justifyContent: 'space-between'}}><span>$</span><strong>Total</strong></div></td>
                               </tr>
                               {calculateSellGrandTotal() > 0 && (
                                 <tr>
@@ -3698,8 +3698,8 @@ export default function InvoicePage() {
                     {chunkIndex === allChunks.length - 1 && (
                       <tr className={styles.bdlSpecialRow}>
                         <td colSpan={5} style={{textAlign: 'left'}}><strong>Special Instructions:</strong></td>
-                        <td style={{padding: '4px 8px'}}><div style={{display: 'flex', justifyContent: 'space-between'}}><strong>$</strong><strong>Total</strong></div></td>
-                        <td style={{padding: '4px 8px'}}><div style={{display: 'flex', justifyContent: 'space-between'}}><strong>$</strong><strong>Total</strong></div></td>
+                        <td style={{padding: '4px 8px'}}><div style={{display: 'flex', justifyContent: 'space-between'}}><span>$</span><strong>Total</strong></div></td>
+                        <td style={{padding: '4px 8px'}}><div style={{display: 'flex', justifyContent: 'space-between'}}><span>$</span><strong>Total</strong></div></td>
                       </tr>
                     )}
                     {chunkIndex === allChunks.length - 1 && calculateGrandTotal() > 0 && (
