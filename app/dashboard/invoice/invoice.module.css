@@ -1978,11 +1978,23 @@
 @media print {
   .welcomeLetter {
     width: 8.5in !important;
+    height: 11in !important;
     min-height: 11in !important;
+    max-height: 11in !important;
     margin: 0 !important;
+    padding: 0 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     page-break-after: always;
+    page-break-inside: avoid;
+    overflow: hidden !important;
+    box-shadow: none !important;
+  }
+
+  .welcomeLetterFrame {
+    min-height: calc(11in - 120px) !important;
+    max-height: calc(11in - 120px) !important;
+    overflow: hidden !important;
   }
 
   .welcomeLetterNameInput {

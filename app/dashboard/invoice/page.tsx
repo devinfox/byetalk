@@ -770,22 +770,27 @@ export default function InvoicePage() {
         <title>Welcome Letter - ${invoiceData.clientName?.split(' ')[0] || "Draft"}</title>
         <style>
           ${cssText}
+          @page {
+            size: 8.5in 11in;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
           @media print {
-            @page {
-              size: letter;
-              margin: 0;
-            }
-            body {
-              margin: 0;
-              padding: 0;
+            html, body {
+              width: 8.5in !important;
+              height: 11in !important;
+              margin: 0 !important;
+              padding: 0 !important;
               -webkit-print-color-adjust: exact !important;
               print-color-adjust: exact !important;
             }
           }
-          body {
+          html, body {
             margin: 0;
             padding: 0;
             background: white;
+            width: 8.5in;
+            height: 11in;
           }
         </style>
       </head>
