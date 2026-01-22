@@ -1847,7 +1847,7 @@ export default function InvoicePage() {
                           <div className={styles.bdlPaymentRight}>
                             <div className={styles.bdlCheckItem} style={{alignItems: 'flex-start'}}>
                               <span className={styles.bdlCheckBox} style={{marginTop: '2px'}}>{paymentOptions.overnightCheck ? "X" : ""}</span>
-                              <span>OVERNIGHT CHECK <span className={styles.bdlCheckNote}>($30 fee applies; cannot overnight to a PO Box. Also,<br/><span style={{display: 'block', textAlign: 'center'}}>invoice must be attached)</span></span></span>
+                              <span>OVERNIGHT CHECK <span className={styles.bdlCheckNote}>($30 fee applies; cannot overnight to a PO Box. Also,<br/><span style={{display: 'block', textAlign: 'left'}}>invoice must be attached)</span></span></span>
                             </div>
                             <div className={styles.bdlCheckItem}>
                               <span className={styles.bdlCheckBox}>{paymentOptions.chargeEntrustAccount ? "X" : ""}</span>
@@ -2767,7 +2767,7 @@ export default function InvoicePage() {
                         <div className={styles.bdlPaymentRight}>
                           <div className={styles.bdlCheckItem}>
                             <span className={styles.bdlCheckBox}>{paymentOptions.overnightCheck ? "X" : ""}</span>
-                            <span>OVERNIGHT CHECK <span className={styles.bdlCheckNote}>($30 fee applies; cannot overnight to a PO Box. Also,<br/><span style={{display: 'block', textAlign: 'center'}}>invoice must be attached)</span></span></span>
+                            <span>OVERNIGHT CHECK <span className={styles.bdlCheckNote}>($30 fee applies; cannot overnight to a PO Box. Also,<br/><span style={{display: 'block', textAlign: 'left'}}>invoice must be attached)</span></span></span>
                           </div>
                           <div className={styles.bdlCheckItem}>
                             <span className={styles.bdlCheckBox}>{paymentOptions.chargeEntrustAccount ? "X" : ""}</span>
@@ -3748,7 +3748,7 @@ export default function InvoicePage() {
                   <div className={styles.bdlPaymentRight}>
                     <div className={styles.bdlCheckItem}>
                       <span className={styles.bdlCheckBox}>{paymentOptions.overnightCheck ? "X" : ""}</span>
-                      <span>OVERNIGHT CHECK <span className={styles.bdlCheckNote}>($30 fee applies; cannot overnight to a PO Box. Also,<br/><span style={{display: 'block', textAlign: 'center'}}>invoice must be attached)</span></span></span>
+                      <span>OVERNIGHT CHECK <span className={styles.bdlCheckNote}>($30 fee applies; cannot overnight to a PO Box. Also,<br/><span style={{display: 'block', textAlign: 'left'}}>invoice must be attached)</span></span></span>
                     </div>
                     <div className={styles.bdlCheckItem}>
                       <span className={styles.bdlCheckBox}>{paymentOptions.chargeEntrustAccount ? "X" : ""}</span>
