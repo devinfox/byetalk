@@ -1295,7 +1295,7 @@
 .bdlHeader {
   display: flex;
   align-items: center;
-  margin-bottom: 5px;
+  margin-bottom: 4.22px;
 }
 
 .bdlLogo {
@@ -1341,7 +1341,7 @@
 .bdlHeaderLine {
   height: 1px;
   background: #000;
-  margin: 8px 0 12px 0;
+  margin: 6.75px 0 12px 0;
 }
 
 /* Section styling */
@@ -1355,16 +1355,16 @@
   display: block;
   background: #808080;
   padding: 0 15px 0 42px;
-  margin-bottom: 8px;
-  height: 26px;
-  min-height: 26px;
-  max-height: 26px;
+  margin-bottom: 16.888px;
+  height: 32.604px;
+  min-height: 32.604px;
+  max-height: 32.604px;
   position: relative;
-  border-radius: 0;
+  border-radius: 3px;
   text-decoration: none !important;
   -webkit-text-decoration: none !important;
   overflow: visible;
-  line-height: 26px;
+  line-height: 32.604px;
 }
 
 /* Number badge - taller than header bar, extends above and below */
@@ -1376,7 +1376,7 @@
   width: 29.5px;
   height: 34px;
   background: #fff;
-  border: 1.5px solid #808080;
+  border: 1px solid #808080;
   border-radius: 3px;
   color: #000;
   font-weight: 900;
@@ -1396,7 +1396,7 @@
   text-decoration: none !important;
   -webkit-text-decoration: none !important;
   border: none;
-  line-height: 26px;
+  line-height: 32.604px;
 }
 
 .bdlSelectOne {
@@ -1592,7 +1592,7 @@
   background: #fff;
   color: #000;
   border: 1px solid #808181;
-  padding: 6px 3px;
+  padding: 6.53px 3px;
   text-align: center;
   font-weight: 700;
   font-size: 9.5px;
@@ -1611,7 +1611,7 @@
   border: 1px solid #808181;
   padding: 5px 4px;
   text-align: center;
-  height: 24px;
+  height: 24.36px;
   vertical-align: top;
   font-size: 9.5px;
   line-height: 1.4;
