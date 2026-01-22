@@ -1816,7 +1816,7 @@
 
 .welcomeLetterHeader {
   background: #1a2744;
-  padding: 20px 40px 60px 40px;
+  padding: 15px 40px 46px 40px;
   position: relative;
 }
 
@@ -1826,21 +1826,21 @@
 }
 
 .welcomeLetterLogo {
-  height: 50px;
+  height: 38px;
   width: auto;
 }
 
 .welcomeLetterHeaderTitle {
   text-align: center;
-  margin-top: 15px;
-  font-size: 32px;
+  margin-top: 11px;
+  font-size: 24px;
   font-weight: 700;
   color: #d4af37;
   letter-spacing: 1px;
 }
 
 .welcomeLetterGoldBar {
-  height: 10px;
+  height: 8px;
   background: linear-gradient(90deg, #b8942e, #d4af37, #f5d456, #d4af37, #b8942e);
 }
 
