@@ -1881,17 +1881,13 @@
 /* Blue triangle in bottom left */
 .welcomeLetterTriangle {
   position: absolute;
-  bottom: 50px;
-  left: 50px;
-  width: 0;
-  height: 0;
-  border-left: 100px solid transparent;
-  border-right: 100px solid transparent;
-  border-bottom: 170px solid #1a2744;
-  transform: rotate(-45deg);
-  transform-origin: bottom left;
-  z-index: 0;
-  opacity: 0.95;
+  bottom: 34px;
+  left: 34px;
+  width: 140px;
+  height: 140px;
+  background: #1a2744;
+  clip-path: polygon(0 0, 0 100%, 100% 100%);
+  z-index: 1;
 }
 
 .welcomeLetterContent {
