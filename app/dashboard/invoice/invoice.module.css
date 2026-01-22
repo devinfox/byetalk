@@ -1801,7 +1801,7 @@
 
 .welcomeLetterWatermark {
   position: absolute;
-  top: 45%;
+  top: calc(50% + 40px);
   left: 50%;
   transform: translate(-50%, -50%);
   opacity: 0.12;
@@ -1832,8 +1832,8 @@
 
 .welcomeLetterHeaderTitle {
   text-align: center;
-  margin-top: 11px;
-  font-size: 24px;
+  margin-top: 25px;
+  font-size: 32px;
   font-weight: 700;
   color: white;
   letter-spacing: 1px;
