@@ -1891,12 +1891,20 @@
 }
 
 .welcomeLetterContent {
-  padding: 50px 70px 40px 70px;
+  padding: 40px 70px;
   position: relative;
   z-index: 1;
   color: #333;
   font-size: 18px;
   line-height: 1.7;
+  min-height: calc(11in - 120px - 174px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.welcomeLetterTextBlock {
+  flex: 0 0 auto;
 }
 
 .welcomeLetterGreeting {
@@ -1916,8 +1924,15 @@
   margin-bottom: 5px !important;
 }
 
-.welcomeLetterSignature {
+.welcomeLetterSignatureRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
   margin-top: 5px;
+}
+
+.welcomeLetterSignature {
+  flex: 0 0 auto;
 }
 
 .welcomeLetterSignatureImg {
@@ -1939,12 +1954,12 @@
   font-size: 16px;
 }
 
+.welcomeLetterBadgesContainer {
+  flex: 0 0 auto;
+}
+
 .welcomeLetterFooter {
-  position: absolute;
-  bottom: 50px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 2;
+  display: none;
 }
 
 .welcomeLetterBadges {

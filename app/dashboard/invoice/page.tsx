@@ -3477,19 +3477,23 @@ export default function InvoicePage() {
                       <div className={styles.welcomeLetterFrameBottom}></div>
                       <div className={styles.welcomeLetterTriangle}></div>
                       <div className={styles.welcomeLetterContent}>
-                        <p className={styles.welcomeLetterGreeting}>Dear {welcomeLetterName || '[Name]'},</p>
-                        <p>Congratulations on taking this exciting step!<br />I'm thrilled to welcome you to the Citadel Gold family and look forward to working with you on your gold investments.</p>
-                        <p>This is a powerful move—one that helps secure your future with a time-tested, tangible asset. You're already positioning yourself for long-term success, and this is just the beginning.</p>
-                        <p>I'll be speaking with you soon to finalize the details of your transaction. In the meantime, welcome aboard—and here's to your growth and success!</p>
-                        <p className={styles.welcomeLetterClosing}>Sincerely,</p>
-                        <div className={styles.welcomeLetterSignature}>
-                          <img src="/jim-signature.png" alt="Jim Bryan" className={styles.welcomeLetterSignatureImg} />
-                          <p className={styles.welcomeLetterSignatureName}>Jim Bryan</p>
-                          <p className={styles.welcomeLetterSignatureTitle}>Senior Metals Advisor</p>
+                        <div className={styles.welcomeLetterTextBlock}>
+                          <p className={styles.welcomeLetterGreeting}>Dear {welcomeLetterName || '[Name]'},</p>
+                          <p>Congratulations on taking this exciting step!<br />I'm thrilled to welcome you to the Citadel Gold family and look forward to working with you on your gold investments.</p>
+                          <p>This is a powerful move—one that helps secure your future with a time-tested, tangible asset. You're already positioning yourself for long-term success, and this is just the beginning.</p>
+                          <p>I'll be speaking with you soon to finalize the details of your transaction. In the meantime, welcome aboard—and here's to your growth and success!</p>
+                          <p className={styles.welcomeLetterClosing}>Sincerely,</p>
+                          <div className={styles.welcomeLetterSignatureRow}>
+                            <div className={styles.welcomeLetterSignature}>
+                              <img src="/jim-bryan.png" alt="Jim Bryan" className={styles.welcomeLetterSignatureImg} />
+                              <p className={styles.welcomeLetterSignatureName}>Jim Bryan</p>
+                              <p className={styles.welcomeLetterSignatureTitle}>Senior Metals Advisor</p>
+                            </div>
+                            <div className={styles.welcomeLetterBadgesContainer}>
+                              <img src="/trust-badges.png" alt="Trust Badges" className={styles.welcomeLetterBadges} />
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                      <div className={styles.welcomeLetterFooter}>
-                        <img src="/trust-badges.png" alt="Trust Badges" className={styles.welcomeLetterBadges} />
                       </div>
                     </div>
                   </div>
