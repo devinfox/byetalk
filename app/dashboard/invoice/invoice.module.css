@@ -812,7 +812,7 @@
   position: absolute;
   left: -9999px;
   top: 0;
-  width: 816px;
+  width: 799px;
   pointer-events: none;
 }
 
@@ -1269,8 +1269,8 @@
    ========================================== */
 
 .bdl {
-  width: 816px;
-  min-height: 1056px;
+  width: 799px;
+  min-height: 1007px;
   background: white;
   margin: 0 auto;
   font-family: Arial, Helvetica, sans-serif;
@@ -1710,8 +1710,8 @@
 /* Print-specific rules - disable auto-scaling */
 @media print {
   .invoice {
-    width: 8.5in !important;
-    min-height: 11in !important;
+    width: 8.32in !important;
+    min-height: 10.487in !important;
     margin: 0 !important;
     padding: 4px !important;
     -webkit-print-color-adjust: exact !important;
@@ -1722,8 +1722,8 @@
   }
 
   .bdl {
-    width: 8.5in !important;
-    min-height: 11in !important;
+    width: 8.32in !important;
+    min-height: 10.487in !important;
     margin: 0 !important;
     padding: 20px 16px !important;
     -webkit-print-color-adjust: exact !important;
@@ -1738,7 +1738,7 @@
   }
 
   @page {
-    size: letter;
+    size: 8.32in 10.487in;
     margin: 0;
   }
 }
