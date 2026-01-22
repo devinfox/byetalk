@@ -1336,6 +1336,7 @@
   font-size: 8pt;
   line-height: 1.4;
   color: #000;
+  align-self: flex-start;
 }
 
 .bdlHeaderLine {
@@ -1355,7 +1356,7 @@
   display: block;
   background: #808080;
   padding: 0 15px 0 42px;
-  margin-bottom: 16.888px;
+  margin-bottom: 8px;
   height: 32.604px;
   min-height: 32.604px;
   max-height: 32.604px;
