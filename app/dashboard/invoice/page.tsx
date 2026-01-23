@@ -2295,10 +2295,10 @@ export default function InvoicePage() {
                     </div>
                     <div className={styles.bdlHeaderLine}></div>
 
-                    {/* Section 5: Current Depository Storage Location */}
+                    {/* Section 4: Current Depository Storage Location */}
                     <div className={styles.bdlSection}>
                       <div className={styles.bdlSectionHeader}>
-                        <div className={styles.bdlSectionNum}>5</div>
+                        <div className={styles.bdlSectionNum}>4</div>
                         <div className={styles.bdlSectionTitle}>Current Depository Storage Location <span className={styles.bdlSelectOne}>(select one)</span></div>
                       </div>
                       <div className={styles.bdlPaymentGrid} style={{flexWrap: 'wrap', minHeight: 'auto'}}>
@@ -2353,10 +2353,10 @@ export default function InvoicePage() {
                       </div>
                     </div>
 
-                    {/* Section 6: Deposit Method */}
+                    {/* Section 5: Deposit Method */}
                     <div className={styles.bdlSection}>
                       <div className={styles.bdlSectionHeader}>
-                        <div className={styles.bdlSectionNum}>6</div>
+                        <div className={styles.bdlSectionNum}>5</div>
                         <div className={styles.bdlSectionTitle}>Deposit Method <span className={styles.bdlSelectOne}>(select one)</span></div>
                       </div>
                       <div className={styles.bdlPaymentGrid}>
@@ -2383,10 +2383,10 @@ export default function InvoicePage() {
                       </div>
                     </div>
 
-                    {/* Section 7: Fee Payment Method */}
+                    {/* Section 6: Fee Payment Method */}
                     <div className={styles.bdlSection}>
                       <div className={styles.bdlSectionHeader}>
-                        <div className={styles.bdlSectionNum}>7</div>
+                        <div className={styles.bdlSectionNum}>6</div>
                         <div className={styles.bdlSectionTitle}>Fee Payment Method <span className={styles.bdlSelectOne}>(select one)</span></div>
                       </div>
                       <div className={styles.bdlPaymentGrid}>
@@ -2397,7 +2397,7 @@ export default function InvoicePage() {
                           </div>
                           <div className={styles.bdlCheckItem}>
                             <span className={styles.bdlCheckBox}>{sellData.feePayment.creditCard ? "X" : ""}</span>
-                            <span>Credit Card <span className={styles.bdlCheckNote}>(complete Section 8)</span></span>
+                            <span>Credit Card <span className={styles.bdlCheckNote}>(complete Section 7)</span></span>
                           </div>
                         </div>
                         <div className={styles.bdlPaymentRight}>
@@ -2417,10 +2417,10 @@ export default function InvoicePage() {
                       </div>
                     </div>
 
-                    {/* Section 8: Credit Card Information */}
+                    {/* Section 7: Credit Card Information */}
                     <div className={styles.bdlSection}>
                       <div className={styles.bdlSectionHeader}>
-                        <div className={styles.bdlSectionNum}>8</div>
+                        <div className={styles.bdlSectionNum}>7</div>
                         <div className={styles.bdlSectionTitle}>Credit Card Information</div>
                       </div>
                       <table className={styles.bdlFormTable}>
@@ -2511,10 +2511,10 @@ export default function InvoicePage() {
                     </div>
                     <div className={styles.bdlHeaderLine}></div>
 
-                    {/* Section 9: Account Owner Signature and Investment Acknowledgment */}
+                    {/* Section 8: Account Owner Signature and Investment Acknowledgment */}
                     <div className={styles.bdlSection}>
                       <div className={styles.bdlSectionHeader} style={{marginBottom: '16.33px'}}>
-                        <div className={styles.bdlSectionNum}>9</div>
+                        <div className={styles.bdlSectionNum}>8</div>
                         <div className={styles.bdlSectionTitle}>Account Owner Signature and Investment Acknowledgment</div>
                       </div>
                       <div className={styles.bdlLegalText}>
@@ -3174,7 +3174,7 @@ export default function InvoicePage() {
 
                         <div className={styles.bdlSection}>
                           <div className={styles.bdlSectionHeader}>
-                            <div className={styles.bdlSectionNum}>5</div>
+                            <div className={styles.bdlSectionNum}>4</div>
                             <div className={styles.bdlSectionTitle}>Current Depository Storage Location <span className={styles.bdlSelectOne}>(select one)</span></div>
                           </div>
                           <div className={styles.bdlPaymentGrid} style={{flexWrap: 'wrap', minHeight: 'auto'}}>
@@ -3231,7 +3231,7 @@ export default function InvoicePage() {
 
                         <div className={styles.bdlSection}>
                           <div className={styles.bdlSectionHeader}>
-                            <div className={styles.bdlSectionNum}>6</div>
+                            <div className={styles.bdlSectionNum}>5</div>
                             <div className={styles.bdlSectionTitle}>Deposit Method <span className={styles.bdlSelectOne}>(select one)</span></div>
                           </div>
                           <div className={styles.bdlPaymentGrid}>
@@ -3260,7 +3260,7 @@ export default function InvoicePage() {
 
                         <div className={styles.bdlSection}>
                           <div className={styles.bdlSectionHeader}>
-                            <div className={styles.bdlSectionNum}>7</div>
+                            <div className={styles.bdlSectionNum}>6</div>
                             <div className={styles.bdlSectionTitle}>Fee Payment Method <span className={styles.bdlSelectOne}>(select one)</span></div>
                           </div>
                           <div className={styles.bdlPaymentGrid}>
@@ -3271,7 +3271,7 @@ export default function InvoicePage() {
                               </div>
                               <div className={styles.bdlCheckItem}>
                                 <span className={styles.bdlCheckBox}>{sellData.feePayment.creditCard ? "X" : ""}</span>
-                                <span>Credit Card <span className={styles.bdlCheckNote}>(complete Section 8)</span></span>
+                                <span>Credit Card <span className={styles.bdlCheckNote}>(complete Section 7)</span></span>
                               </div>
                             </div>
                             <div className={styles.bdlPaymentRight}>
@@ -3293,7 +3293,7 @@ export default function InvoicePage() {
 
                         <div className={styles.bdlSection}>
                           <div className={styles.bdlSectionHeader}>
-                            <div className={styles.bdlSectionNum}>8</div>
+                            <div className={styles.bdlSectionNum}>7</div>
                             <div className={styles.bdlSectionTitle}>Credit Card Information</div>
                           </div>
                           <table className={styles.bdlFormTable}>
@@ -3386,7 +3386,7 @@ export default function InvoicePage() {
 
                         <div className={styles.bdlSection}>
                           <div className={styles.bdlSectionHeader} style={{marginBottom: '16.33px'}}>
-                            <div className={styles.bdlSectionNum}>9</div>
+                            <div className={styles.bdlSectionNum}>8</div>
                             <div className={styles.bdlSectionTitle}>Account Owner Signature and Investment Acknowledgment</div>
                           </div>
                           <div className={styles.bdlLegalText}>
