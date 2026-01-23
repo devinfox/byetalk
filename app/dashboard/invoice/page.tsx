@@ -1705,21 +1705,28 @@ export default function InvoicePage() {
                         <span>{formatCurrency(calculateGrandTotal())}</span>
                       </div>
                     </div>
-                    <div className={styles.addressSection}>
-                      <div className={styles.addressBlock}>
-                        <p className={styles.addressLabel}>Bill To:</p>
-                        <p className={styles.addressText}>{invoiceData.billTo}</p>
+                    <div className={styles.signatureAddressRow}>
+                      <div className={styles.signatureSection}>
+                        <span className={styles.signatureLabel}>Signature: _____________________</span>
                       </div>
-                      <div className={styles.addressBlock}>
-                        <p className={styles.addressLabel}>Ship To:</p>
-                        <p className={styles.addressText}>{invoiceData.shipTo}</p>
+                      <div className={styles.addressSection}>
+                        <div className={styles.addressBlock}>
+                          <p className={styles.addressLabel}>Bill To: </p>
+                          <p className={styles.addressText}>{invoiceData.billTo}</p>
+                        </div>
+                        <div className={styles.addressBlock}>
+                          <p className={styles.addressLabel}>Ship To: </p>
+                          <p className={styles.addressText}>{invoiceData.shipTo}</p>
+                        </div>
                       </div>
                     </div>
-                    <div className={styles.shippingInfo}>
-                      <p>Shipping Information: Orders may take up to 28 days to arrive, as outlined by our wholesalers' timeline, to account for potential product shortages and unforeseen shipping delays. Most shipments are fully insured, require a signature upon delivery, and typically arrive within 7 business days via UPS, FedEx, or USPS. Tracking details will be provided once your order is packaged and ready for shipment.</p>
-                    </div>
-                    <div className={styles.tagline}>
-                      <p>Fortifying Your Future One Precious Metal at a Time</p>
+                    <div className={styles.bottomSection}>
+                      <div className={styles.shippingInfo}>
+                        <p>Shipping Information: Orders may take up to 28 days to arrive, as outlined by our wholesalers' timeline, to account for potential product shortages and unforeseen shipping delays. Most shipments are fully insured, require a signature upon delivery, and typically arrive within 7 business days via UPS, FedEx, or USPS. Tracking details will be provided once your order is packaged and ready for shipment.</p>
+                      </div>
+                      <div className={styles.tagline}>
+                        <p>Fortifying Your Future One Precious Metal at a Time</p>
+                      </div>
                     </div>
                   </div>
                   <div className={styles.invoiceFooter}>
@@ -2229,59 +2236,35 @@ export default function InvoicePage() {
                               <td></td><td></td><td></td><td></td><td></td><td>$</td><td>$</td>
                             </tr>
                           ))}
-                          <tr className={styles.bdlSpecialRow}>
+                          <tr className={styles.bdlSellSpecialRow}>
                             <td colSpan={5} style={{textAlign: 'left'}}><strong>Special Instructions:</strong> {sellData.specialInstructions}</td>
-                            <td>$<strong style={{float: 'right'}}>Total</strong></td>
-                            <td>$<strong style={{float: 'right'}}>Total</strong></td>
+                            <td style={{textAlign: 'right'}}><strong>Total</strong> $</td>
+                            <td><strong>Total</strong></td>
                           </tr>
-                          {calculateSellGrandTotal() > 0 && (
-                            <tr>
-                              <td colSpan={5}></td>
-                              <td style={{textAlign: 'right'}}>$ {calculateSellGrandTotal().toFixed(2)}</td>
-                              <td style={{textAlign: 'right'}}>$ {calculateSellGrandTotal().toFixed(2)}</td>
-                            </tr>
-                          )}
                         </tbody>
                       </table>
-                    </div>
-
-                    {/* Section 4: Delivery Instructions */}
-                    <div className={styles.bdlSection}>
-                      <div className={styles.bdlSectionHeader}>
-                        <div className={styles.bdlSectionNum}>4</div>
-                        <div className={styles.bdlSectionTitle}>Delivery Instructions</div>
-                      </div>
-                      <table className={styles.bdlFormTable}>
+                      {/* Delivery Instructions - Subheading Banner (no section number) */}
+                      <div className={styles.bdlDeliverySubheading}>Delivery Instructions</div>
+                      <table className={styles.bdlSellDeliveryTable}>
                         <tbody>
                           <tr>
-                            <td className={styles.bdlCell} style={{width: '50%'}}>
-                              <div className={styles.bdlCellLabel}>DEALER / DEPOSITORY / RECIPIENT NAME</div>
-                              <div className={styles.bdlCellValue}>{sellData.deliveryRecipient}</div>
-                            </td>
-                            <td className={styles.bdlCell} style={{width: '50%'}}>
-                              <div className={styles.bdlCellLabel}>SUB-ACCOUNT NUMBER</div>
-                              <div className={styles.bdlCellValue}>{sellData.subAccountNumber}</div>
-                            </td>
+                            <td className={styles.bdlDeliveryLabel}>Dealer, Depository, or<br/>Name of Recipient</td>
+                            <td className={styles.bdlDeliveryValue}>{sellData.deliveryRecipient}</td>
                           </tr>
                           <tr>
-                            <td className={styles.bdlCell} colSpan={2}>
-                              <div className={styles.bdlCellLabel}>STREET ADDRESS</div>
-                              <div className={styles.bdlCellValue}>{sellData.shippingStreet}</div>
-                            </td>
+                            <td className={styles.bdlDeliveryLabel}>Sub-Account Number</td>
+                            <td className={styles.bdlDeliveryValue}>{sellData.subAccountNumber}</td>
                           </tr>
                           <tr>
-                            <td className={styles.bdlCell}>
-                              <div className={styles.bdlCellLabel}>CITY</div>
-                              <div className={styles.bdlCellValue}>{sellData.shippingCity}</div>
-                            </td>
-                            <td className={styles.bdlCell} style={{display: 'flex', gap: '0'}}>
-                              <div style={{flex: 1, borderRight: '1px solid #808181', padding: '3px 8px'}}>
-                                <div className={styles.bdlCellLabel}>STATE</div>
-                                <div className={styles.bdlCellValue}>{sellData.shippingState}</div>
-                              </div>
-                              <div style={{flex: 1, padding: '3px 8px'}}>
-                                <div className={styles.bdlCellLabel}>ZIP CODE</div>
-                                <div className={styles.bdlCellValue}>{sellData.shippingZip}</div>
+                            <td className={styles.bdlDeliveryLabel} rowSpan={2}>Shipping Address</td>
+                            <td className={styles.bdlDeliveryValue}>Street Address<br/>{sellData.shippingStreet}</td>
+                          </tr>
+                          <tr>
+                            <td className={styles.bdlDeliveryValue} style={{padding: 0}}>
+                              <div style={{display: 'flex'}}>
+                                <div style={{flex: 1, padding: '4px 8px', borderRight: '1px solid #a6a6a6'}}>City<br/>{sellData.shippingCity}</div>
+                                <div style={{width: '80px', padding: '4px 8px', borderRight: '1px solid #a6a6a6'}}>State<br/>{sellData.shippingState}</div>
+                                <div style={{width: '80px', padding: '4px 8px'}}>Zip Code<br/>{sellData.shippingZip}</div>
                               </div>
                             </td>
                           </tr>
@@ -2628,21 +2611,28 @@ export default function InvoicePage() {
                           <span>{formatCurrency(calculateGrandTotal())}</span>
                         </div>
                       </div>
-                      <div className={styles.addressSection}>
-                        <div className={styles.addressBlock}>
-                          <p className={styles.addressLabel}>Bill To:</p>
-                          <p className={styles.addressText}>{invoiceData.billTo}</p>
+                      <div className={styles.signatureAddressRow}>
+                        <div className={styles.signatureSection}>
+                          <span className={styles.signatureLabel}>Signature: _____________________</span>
                         </div>
-                        <div className={styles.addressBlock}>
-                          <p className={styles.addressLabel}>Ship To:</p>
-                          <p className={styles.addressText}>{invoiceData.shipTo}</p>
+                        <div className={styles.addressSection}>
+                          <div className={styles.addressBlock}>
+                            <p className={styles.addressLabel}>Bill To: </p>
+                            <p className={styles.addressText}>{invoiceData.billTo}</p>
+                          </div>
+                          <div className={styles.addressBlock}>
+                            <p className={styles.addressLabel}>Ship To: </p>
+                            <p className={styles.addressText}>{invoiceData.shipTo}</p>
+                          </div>
                         </div>
                       </div>
-                      <div className={styles.shippingInfo}>
-                        <p>Shipping Information: Orders may take up to 28 days to arrive, as outlined by our wholesalers' timeline, to account for potential product shortages and unforeseen shipping delays. Most shipments are fully insured, require a signature upon delivery, and typically arrive within 7 business days via UPS, FedEx, or USPS. Tracking details will be provided once your order is packaged and ready for shipment.</p>
-                      </div>
-                      <div className={styles.tagline}>
-                        <p>Fortifying Your Future One Precious Metal at a Time</p>
+                      <div className={styles.bottomSection}>
+                        <div className={styles.shippingInfo}>
+                          <p>Shipping Information: Orders may take up to 28 days to arrive, as outlined by our wholesalers' timeline, to account for potential product shortages and unforeseen shipping delays. Most shipments are fully insured, require a signature upon delivery, and typically arrive within 7 business days via UPS, FedEx, or USPS. Tracking details will be provided once your order is packaged and ready for shipment.</p>
+                        </div>
+                        <div className={styles.tagline}>
+                          <p>Fortifying Your Future One Precious Metal at a Time</p>
+                        </div>
                       </div>
                     </div>
                     <div className={styles.invoiceFooter}>
@@ -3124,57 +3114,35 @@ export default function InvoicePage() {
                                   <td></td><td></td><td></td><td></td><td></td><td>$</td><td>$</td>
                                 </tr>
                               ))}
-                              <tr className={styles.bdlSpecialRow}>
+                              <tr className={styles.bdlSellSpecialRow}>
                                 <td colSpan={5} style={{textAlign: 'left'}}><strong>Special Instructions:</strong> {sellData.specialInstructions}</td>
-                                <td>$<strong style={{float: 'right'}}>Total</strong></td>
-                                <td>$<strong style={{float: 'right'}}>Total</strong></td>
+                                <td style={{textAlign: 'right'}}><strong>Total</strong> $</td>
+                                <td><strong>Total</strong></td>
                               </tr>
-                              {calculateSellGrandTotal() > 0 && (
-                                <tr>
-                                  <td colSpan={5}></td>
-                                  <td style={{textAlign: 'right'}}>$ {calculateSellGrandTotal().toFixed(2)}</td>
-                                  <td style={{textAlign: 'right'}}>$ {calculateSellGrandTotal().toFixed(2)}</td>
-                                </tr>
-                              )}
                             </tbody>
                           </table>
-                        </div>
-                        <div className={styles.bdlSection}>
-                          <div className={styles.bdlSectionHeader}>
-                            <div className={styles.bdlSectionNum}>4</div>
-                            <div className={styles.bdlSectionTitle}>Delivery Instructions</div>
-                          </div>
-                          <table className={styles.bdlFormTable}>
+                          {/* Delivery Instructions - Subheading Banner (no section number) */}
+                          <div className={styles.bdlDeliverySubheading}>Delivery Instructions</div>
+                          <table className={styles.bdlSellDeliveryTable}>
                             <tbody>
                               <tr>
-                                <td className={styles.bdlCell} style={{width: '50%'}}>
-                                  <div className={styles.bdlCellLabel}>DEALER / DEPOSITORY / RECIPIENT NAME</div>
-                                  <div className={styles.bdlCellValue}>{sellData.deliveryRecipient}</div>
-                                </td>
-                                <td className={styles.bdlCell} style={{width: '50%'}}>
-                                  <div className={styles.bdlCellLabel}>SUB-ACCOUNT NUMBER</div>
-                                  <div className={styles.bdlCellValue}>{sellData.subAccountNumber}</div>
-                                </td>
+                                <td className={styles.bdlDeliveryLabel}>Dealer, Depository, or<br/>Name of Recipient</td>
+                                <td className={styles.bdlDeliveryValue}>{sellData.deliveryRecipient}</td>
                               </tr>
                               <tr>
-                                <td className={styles.bdlCell} colSpan={2}>
-                                  <div className={styles.bdlCellLabel}>STREET ADDRESS</div>
-                                  <div className={styles.bdlCellValue}>{sellData.shippingStreet}</div>
-                                </td>
+                                <td className={styles.bdlDeliveryLabel}>Sub-Account Number</td>
+                                <td className={styles.bdlDeliveryValue}>{sellData.subAccountNumber}</td>
                               </tr>
                               <tr>
-                                <td className={styles.bdlCell}>
-                                  <div className={styles.bdlCellLabel}>CITY</div>
-                                  <div className={styles.bdlCellValue}>{sellData.shippingCity}</div>
-                                </td>
-                                <td className={styles.bdlCell} style={{display: 'flex', gap: '0'}}>
-                                  <div style={{flex: 1, borderRight: '1px solid #808181', padding: '3px 8px'}}>
-                                    <div className={styles.bdlCellLabel}>STATE</div>
-                                    <div className={styles.bdlCellValue}>{sellData.shippingState}</div>
-                                  </div>
-                                  <div style={{flex: 1, padding: '3px 8px'}}>
-                                    <div className={styles.bdlCellLabel}>ZIP CODE</div>
-                                    <div className={styles.bdlCellValue}>{sellData.shippingZip}</div>
+                                <td className={styles.bdlDeliveryLabel} rowSpan={2}>Shipping Address</td>
+                                <td className={styles.bdlDeliveryValue}>Street Address<br/>{sellData.shippingStreet}</td>
+                              </tr>
+                              <tr>
+                                <td className={styles.bdlDeliveryValue} style={{padding: 0}}>
+                                  <div style={{display: 'flex'}}>
+                                    <div style={{flex: 1, padding: '4px 8px', borderRight: '1px solid #a6a6a6'}}>City<br/>{sellData.shippingCity}</div>
+                                    <div style={{width: '80px', padding: '4px 8px', borderRight: '1px solid #a6a6a6'}}>State<br/>{sellData.shippingState}</div>
+                                    <div style={{width: '80px', padding: '4px 8px'}}>Zip Code<br/>{sellData.shippingZip}</div>
                                   </div>
                                 </td>
                               </tr>
@@ -3582,28 +3550,36 @@ export default function InvoicePage() {
               </div>
             </div>
 
-            {/* Bill To / Ship To */}
-            <div className={styles.addressSection}>
-              <div className={styles.addressBlock}>
-                <p className={styles.addressLabel}>Bill To:</p>
-                <p className={styles.addressText}>{invoiceData.billTo}</p>
+            {/* Signature / Bill To / Ship To */}
+            <div className={styles.signatureAddressRow}>
+              <div className={styles.signatureSection}>
+                <span className={styles.signatureLabel}>Signature: _____________________</span>
               </div>
-              <div className={styles.addressBlock}>
-                <p className={styles.addressLabel}>Ship To:</p>
-                <p className={styles.addressText}>{invoiceData.shipTo}</p>
+              <div className={styles.addressSection}>
+                <div className={styles.addressBlock}>
+                  <p className={styles.addressLabel}>Bill To: </p>
+                  <p className={styles.addressText}>{invoiceData.billTo}</p>
+                </div>
+                <div className={styles.addressBlock}>
+                  <p className={styles.addressLabel}>Ship To: </p>
+                  <p className={styles.addressText}>{invoiceData.shipTo}</p>
+                </div>
               </div>
             </div>
 
-            {/* Shipping Info */}
-            <div className={styles.shippingInfo}>
-              <p>
-                Shipping Information: Orders may take up to 28 days to arrive, as outlined by our wholesalers' timeline, to account for potential product shortages and unforeseen shipping delays. Most shipments are fully insured, require a signature upon delivery, and typically arrive within 7 business days via UPS, FedEx, or USPS. Tracking details will be provided once your order is packaged and ready for shipment.
-              </p>
-            </div>
+            {/* Bottom Section - pushed to footer */}
+            <div className={styles.bottomSection}>
+              {/* Shipping Info */}
+              <div className={styles.shippingInfo}>
+                <p>
+                  Shipping Information: Orders may take up to 28 days to arrive, as outlined by our wholesalers' timeline, to account for potential product shortages and unforeseen shipping delays. Most shipments are fully insured, require a signature upon delivery, and typically arrive within 7 business days via UPS, FedEx, or USPS. Tracking details will be provided once your order is packaged and ready for shipment.
+                </p>
+              </div>
 
-            {/* Tagline */}
-            <div className={styles.tagline}>
-              <p>Fortifying Your Future One Precious Metal at a Time</p>
+              {/* Tagline */}
+              <div className={styles.tagline}>
+                <p>Fortifying Your Future One Precious Metal at a Time</p>
+              </div>
             </div>
           </div>
 

@@ -1034,24 +1034,45 @@
   color: #1e3a5f;
 }
 
+/* Signature and Address Row */
+.signatureAddressRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin: 30px 0 0 0;
+  padding: 0 10px;
+}
+
+.signatureSection {
+  flex: 0 0 auto;
+}
+
+.signatureLabel {
+  font-size: 14px;
+  color: #333;
+  white-space: nowrap;
+}
+
 /* Address Section */
 .addressSection {
   display: flex;
-  justify-content: center;
-  gap: 120px;
-  margin: 25px 0;
+  justify-content: flex-end;
+  gap: 60px;
+  flex: 1;
+  padding-left: 40px;
 }
 
 .addressBlock {
-  text-align: center;
-  min-width: 150px;
+  text-align: left;
+  min-width: 120px;
 }
 
 .addressLabel {
   font-weight: 700;
   color: #1e3a5f;
-  font-size: 15px;
-  margin: 0 0 8px 0;
+  font-size: 14px;
+  margin: 0;
+  display: inline;
 }
 
 .addressText {
@@ -1060,11 +1081,18 @@
   white-space: pre-line;
   margin: 0;
   line-height: 1.5;
+  display: inline;
+}
+
+/* Bottom Section - pushed to bottom */
+.bottomSection {
+  margin-top: auto;
+  padding-top: 20px;
 }
 
 /* Shipping Info */
 .shippingInfo {
-  margin: 20px 0;
+  margin: 0 0 15px 0;
   padding: 0 10px;
 }
 
@@ -1079,7 +1107,7 @@
 /* Tagline */
 .tagline {
   text-align: center;
-  margin: 15px 0 10px;
+  margin: 0 0 15px 0;
 }
 
 .tagline p {
@@ -1356,7 +1384,7 @@
   display: block;
   background: #959595;
   padding: 0 15px 0 42px;
-  margin-bottom: 19px;
+  margin-bottom: 6.93px;
   height: 32.604px;
   min-height: 32.604px;
   max-height: 32.604px;
@@ -1648,6 +1676,60 @@
 
 .bdlSpecialRow td:last-child {
   text-align: left !important;
+}
+
+/* Sell Direction Letter - Taller Special Instructions Row */
+.bdlSellSpecialRow td {
+  text-align: left !important;
+  font-size: 9.5px;
+  height: 65px;
+  vertical-align: top;
+  padding: 8px 6px;
+}
+
+.bdlSellSpecialRow td:first-child {
+  text-align: left !important;
+}
+
+.bdlSellSpecialRow td:last-child {
+  text-align: left !important;
+}
+
+/* Delivery Instructions Subheading - matches bdlPurchaseIntro style */
+.bdlDeliverySubheading {
+  border: 1px solid #a6a6a6;
+  border-bottom: none;
+  padding: 5px 8px;
+  font-size: 9.5px;
+  font-weight: 700;
+  background: #c0c0c0;
+  color: #000;
+  line-height: 1.2;
+}
+
+/* Sell Delivery Table */
+.bdlSellDeliveryTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 9.5px;
+}
+
+.bdlSellDeliveryTable td {
+  border: 1px solid #a6a6a6;
+  padding: 4px 8px;
+  vertical-align: top;
+  font-size: 9.5px;
+  line-height: 1.4;
+}
+
+.bdlSellDeliveryTable .bdlDeliveryLabel {
+  font-weight: 700;
+  width: 130px;
+  background: transparent;
+}
+
+.bdlSellDeliveryTable .bdlDeliveryValue {
+  background: transparent;
 }
 
 /* Page 2 styling */
