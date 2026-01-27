@@ -37,9 +37,14 @@ export async function middleware(request: NextRequest) {
   // Define protected and auth routes
   const isAuthRoute = request.nextUrl.pathname.startsWith('/login') ||
                       request.nextUrl.pathname.startsWith('/signup')
-  const isProtectedRoute = !isAuthRoute &&
-                           !request.nextUrl.pathname.startsWith('/api') &&
-                           request.nextUrl.pathname !== '/'
+  const isPublicRoute = request.nextUrl.pathname === '/' ||
+                        request.nextUrl.pathname === '/bonds' ||
+                        request.nextUrl.pathname === '/stocks' ||
+                        request.nextUrl.pathname === '/annuities' ||
+                        request.nextUrl.pathname === '/homepage' ||
+                        request.nextUrl.pathname === '/homepage-2' ||
+                        request.nextUrl.pathname.startsWith('/api')
+  const isProtectedRoute = !isAuthRoute && !isPublicRoute
 
   // Redirect unauthenticated users to login
   if (!user && isProtectedRoute) {

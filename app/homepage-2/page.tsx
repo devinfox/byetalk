@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import './homepage-2/homepage-2.css';
+import './homepage-2.css';
 
-export default function Home() {
+export default function Homepage2() {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -50,7 +50,7 @@ export default function Home() {
       {/* Navigation */}
       <nav className={scrolled ? 'scrolled' : ''}>
         <div className="nav-container">
-          <a href="/" className="logo">
+          <a href="#" className="logo">
             <img src="/byetalk-logo-blue.png" alt="ByeTalk" className="logo-img" />
           </a>
           <div className="nav-links">
@@ -473,7 +473,7 @@ export default function Home() {
         <div className="footer-container">
           <div className="footer-grid">
             <div className="footer-brand">
-              <a href="/" className="logo">
+              <a href="#" className="logo">
                 <img src="/byetalk-logo-blue.png" alt="ByeTalk" className="logo-img" />
               </a>
               <p>The intelligent workspace that helps teams close more deals with less effort.</p>
