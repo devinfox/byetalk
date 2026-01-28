@@ -1,0 +1,237 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@400;500;600&display=swap');
+
+.bonds-page {
+  margin: 0;
+  padding: 0;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  background-color: #f5f1eb;
+  color: #1a1a2e;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+.email-wrapper {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 40px 32px 60px;
+  background-color: #f8f5f0;
+  min-height: 100vh;
+}
+
+.bonds-header {
+  background-color: #1d3557;
+  margin: -40px -32px 40px -32px;
+  padding: 24px 32px;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+}
+
+.header-logo {
+  height: 48px;
+  width: auto;
+}
+
+.bonds-content {
+  padding-top: 0;
+}
+
+.greeting {
+  font-size: 22px;
+  font-weight: 500;
+  margin-bottom: 20px;
+  color: #1a1a2e;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+}
+
+.body-text {
+  font-size: 18px;
+  line-height: 1.7;
+  color: #2d2d3a;
+  margin-bottom: 20px;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+}
+
+.image-insight-block {
+  margin: 28px 0;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border: 1px solid #d0a56d;
+}
+
+.gold-image-container {
+  margin: 0;
+}
+
+.gold-image {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.key-insight {
+  background-image: url('/email-template-images/citadel-gold-texture.png');
+  background-size: cover;
+  padding: 20px 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  border-top: 1px solid #d0a56d;
+}
+
+.insight-icon {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  flex-shrink: 0;
+  margin-top: 5px;
+}
+
+.insight-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: #b8973a;
+}
+
+.insight-text {
+  font-size: 17px;
+  line-height: 1.6;
+  color: #e8e4dc;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  margin: 0;
+}
+
+.chart-section {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  margin: 28px 0;
+}
+
+.chart-text {
+  flex: 1;
+}
+
+.chart-image-container {
+  flex: 0 0 280px;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.chart-image {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.cta-button {
+  display: inline-block;
+  background: linear-gradient(135deg, #d4af37 0%, #b8973a 100%);
+  color: #1a1a2e;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 14px 28px;
+  border-radius: 4px;
+  margin: 24px 0 0;
+  box-shadow: 0 4px 12px rgba(184, 151, 58, 0.3);
+  transition: all 0.2s ease;
+}
+
+.cta-button:hover {
+  background: linear-gradient(135deg, #e0bc45 0%, #c4a340 100%);
+  box-shadow: 0 6px 16px rgba(184, 151, 58, 0.4);
+}
+
+.signature {
+  margin-top: 32px;
+}
+
+.signature-name {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin-bottom: 4px;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+}
+
+.signature-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: #4a4a5a;
+  margin-bottom: 2px;
+}
+
+.signature-company {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: #1a1a2e;
+  margin-top: 8px;
+}
+
+/* Print styles */
+@media print {
+  .bonds-header {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    background-color: #1d3557 !important;
+  }
+
+  .bonds-page,
+  .email-wrapper,
+  .key-insight {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+}
+
+/* Mobile styles */
+@media (max-width: 600px) {
+  .email-wrapper {
+    padding: 24px 20px 40px;
+  }
+
+  .bonds-header {
+    margin: -24px -20px 40px -20px;
+    padding: 20px;
+  }
+
+  .greeting {
+    font-size: 20px;
+  }
+
+  .body-text {
+    font-size: 17px;
+    line-height: 1.65;
+  }
+
+  .key-insight {
+    padding: 18px 20px;
+    gap: 14px;
+  }
+
+  .insight-text {
+    font-size: 16px;
+  }
+
+  .chart-section {
+    flex-direction: column;
+  }
+
+  .chart-image-container {
+    flex: none;
+    width: 100%;
+  }
+}

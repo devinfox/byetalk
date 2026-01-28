@@ -1,0 +1,157 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@400;500;600&display=swap');
+
+.stocks-page {
+  margin: 0;
+  padding: 0;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  background-color: #f5f1eb;
+  color: #1a1a2e;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+.email-wrapper {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 40px 32px 60px;
+  background-color: #f8f5f0;
+  min-height: 100vh;
+}
+
+.stocks-header {
+  background-color: #1d3557;
+  margin: -40px -32px 40px -32px;
+  padding: 24px 32px;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+}
+
+.header-logo {
+  height: 48px;
+  width: auto;
+}
+
+.stocks-content {
+  padding-top: 0;
+}
+
+.greeting {
+  font-size: 22px;
+  font-weight: 500;
+  margin-bottom: 20px;
+  color: #1a1a2e;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+}
+
+.body-text {
+  font-size: 18px;
+  line-height: 1.7;
+  color: #2d2d3a;
+  margin-bottom: 20px;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+}
+
+.image-block {
+  margin: 28px 0;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border: 1px solid #d0a56d;
+}
+
+.stocks-image {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.cta-button {
+  display: inline-block;
+  background: linear-gradient(135deg, #d4af37 0%, #b8973a 100%);
+  color: #1a1a2e;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 14px 28px;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(184, 151, 58, 0.3);
+  transition: all 0.2s ease;
+  margin-bottom: 32px;
+}
+
+.cta-button:hover {
+  background: linear-gradient(135deg, #e0bc45 0%, #c4a340 100%);
+  box-shadow: 0 6px 16px rgba(184, 151, 58, 0.4);
+}
+
+.signature {
+  margin-top: 0;
+}
+
+.signature-name {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin-bottom: 4px;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+}
+
+.signature-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: #4a4a5a;
+  margin-bottom: 2px;
+}
+
+.signature-company {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: #1a1a2e;
+  margin-top: 8px;
+}
+
+/* Print styles */
+@media print {
+  .stocks-header {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    background-color: #1d3557 !important;
+  }
+
+  .stocks-page,
+  .email-wrapper {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+}
+
+/* Mobile styles */
+@media (max-width: 600px) {
+  .email-wrapper {
+    padding: 24px 20px 40px;
+  }
+
+  .stocks-header {
+    margin: -24px -20px 40px -20px;
+    padding: 20px;
+  }
+
+  .greeting {
+    font-size: 20px;
+  }
+
+  .body-text {
+    font-size: 17px;
+    line-height: 1.65;
+  }
+
+}
